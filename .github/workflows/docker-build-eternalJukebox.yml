@@ -1,11 +1,9 @@
 name: Docker build EternalJukebox image
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
   push:
-    branches:
-      - master
+    branches-ignore:
+      - '**'
 
 jobs:
 

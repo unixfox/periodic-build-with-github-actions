@@ -67,8 +67,8 @@ jobs:
         id: docker_build_new
         uses: docker/build-push-action@v2
         with:
-          context: ./k8s-zabbix
-          file: ./k8s-zabbix-git/Dockerfile
+          context: ./k8s-zabbix-git
+          file: ./k8s-zabbix/Dockerfile
           platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/zabbix-tooling-k8s-zabbix:latest, quay.io/unixfox/zabbix-tooling-k8s-zabbix:build-${{ env.timestamp }}
