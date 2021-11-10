@@ -1,10 +1,10 @@
-FROM golang:1.15 as builder
+FROM        golang:1.15-alpine3.12 as builder
 
-WORKDIR /app 
+WORKDIR     /app 
 
-COPY . .
+COPY        . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" .
+RUN         go build .
 
 FROM        alpine:3.12
 
