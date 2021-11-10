@@ -29,6 +29,9 @@ jobs:
         with:
           platforms: all
 
+      - name: Check Out Repo
+        uses: actions/checkout@v2
+
       - name: Check Out Repo mittwald/brudi
         uses: actions/checkout@v2
         if: steps.cache.outputs.cache-hit != 'true'
