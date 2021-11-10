@@ -41,7 +41,7 @@ jobs:
         with:
           repository: "UnderMybrella/EternalJukebox"
           ref: 'master'
-          path: 'eternalJukebox-git'
+          path: 'eternaljukebox-git'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
