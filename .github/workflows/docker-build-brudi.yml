@@ -64,7 +64,7 @@ jobs:
 
       - name: Add rclone to dockerfile
         if: steps.cache.outputs.cache-hit != 'true'
-        run: sed "2i COPY --from=rclone/rclone:1.57 /usr/bin/rclone /usr/bin/rclone" ./brudi/build/Dockerfile
+        run: sed "2i COPY --from=rclone/rclone:1.57 /usr/bin/rclone /usr/bin/rclone" ./brudi/build/docker/Dockerfile
 
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
