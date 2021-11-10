@@ -45,7 +45,7 @@ jobs:
 
       - name: Build brudi bin
         if: steps.cache.outputs.cache-hit != 'true'
-        run: go build
+        run: cd brudi && go build
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
