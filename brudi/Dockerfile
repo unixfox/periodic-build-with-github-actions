@@ -16,7 +16,7 @@ ENV         BRUDI_USER="brudi" \
 
 COPY        --from=builder /app/brudi /usr/local/bin/brudi
 
-COPY        --from=rclone/rclone:1.57 /usr/bin/rclone /usr/bin/rclone
+COPY        --from=rclone/rclone:1.57 /usr/local/bin/rclone /usr/bin/rclone
 COPY        --from=restic/restic:0.11.0 /usr/bin/restic /usr/local/bin/restic
 COPY        --from=redis:alpine /usr/local/bin/redis-cli /usr/local/bin/redis-cli
 
