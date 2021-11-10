@@ -66,6 +66,6 @@ jobs:
         with:
           context: ./brudi-git
           file: ./brudi/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm64/v7,linux/arm/v6
+          platforms: linux/amd64,linux/arm64/v8,linux/arm64/v7,linux/386
           push: true
           tags: quay.io/unixfox/brudi:latest, quay.io/unixfox/brudi:build-${{ env.timestamp }}
