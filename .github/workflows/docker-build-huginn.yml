@@ -1,4 +1,4 @@
-name: Docker build brudi image
+name: Docker build huginn image
 
 on:
   schedule:
@@ -17,13 +17,13 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "::set-output name=commit::$(git ls-remote git://github.com/mittwald/brudi.git | head -n1 | awk '{print $1;}')"
+          echo "::set-output name=commit::$(git ls-remote git://github.com/huginn/huginn.git | head -n1 | awk '{print $1;}')"
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
-          path: brudi
+          path: keel
           key: ${{ runner.os }}-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
@@ -35,13 +35,13 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v2
 
-      - name: Check Out Repo mittwald/brudi
+      - name: Check Out Repo huginn/huginn
         uses: actions/checkout@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          repository: "mittwald/brudi"
+          repository: "huginn/huginn"
           ref: 'master'
-          path: 'brudi-git'
+          path: 'huginn-git'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
@@ -67,8 +67,8 @@ jobs:
         id: docker_build_new
         uses: docker/build-push-action@v2
         with:
-          context: ./brudi-git
-          file: ./brudi/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
+          context: ./huginn-git
+          file: ./huginn-git/docker/single-process/Dockerfile
+          platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/brudi:latest, quay.io/unixfox/brudi:build-${{ env.timestamp }}
+          tags: quay.io/unixfox/huginn:latest, quay.io/unixfox/huginn:build-${{ env.timestamp }}
