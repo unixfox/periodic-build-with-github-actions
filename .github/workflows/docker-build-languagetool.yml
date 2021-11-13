@@ -16,6 +16,9 @@ jobs:
     steps:
       - name: Free up 24GB of disk space
         run: sudo rm -rf /usr/share/dotnet
+
+      - name: Free up 10GB of disk space
+        run: sudo rm -rf /usr/local/lib/android
       
       - name: Get latest commit hash
         id: get-latest-commit
