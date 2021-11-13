@@ -1,6 +1,6 @@
 FROM erikvl87/languagetool
 
-RUN mkdir -p /ngrams
+RUN mkdir -p /ngrams && \
     wget https://languagetool.org/download/ngram-data/ngrams-en-20150817.zip -O /tmp/ngrams-en-20150817.zip && \
     unzip /tmp/ngrams-en-20150817.zip -d /ngrams && \
     rm /tmp/ngrams-en-20150817.zip && \
