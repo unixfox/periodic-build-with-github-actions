@@ -11,22 +11,9 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-18.04
+    runs-on: self-hosted
 
-    steps:
-      - name: Maximize build disk space
-        shell: bash
-        run: |
-            set -euo pipefail
-            echo "Removing unwanted software... "
-            sudo rm -rf /usr/share/dotnet
-            sudo rm -rf /usr/local/lib/android
-            sudo rm -rf /opt/ghc
-            sudo swapoff -a
-            sudo rm -f /mnt/swapfile
-            echo "Available storage:"
-            df -h
-      
+    steps:      
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
