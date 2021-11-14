@@ -14,20 +14,16 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          swap-size-mb: 1
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          temp-reserve-mb: 512
-          overprovision-lvm: true
-
-      - name: Build
+      - name: Maximize build disk space
+        shell: bash
         run: |
-          echo "Free space:"
-          df -h
+            set -euo pipefail
+            echo "Removing unwanted software... "
+            sudo rm -rf /usr/share/dotnet
+            sudo rm -rf /usr/local/lib/android
+            sudo rm -rf /opt/ghc
+            sudo swapoff -a
+            sudo rm -f /mnt/swapfile
       
       - name: Get latest commit hash
         id: get-latest-commit
