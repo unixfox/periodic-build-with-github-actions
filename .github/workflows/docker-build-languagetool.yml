@@ -17,11 +17,12 @@ jobs:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 512
+          root-reserve-mb: 102400
           swap-size-mb: 1
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
+          overprovision-lvm: true
       
       - name: Get latest commit hash
         id: get-latest-commit
