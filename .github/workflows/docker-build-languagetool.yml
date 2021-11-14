@@ -39,7 +39,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          platforms: all
+          platforms: arm64
 
       - name: Check Out Repo
         uses: actions/checkout@v2
