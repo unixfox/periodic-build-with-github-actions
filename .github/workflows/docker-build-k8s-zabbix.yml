@@ -1,11 +1,9 @@
 name: Docker build k8s-zabbix image
 
 on:
-  schedule:
-    - cron: "0 * * * *"
   push:
-    branches:
-      - master
+    branches-ignore:
+      - '**'
 
 jobs:
 
