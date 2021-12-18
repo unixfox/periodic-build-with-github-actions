@@ -1,15 +1,14 @@
-FROM alpine as build
+FROM ghcr.io/maxisoft/nim-docker-images/nim as build
 
 ARG  REPO=https://github.com/zedeus/nitter.git
 
-RUN apk add --no-cache g++ curl tar xz nodejs
-
-RUN  mkdir -p /nim;     curl -sL "https://nim-lang.org/download/nim-1.6.2.tar.xz"     |tar xJ --strip-components=1 -C /nim;     cd /nim; sh build.sh;     rm -r c_code tests;     ln -s `pwd`/bin/nim /bin/nim
-
-RUN apk --no-cache add libsass-dev libffi-dev openssl-dev redis openssh-client git mercurial
-
-RUN cd /nim; nim c koch; ./koch tools;    ln -s `pwd`/bin/nimble /bin/nimble;    ln -s `pwd`/bin/nimsuggest /bin/nimsuggest;    ln -s `pwd`/bin/testament /bin/testament
-ENV PATH=~/.nimble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+RUN apk update \
+&&  apk add libsass-dev \
+        libffi-dev \
+	openssl-dev \
+	unzip \
+	git \
+&&  mkdir -p /build
 
 WORKDIR /build
     
