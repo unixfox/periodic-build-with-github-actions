@@ -39,7 +39,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          git clone --depth=1 --single-branch --branch master gitlab.com/aztek-io/oss/containers/pgbouncer-container.git pgbouncer-git
+          git clone --depth=1 --single-branch --branch master https://gitlab.com/aztek-io/oss/containers/pgbouncer-container.git pgbouncer-git
       
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
