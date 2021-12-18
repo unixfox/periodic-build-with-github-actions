@@ -70,4 +70,5 @@ jobs:
           file: ./pgbouncer-git/Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
           push: true
-          tags: quay.io/unixfox/pgbouncer:latest, quay.io/unixfox/pgbouncer:build-${{ env.timestamp }}
+          tags: quay.io/unixfox/pgbouncer:latest, quay.io/unixfox/pgbouncer:1.16.1-build-${{ env.timestamp }}
+          build-args: PGBOUNCER_VERSION=1.16.1
