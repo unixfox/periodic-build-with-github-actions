@@ -36,8 +36,8 @@ jobs:
         uses: actions/checkout@v2
           
       - name: Check Out Repo pgbouncer-container
-        uses: actions/checkout@v2
         if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
         run: |
           git clone --depth=1 --single-branch --branch master gitlab.com/aztek-io/oss/containers/pgbouncer-container.git pgbouncer-git
       
