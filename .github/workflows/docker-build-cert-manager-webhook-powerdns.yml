@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "lordofsystem/cert-manager-webhook-powerdns"
-          ref: 'master'
+          ref: 'main'
           path: 'cert-manager-webhook-powerdns-git'
           
       - name: Login to Quay.io
