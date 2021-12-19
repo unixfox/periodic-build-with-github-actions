@@ -30,7 +30,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          platforms: arm64
+          platforms: all
 
       - name: Check Out Repo
         uses: actions/checkout@v2
@@ -69,7 +69,7 @@ jobs:
         with:
           context: ./stolon-git
           file: ./stolon-git/examples/kubernetes/image/docker/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
           push: true
           tags: quay.io/unixfox/stolon:latest-pg10, quay.io/unixfox/stolon:v0.17.0-pg10, quay.io/unixfox/stolon:v0.17.0-pg10-build-${{ env.timestamp }}
           build-args: PGVERSION=10
