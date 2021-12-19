@@ -1,9 +1,11 @@
 name: Docker build huginn image
 
 on:
+  schedule:
+    - cron: "0 * * * *"
   push:
-    branches-ignore:
-      - '**'
+    branches:
+      - master
 
 jobs:
 
