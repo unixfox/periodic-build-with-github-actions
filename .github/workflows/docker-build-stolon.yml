@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: stolon
-          key: ${{ runner.os }}-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v2-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
