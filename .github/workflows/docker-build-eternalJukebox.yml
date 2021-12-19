@@ -62,6 +62,10 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
 
+      - name: Set up build timestamp
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: sed -i 's/maven.abimon.org/maven.brella.dev/g' ./eternaljukebox-git/build.gradle
+
       - name: Build and push docker image
         if: steps.cache.outputs.cache-hit != 'true'
         id: docker_build_new
