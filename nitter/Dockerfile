@@ -65,12 +65,12 @@ ENV  REDIS_HOST="localhost" \
      REPLACE_YOUTUBE="invidio.us" \
      REPLACE_INSTAGRAM=""
 
-COPY ./entrypoint.sh /entrypoint.sh
-COPY ./nitter.conf.pre /dist/nitter.conf.pre
+COPY ./nitter-git/entrypoint.sh /entrypoint.sh
+COPY ./nitter-git/nitter.conf.pre /dist/nitter.conf.pre
 
 COPY --from=build /build/nitter /usr/local/bin
 COPY --from=build /build/public /build/public
-COPY ../nitter/about.md /build/public/md/about.md
+COPY ./nitter/about.md /build/public/md/about.md
 COPY --from=bootstrap /usr/local/bin/gosu /usr/bin/gosu
 
 RUN set -eux \
