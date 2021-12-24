@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: stolon
-          key: ${{ runner.os }}-v2-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v3-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -68,7 +68,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./stolon-git
-          file: ./stolon-git/examples/kubernetes/image/docker/Dockerfile
+          file: ./stolon/Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
           push: true
           tags: quay.io/unixfox/stolon:latest-pg10, quay.io/unixfox/stolon:v0.17.0-pg10, quay.io/unixfox/stolon:v0.17.0-pg10-build-${{ env.timestamp }}
