@@ -32,6 +32,6 @@ EXPOSE 5432
 
 # copy the agola-web dist
 COPY --from=builder /stolon/bin/ /usr/local/bin
-COPY --from=rancher/kubectl /bin/kubectl /usr/local/bin/kubectl
+COPY --from=rancher/kubectl:v1.22.2 /bin/kubectl /usr/local/bin/kubectl
 
 RUN chmod +x /usr/local/bin/stolon-keeper /usr/local/bin/stolon-sentinel /usr/local/bin/stolon-proxy /usr/local/bin/stolonctl
