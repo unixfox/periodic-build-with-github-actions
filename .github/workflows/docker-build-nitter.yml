@@ -75,7 +75,7 @@ jobs:
 
       - name: Build and push docker image custom
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new
+        id: docker_build_new_custom
         uses: docker/build-push-action@v2
         with:
           context: ./
