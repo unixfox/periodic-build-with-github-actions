@@ -16,7 +16,8 @@ RUN set -ex \
 &&  git clone $REPO . \
 &&  nimble build -y -d:release --passC:"-flto" --passL:"-flto" \
 &&  strip -s nitter \
-&&  nimble scss
+&&  nimble scss \
+&&  nimble md
 
 # ---------------------------------------------------------------------
 
