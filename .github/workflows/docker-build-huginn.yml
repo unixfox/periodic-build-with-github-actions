@@ -65,7 +65,7 @@ jobs:
       - name: Override prepare script
         id: override-prepare-script
         run: |
-          cp huginn/scripts/prepare huginn-git/scripts/prepare
+          cp huginn/scripts/prepare huginn-git/docker/scripts/prepare
         shell: bash
 
       - name: Build and push docker image single process
