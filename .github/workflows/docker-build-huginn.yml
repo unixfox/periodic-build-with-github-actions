@@ -75,7 +75,7 @@ jobs:
         with:
           context: ./huginn-git
           file: ./huginn/single-process/Dockerfile
-          platforms: linux/386,linux/amd64,linux/arm/v7,linux/arm64/v8
+          platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/huginn-single-process:latest, quay.io/unixfox/huginn-single-process:build-${{ env.timestamp }}
 
@@ -86,6 +86,6 @@ jobs:
         with:
           context: ./huginn-git
           file: ./huginn/multi-process/Dockerfile
-          platforms: linux/386,linux/amd64,linux/arm/v7,linux/arm64/v8
+          platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/huginn-multi-process:latest, quay.io/unixfox/huginn-multi-process:build-${{ env.timestamp }}
