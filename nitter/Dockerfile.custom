@@ -11,15 +11,15 @@ RUN apk update \
 &&  mkdir -p /build
 
 WORKDIR /build
-
-COPY ./nitter/about.md /build/public/md/about.md
     
 RUN set -ex \
 &&  git clone $REPO . \
 &&  nimble build -y -d:release --passC:"-flto" --passL:"-flto" \
 &&  strip -s nitter \
-&&  nimble scss \
-&&  nimble md
+&&  nimble scss
+
+COPY ./nitter/about.md /build/public/md/about.md
+RUN nimble md
 
 # ---------------------------------------------------------------------
 

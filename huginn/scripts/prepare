@@ -20,6 +20,8 @@ CLEAR_DOCKER_CACHE=2020-05-28
 
 minimal_apt_get_install='apt-get install -y --no-install-recommends'
 
+echo "deb http://deb.debian.org/debian buster-backports main contrib non-free" | tee -a /etc/apt/sources.list.d/backports.list
+
 apt-get update
 apt-get dist-upgrade -y --no-install-recommends
 $minimal_apt_get_install software-properties-common

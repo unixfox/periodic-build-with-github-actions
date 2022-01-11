@@ -66,6 +66,7 @@ jobs:
         id: override-prepare-script
         run: |
           cp huginn/scripts/prepare huginn-git/docker/scripts/prepare
+          cp huginn/multi-process/scripts/standalone-packages huginn-git/docker/multi-process/scripts/standalone-packages
         shell: bash
 
       - name: Downgrade libv8

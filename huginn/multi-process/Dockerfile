@@ -1,4 +1,4 @@
-FROM ruby:2.6-bullseye
+FROM ruby:2.6-buster
 
 COPY docker/scripts/prepare /scripts/
 RUN /scripts/prepare
