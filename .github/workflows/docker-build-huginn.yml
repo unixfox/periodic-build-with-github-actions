@@ -64,6 +64,7 @@ jobs:
 
       - name: Override prepare script
         id: override-prepare-script
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cp huginn/scripts/prepare huginn-git/docker/scripts/prepare
           cp huginn/multi-process/scripts/standalone-packages huginn-git/docker/multi-process/scripts/standalone-packages
@@ -71,6 +72,7 @@ jobs:
 
       - name: Downgrade libv8
         id: downgrade-libv8
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           sed -i 's/7.3.492.27.1/6.3.292.48.1/g' ./huginn-git/Gemfile.lock
           sed -i 's/0.2.9/0.2.4/g' ./huginn-git/Gemfile.lock
