@@ -28,7 +28,7 @@ $minimal_apt_get_install build-essential checkinstall git-core \
   zlib1g-dev libyaml-dev libssl-dev libgdbm-dev libreadline-dev \
   libncurses5-dev libffi-dev libxml2-dev libxslt-dev curl libcurl4-openssl-dev libicu-dev \
   graphviz default-libmysqlclient-dev libpq-dev libsqlite3-dev \
-  locales tzdata shared-mime-info iputils-ping
+  locales tzdata shared-mime-info iputils-ping python2 python2-dev
 locale-gen en_US.UTF-8
 update-locale
 gem update --system --no-document
