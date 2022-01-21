@@ -59,11 +59,13 @@ LABEL maintainer="ken@epenguin.com"
 
 ENV  REDIS_HOST="localhost" \
      REDIS_PORT=6379 \
+	 NITTER_HTTPS="false" \
      NITTER_HOST="nitter.net" \
      NITTER_NAME="nitter" \
      NITTER_THEME="Nitter" \
      REPLACE_TWITTER="nitter.net" \
      REPLACE_YOUTUBE="invidio.us" \
+	 REPLACE_REDDIT="teddit.net" \
      REPLACE_INSTAGRAM=""
 
 COPY ./nitter-git/entrypoint.sh /entrypoint.sh
