@@ -46,16 +46,16 @@ Buy Me a Coffee (one time donation): <https://www.buymeacoffee.com/yewtube>
 
 Bitcoin: 1fyoJKdFo5cDPt21CGHW2RDQtcktQU9cL (Segwit compatible) \
 Bitcoin cash: qz6qvjt9m4wqrqhyet3v3gljrpnys3wl2yxz0jfuu2 \
-Ethereum: 0x52B72e00be486C03C9b09AA0D441ADE1EfA5d2CB \
+Ethereum: 0x52B72e00be486C03C9b09AA0D441ADE1EfA5d2CB (you can send any ERC20 token) \
 Monero: 82VziQe69ynRNKZ2Bk7XcoYUA6Q1eRuPyGxV3gVWDju7EPkUXZE2oGTGWiah51cCKRMAmwTY11D6qcH3NpGtfdjcNccmXL5 \
 Nano: nano_3hrphgbgi4px1gfiftsphokukcj1tkk168it6xeetxpc9c7jt5e6i7kmjupi \
 Stellar: GB5LHWSIOM6BRO7CMWRMWVWJUGPCKVRAVINGUJHA7PYP3CHES2XCMDG5 \
 Dogecoin: D6dsXSZEp1rkqvLAV41QxXTPPgvDSU2rjo \
 Dash: XmWHgigKxxNuCiiYfE5ZY6EoRDBwmfUJA5 \
 Ripple: rwM9qRsciVWdvAfPjgJHFV4hpP6HtdCVi \
-Binance coin: bnb10vd22k3ujp9ezjc6s8x7vqvuh02hlvcwqtsepq \
+Binance coin: bnb10vd22k3ujp9ezjc6s8x7vqvuh02hlvcwqtsepq (you can send any BEP20 token) \
 Litecoin: ltc1qre3xwwjsnctpfrx6eu0y77nca3cwlhe8kzy27d \
-USD Coin: bnb10vd22k3ujp9ezjc6s8x7vqvuh02hlvcwqtsepq
+USD Coin: 0xd415a7A9455DBf1a666F933c78A7325914E73C6b (ETH) - bnb10vd22k3ujp9ezjc6s8x7vqvuh02hlvcwqtsepq (BNB)
 
 ### Is your prefered payment method not listed?
 Feel ask me by email at donate[at]unixfox.eu to add it.
