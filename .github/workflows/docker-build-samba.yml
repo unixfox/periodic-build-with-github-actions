@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: samba
-          key: ${{ runner.os }}-v1-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v2-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -58,9 +58,9 @@ jobs:
         with:
           version: latest
 
-      - name: Override files from the github repository
+      - name: Override samba file
         if: steps.cache.outputs.cache-hit != 'true'
-        run: cp -R samba/ samba-git/
+        run: cp samba/samba.sh samba-git/samba.sh
 
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
