@@ -13,28 +13,18 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Check Out Repo
-        uses: actions/checkout@v2
-          
-      - name: Check Out Repo dperson/samba
-        uses: actions/checkout@v2
-        with:
-          repository: "dperson/samba"
-          ref: 'master'
-          path: 'samba-git'
-
+    steps:      
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          cd samba-git && echo "::set-output name=commit::$(git describe --tags `git rev-list --tags --max-count=1`)"
+          echo "::set-output name=commit::$(git ls-remote --tags --sort="v:refname" git://github.com/samba-team/samba.git | grep samba-4 | tail -n1 | awk '{print $1;}')"
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: samba
-          key: ${{ runner.os }}-v2-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v1-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -42,6 +32,17 @@ jobs:
         with:
           platforms: all
 
+      - name: Check Out Repo
+        uses: actions/checkout@v2
+          
+      - name: Check Out Repo dperson/samba
+        uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: "dperson/samba"
+          ref: 'master'
+          path: 'samba-git'
+      
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
         uses: docker/login-action@v1
@@ -59,7 +60,7 @@ jobs:
 
       - name: Override samba file
         if: steps.cache.outputs.cache-hit != 'true'
-        run: cp samba/samba.sh samba-git/samba.sh
+        run: cp samba/samba.sh samba-git/
 
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
