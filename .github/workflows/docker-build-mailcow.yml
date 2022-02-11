@@ -75,7 +75,7 @@ jobs:
 
       - name: Build and push dockerapi
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_dockerapi
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/dockerapi
@@ -86,7 +86,7 @@ jobs:
 
       - name: Build and push netfilter
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_netfilter
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/netfilter
@@ -97,7 +97,7 @@ jobs:
       
       - name: Build and push olefy
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_olefy
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/olefy
@@ -108,7 +108,7 @@ jobs:
 
       - name: Build and push phpfpm
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_phpfpm
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/phpfpm
@@ -119,7 +119,7 @@ jobs:
 
       - name: Build and push postfix
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_postfix
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/postfix
@@ -130,7 +130,7 @@ jobs:
 
       - name: Build and push solr
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_solr
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/solr
@@ -141,7 +141,7 @@ jobs:
 
       - name: Build and push unbound
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_unbound
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/unbound
@@ -152,7 +152,7 @@ jobs:
 
       - name: Build and push watchdog
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
+        id: docker_build_watchdog
         uses: docker/build-push-action@v2
         with:
           context: ./mailcow-git/watchdog
