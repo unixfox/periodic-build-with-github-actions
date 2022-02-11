@@ -67,7 +67,7 @@ jobs:
         id: docker_build_new_custom
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/acme
+          context: ./mailcow-git/data/Dockerfiles/acme
           file: ./mailcow-git/acme/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -78,7 +78,7 @@ jobs:
         id: docker_build_dockerapi
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/dockerapi
+          context: ./mailcow-git/data/Dockerfiles/dockerapi
           file: ./mailcow-git/dockerapi/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -89,7 +89,7 @@ jobs:
         id: docker_build_netfilter
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/netfilter
+          context: ./mailcow-git/data/Dockerfiles/netfilter
           file: ./mailcow-git/netfilter/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -100,7 +100,7 @@ jobs:
         id: docker_build_olefy
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/olefy
+          context: ./mailcow-git/data/Dockerfiles/olefy
           file: ./mailcow-git/olefy/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -111,7 +111,7 @@ jobs:
         id: docker_build_phpfpm
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/phpfpm
+          context: ./mailcow-git/data/Dockerfiles/phpfpm
           file: ./mailcow-phpfpm/phpfpm/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -122,7 +122,7 @@ jobs:
         id: docker_build_postfix
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/postfix
+          context: ./mailcow-git/data/Dockerfiles/postfix
           file: ./mailcow-git/postfix/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -133,7 +133,7 @@ jobs:
         id: docker_build_solr
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/solr
+          context: ./mailcow-git/data/Dockerfiles/solr
           file: ./mailcow-git/solr/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -144,7 +144,7 @@ jobs:
         id: docker_build_unbound
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/unbound
+          context: ./mailcow-git/data/Dockerfiles/unbound
           file: ./mailcow-git/unbound/Dockerfile
           platforms: linux/arm64/v8
           push: true
@@ -155,7 +155,7 @@ jobs:
         id: docker_build_watchdog
         uses: docker/build-push-action@v2
         with:
-          context: ./mailcow-git/watchdog
+          context: ./mailcow-git/data/Dockerfiles/watchdog
           file: ./mailcow-git/watchdog/Dockerfile
           platforms: linux/arm64/v8
           push: true
