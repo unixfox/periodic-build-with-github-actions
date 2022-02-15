@@ -67,4 +67,4 @@ jobs:
           APPSCODE_ENV: prod
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
-          make release
+          cd stash-git && make release
