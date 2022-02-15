@@ -65,6 +65,7 @@ jobs:
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
           USERNAME: ${{ secrets.QUAY_USERNAME }}
           APPSCODE_ENV: prod
+          TAG: latest
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd stash-git && make release
