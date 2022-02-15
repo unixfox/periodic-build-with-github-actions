@@ -54,7 +54,7 @@ jobs:
         id: replace-copy
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          sed 's/rest:/rclone:/' stash-git/vendor/stash.appscode.dev/apimachinery/pkg/restic/setup.go
+          sed -i 's/rest:/rclone:/' stash-git/vendor/stash.appscode.dev/apimachinery/pkg/restic/setup.go
           cp stash/Dockerfile.in stash-git/Dockerfile.in
         shell: bash
 
