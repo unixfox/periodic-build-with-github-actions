@@ -30,7 +30,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          platforms: arm64
+          platforms: all
 
       - name: Check Out Repo
         uses: actions/checkout@v2
@@ -55,7 +55,6 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           sed -i 's/rest:/rclone:/' stash-git/vendor/stash.appscode.dev/apimachinery/pkg/restic/setup.go
-          sed -i 's/linux\/amd64 linux\/arm linux\/arm64/linux\/amd64 linux\/arm64/' stash-git/Makefile
           cp stash/Dockerfile.in stash-git/Dockerfile.in
         shell: bash
 
@@ -66,7 +65,6 @@ jobs:
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
           USERNAME: ${{ secrets.QUAY_USERNAME }}
           APPSCODE_ENV: prod
-          DOCKER_PLATFORMS: linux/amd64 linux/arm64
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd stash-git && make release
