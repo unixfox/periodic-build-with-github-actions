@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "stashed/stash"
-          ref: 'master'
+          ref: 'v0.18.0'
           path: 'stash-git'
 
       - name: Set up Docker Buildx
@@ -65,7 +65,6 @@ jobs:
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
           USERNAME: ${{ secrets.QUAY_USERNAME }}
           APPSCODE_ENV: prod
-          TAG: latest
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd stash-git && make release
