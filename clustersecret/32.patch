@@ -1,0 +1,35 @@
+From e0528362cbe4cc5d86aa7514e76e6ea22ba7c244 Mon Sep 17 00:00:00 2001
+From: Kirill Pinchuk <cybergrind@gmail.com>
+Date: Wed, 16 Feb 2022 14:38:13 +0300
+Subject: [PATCH] fixes #30. add openAPIV3Schema to CRD
+
+---
+ yaml/01_crd.yaml | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/yaml/01_crd.yaml b/yaml/01_crd.yaml
+index 207ccf5..593fbca 100644
+--- a/yaml/01_crd.yaml
++++ b/yaml/01_crd.yaml
+@@ -10,6 +10,21 @@ spec:
+     - name: v1
+       served: true
+       storage: true
++      schema:
++        openAPIV3Schema:
++          type: object
++          properties:
++            matchNamespace:
++              type: array
++              items:
++                type: string
++            avoidNamespaces:
++              type: array
++              items:
++                type: string
++            data:
++              type: object
++              x-kubernetes-preserve-unknown-fields: true
+       additionalPrinterColumns:
+         - name: Type
+           type: string
