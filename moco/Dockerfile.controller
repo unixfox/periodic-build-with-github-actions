@@ -1,6 +1,8 @@
 # Build the moco-controller binary
 FROM golang:1.17-buster as builder
 
+WORKDIR /src/app
+
 # Copy the go source
 COPY ./ .
 
@@ -11,7 +13,7 @@ RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o moco-controller ./cmd/moco-contro
 FROM scratch
 LABEL org.opencontainers.image.source https://github.com/cybozu-go/moco
 
-COPY --from=builder /work/moco-controller ./
+COPY --from=builder /src/app/moco-controller ./
 USER 10000:10000
 
 ENTRYPOINT ["/moco-controller"]

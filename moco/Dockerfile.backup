@@ -1,6 +1,8 @@
 # Build the moco-controller binary
 FROM golang:1.17-buster as builder
 
+WORKDIR /src/app
+
 # Copy the go source
 COPY ./ .
 
@@ -16,7 +18,7 @@ LABEL org.opencontainers.image.source https://github.com/cybozu-go/moco
 
 ARG MYSQLSH_VERSION=8.0.28-1
 
-COPY --from=builder /work/moco-backup /moco-backup
+COPY --from=builder WORKDIR /src/app/moco-backup /moco-backup
 
 COPY --from=mysql /usr/local/mysql/LICENSE         /usr/local/mysql/LICENSE
 COPY --from=mysql /usr/local/mysql/bin/mysqlbinlog /usr/local/mysql/bin/mysqlbinlog
