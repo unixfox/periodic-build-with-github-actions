@@ -10,7 +10,7 @@ COPY ./ .
 RUN go build -ldflags="-w -s" -o moco-backup ./cmd/moco-backup
 
 # For MySQL binaries
-FROM mysql:8.0.28.1 as mysql
+FROM mysql:8.0.28 as mysql
 
 # the backup image
 FROM debian:buster-slim
