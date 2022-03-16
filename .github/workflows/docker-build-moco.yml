@@ -71,7 +71,7 @@ jobs:
           file: ./moco/Dockerfile.controller
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/moco:latest, quay.io/unixfox/moco:v0.11.1, quay.io/unixfox/moco:v0.11.1-build-${{ env.timestamp }}
+          tags: quay.io/unixfox/moco-controller:latest, quay.io/unixfox/moco-controller:v0.11.1, quay.io/unixfox/moco-controller:v0.11.1-build-${{ env.timestamp }}
       
       - name: Build and push docker image for backup
         if: steps.cache.outputs.cache-hit != 'true'
