@@ -64,7 +64,7 @@ jobs:
 
       - name: Build and push docker image for controller
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new
+        id: docker_build_controller
         uses: docker/build-push-action@v2
         with:
           context: ./moco-git
@@ -75,7 +75,7 @@ jobs:
       
       - name: Build and push docker image for backup
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new
+        id: docker_build_backup
         uses: docker/build-push-action@v2
         with:
           context: ./moco-git
