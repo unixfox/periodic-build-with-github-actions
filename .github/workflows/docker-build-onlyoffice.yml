@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: onlyoffice
-          key: ${{ runner.os }}-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v1-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Check Out Repo
         uses: actions/checkout@v2
