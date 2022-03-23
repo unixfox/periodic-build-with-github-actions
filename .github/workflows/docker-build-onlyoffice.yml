@@ -17,7 +17,7 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "::set-output name=commit::$(git ls-remote git://github.com/ONLYOFFICE/Docker-DocumentServer.git | head -n1 | awk '{print $1;}')"
+          echo "::set-output name=commit::$(git ls-remote git://github.com/jiriks74/Docker-DocumentServer-Arm64.git | head -n1 | awk '{print $1;}')"
         shell: bash
 
       - uses: actions/cache@v2
@@ -35,11 +35,11 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v2
 
-      - name: Check Out Repo ONLYOFFICE/Docker-DocumentServer
+      - name: Check Out Repo jiriks74/Docker-DocumentServer-Arm64
         uses: actions/checkout@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          repository: "ONLYOFFICE/Docker-DocumentServer"
+          repository: "jiriks74/Docker-DocumentServer-Arm64"
           ref: 'master'
           path: 'onlyoffice-git'
           
