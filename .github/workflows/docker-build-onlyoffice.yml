@@ -26,12 +26,6 @@ jobs:
           path: onlyoffice
           key: ${{ runner.os }}-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-        if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          platforms: arm64
-
       - name: Check Out Repo
         uses: actions/checkout@v2
 
@@ -69,6 +63,6 @@ jobs:
         with:
           context: ./onlyoffice-git
           file: ./onlyoffice-git/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/amd64
           push: true
           tags: quay.io/unixfox/onlyoffice:latest, quay.io/unixfox/onlyoffice:build-${{ env.timestamp }}
