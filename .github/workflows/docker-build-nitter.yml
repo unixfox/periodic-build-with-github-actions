@@ -17,7 +17,7 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "::set-output name=commit::$(git ls-remote git://github.com/zedeus/nitter.git | head -n1 | awk '{print $1;}')"
+          echo "::set-output name=commit::$(git ls-remote https://github.com/zedeus/nitter.git | head -n1 | awk '{print $1;}')"
         shell: bash
 
       - uses: actions/cache@v2
