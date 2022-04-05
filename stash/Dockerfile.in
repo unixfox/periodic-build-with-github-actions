@@ -1,0 +1,42 @@
+# Copyright AppsCode Inc. and Contributors
+#
+# Licensed under the AppsCode Community License 1.0.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://github.com/appscode/licenses/raw/1.0.0/AppsCode-Community-1.0.0.md
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+FROM debian:bullseye
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN true
+
+RUN set -x \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends apt-transport-https ca-certificates curl bzip2
+
+RUN set -x                                                                                                                                 \
+  && curl -fsSL -o restic.bz2 https://github.com/restic/restic/releases/download/v{RESTIC_VER}/restic_{RESTIC_VER}_{ARG_OS}_{ARG_ARCH}.bz2 \
+  && bzip2 -d restic.bz2                                                                                                                   \
+  && chmod 755 restic
+
+
+
+FROM {ARG_FROM}
+
+LABEL org.opencontainers.image.source https://github.com/stashed/stash
+
+COPY --from=0 /restic /bin/restic
+COPY --from=rclone/rclone:latest /usr/local/bin/rclone /bin/rclone
+COPY bin/{ARG_OS}_{ARG_ARCH}/{ARG_BIN} /{ARG_BIN}
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+USER nobody
+
+ENTRYPOINT ["/{ARG_BIN}"]

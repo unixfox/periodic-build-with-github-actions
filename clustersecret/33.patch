@@ -1,0 +1,65 @@
+From e0528362cbe4cc5d86aa7514e76e6ea22ba7c244 Mon Sep 17 00:00:00 2001
+From: Kirill Pinchuk <cybergrind@gmail.com>
+Date: Wed, 16 Feb 2022 14:38:13 +0300
+Subject: [PATCH 1/2] fixes #30. add openAPIV3Schema to CRD
+
+---
+ yaml/01_crd.yaml | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/yaml/01_crd.yaml b/yaml/01_crd.yaml
+index 207ccf5..593fbca 100644
+--- a/yaml/01_crd.yaml
++++ b/yaml/01_crd.yaml
+@@ -10,6 +10,21 @@ spec:
+     - name: v1
+       served: true
+       storage: true
++      schema:
++        openAPIV3Schema:
++          type: object
++          properties:
++            matchNamespace:
++              type: array
++              items:
++                type: string
++            avoidNamespaces:
++              type: array
++              items:
++                type: string
++            data:
++              type: object
++              x-kubernetes-preserve-unknown-fields: true
+       additionalPrinterColumns:
+         - name: Type
+           type: string
+
+From 6665514270ba65c3308bec96468b98eff730bce6 Mon Sep 17 00:00:00 2001
+From: Kirill Pinchuk <cybergrind@gmail.com>
+Date: Wed, 16 Feb 2022 19:06:17 +0300
+Subject: [PATCH 2/2] Fix replace secrets function
+
+---
+ src/handlers.py | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/handlers.py b/src/handlers.py
+index 5ac5ecd..9a41a1b 100644
+--- a/src/handlers.py
++++ b/src/handlers.py
+@@ -44,8 +44,13 @@ def on_field_data(old, new, body,name,logger=None, **_):
+             api_version = 'v1'
+             kind = 'Secret'
+             data = new
+-            body = client.V1Secret(api_version, data , kind, metadata, type = secret_type)
+-            # response = v1.patch_namespaced_secret(name,ns,body)
++            body = client.V1Secret(
++                api_version=api_version,
++                data=data ,
++                kind=kind,
++                metadata=metadata,
++                type = secret_type
++            )
+             response = v1.replace_namespaced_secret(name,ns,body)
+             logger.debug(response)
+     else:

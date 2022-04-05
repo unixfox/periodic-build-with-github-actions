@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "cybozu-go/moco"
-          ref: 'v0.10.9'
+          ref: 'v0.11.1'
           path: 'moco-git'
       
       - name: Login to Quay.io
@@ -62,13 +62,24 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
 
-      - name: Build and push docker image
+      - name: Build and push docker image for controller
         if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new
+        id: docker_build_controller
         uses: docker/build-push-action@v2
         with:
           context: ./moco-git
-          file: ./moco/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          file: ./moco/Dockerfile.controller
+          platforms: linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/moco:latest, quay.io/unixfox/moco:v0.10.9, quay.io/unixfox/moco:v0.10.9-build-${{ env.timestamp }}
+          tags: quay.io/unixfox/moco-controller:latest, quay.io/unixfox/moco-controller:v0.11.1, quay.io/unixfox/moco-controller:v0.11.1-build-${{ env.timestamp }}
+      
+      - name: Build and push docker image for backup
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_backup
+        uses: docker/build-push-action@v2
+        with:
+          context: ./moco-git
+          file: ./moco/Dockerfile.backup
+          platforms: linux/arm64/v8
+          push: true
+          tags: quay.io/unixfox/moco-backup:latest, quay.io/unixfox/moco-backup:v0.11.1, quay.io/unixfox/moco-backup:v0.11.1-build-${{ env.timestamp }}
