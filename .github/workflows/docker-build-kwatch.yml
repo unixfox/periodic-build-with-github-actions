@@ -69,6 +69,6 @@ jobs:
         with:
           context: ./kwatch-git
           file: ./kwatch-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+          platforms: linux/amd64,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/kwatch:latest, quay.io/unixfox/kwatch:build-${{ env.timestamp }}
