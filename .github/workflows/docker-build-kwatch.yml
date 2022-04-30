@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "abahmed/kwatch"
-          ref: 'master'
+          ref: 'main'
           path: 'kwatch-git'
           
       - name: Login to Quay.io
