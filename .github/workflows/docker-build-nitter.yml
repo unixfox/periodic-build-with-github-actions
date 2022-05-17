@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: nitter
-          key: ${{ runner.os }}-v7-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v8-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
