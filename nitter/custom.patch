@@ -1,0 +1,16 @@
+--- Dockerfile.normal	2022-05-20 16:12:28.020236201 +0000
++++ Dockerfile	2022-05-20 16:12:54.356586918 +0000
+@@ -18,8 +18,11 @@
+ &&  nimble install -y --depsOnly \
+ &&  nimble build -y -d:release --passC:"-flto" --passL:"-flto" \
+ &&  strip -s nitter \
+-&&  nimble scss \
+-&&  nimble md
++&&  nimble scss
++
++COPY ./about.md /build/public/md/about.md
++
++RUN nimble md
+ 
+ # ---------------------------------------------------------------------
+ 

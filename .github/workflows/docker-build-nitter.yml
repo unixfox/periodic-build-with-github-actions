@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: nitter
-          key: ${{ runner.os }}-v8-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v9-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -62,24 +62,42 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
 
+      - name: Copy override files for nitter
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          cp ./nitter/* ./nitter-git
+        shell: bash
+
+      - name: Apply normal patch
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          patch Dockerfile < normal.patch
+        shell: bash
+
       - name: Build and push docker image custom
         if: steps.cache.outputs.cache-hit != 'true'
         id: docker_build_new_custom
         uses: docker/build-push-action@v2
         with:
-          context: ./
-          file: ./nitter/Dockerfile.custom
+          context: ./nitter-git
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
           push: true
           tags: quay.io/unixfox/nitter-custom:latest, quay.io/unixfox/nitter-custom:build-${{ env.timestamp }}
+
+      - name: Apply custom patch
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          patch Dockerfile < custom.patch
+        shell: bash
 
       - name: Build and push docker image
         if: steps.cache.outputs.cache-hit != 'true'
         id: docker_build_new
         uses: docker/build-push-action@v2
         with:
-          context: ./
-          file: ./nitter/Dockerfile
+          context: ./nitter-git
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
           push: true
           tags: quay.io/unixfox/nitter:latest, quay.io/unixfox/nitter:build-${{ env.timestamp }}
