@@ -1,0 +1,69 @@
+From 5ad2f1919cc02d4b9d7c746efa7a59690b1f95d9 Mon Sep 17 00:00:00 2001
+From: Emilien Devos <contact@emiliendevos.be>
+Date: Tue, 10 May 2022 19:42:10 +0200
+Subject: [PATCH 1/1] downgrade mini_racer and libv8
+
+---
+ Gemfile      |  2 +-
+ Gemfile.lock | 14 +++++---------
+ 2 files changed, 6 insertions(+), 10 deletions(-)
+
+diff --git a/Gemfile b/Gemfile
+index cf4f9c94..a840a757 100644
+--- a/Gemfile
++++ b/Gemfile
+@@ -36,7 +36,7 @@ gem 'forecast_io', '~> 2.0.0'     # WeatherAgent
+ gem 'rturk', '~> 2.12.1'          # HumanTaskAgent
+ gem 'erector', github: 'dsander/erector', branch: 'rails6'
+ gem 'hipchat', '~> 1.2.0'         # HipchatAgent
+-gem 'mini_racer'                  # JavaScriptAgent
++gem 'mini_racer', '~> 0.2.4'      # JavaScriptAgent
+ gem 'xmpp4r',  '~> 0.5.6'         # JabberAgent
+ gem 'mqtt'                        # MQTTAgent
+ gem 'slack-notifier', '~> 1.0.0'  # SlackAgent
+diff --git a/Gemfile.lock b/Gemfile.lock
+index 59b86925..bfb71b1d 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -428,11 +428,7 @@ GEM
+       actionmailer (>= 3.2)
+       letter_opener (~> 1.0)
+       railties (>= 3.2)
+-    libv8-node (16.10.0.0)
+-    libv8-node (16.10.0.0-aarch64-linux)
+-    libv8-node (16.10.0.0-arm64-darwin)
+-    libv8-node (16.10.0.0-x86_64-darwin)
+-    libv8-node (16.10.0.0-x86_64-linux)
++    libv8 (6.3.292.48.1)
+     liquid (4.0.3)
+     listen (3.0.8)
+       rb-fsevent (~> 0.9, >= 0.9.4)
+@@ -459,8 +455,8 @@ GEM
+     mini_magick (4.11.0)
+     mini_mime (1.1.2)
+     mini_portile2 (2.6.1)
+-    mini_racer (0.6.2)
+-      libv8-node (~> 16.10.0.0)
++    mini_racer (0.2.4)
++      libv8 (>= 6.3)
+     minitest (5.15.0)
+     mqtt (0.3.1)
+     msgpack (1.4.2)
+@@ -799,7 +795,7 @@ DEPENDENCIES
+   listen (~> 3.0.5)
+   loofah (~> 2.0)
+   mini_magick (>= 4.9.4)
+-  mini_racer
++  mini_racer (~> 0.2.4)
+   mqtt
+   multi_xml
+   mysql2 (~> 0.5.2)
+@@ -857,4 +853,4 @@ RUBY VERSION
+    ruby 2.6.5p114
+ 
+ BUNDLED WITH
+-   2.3.10
++   2.3.5
+-- 
+2.36.0
+

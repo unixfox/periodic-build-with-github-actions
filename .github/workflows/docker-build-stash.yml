@@ -14,17 +14,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get latest commit hash
-        id: get-latest-commit
+      - name: Get latest tag
+        id: get-latest-tag
         run: |
-          echo "::set-output name=commit::$(git ls-remote git://github.com/stashed/stash.git | head -n1 | awk '{print $1;}')"
+          echo "::set-output name=tag::$(git ls-remote --refs --tags https://github.com/stashed/stash.git|cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1)"
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: stash
-          key: ${{ runner.os }}-v1-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v1-${{ steps.get-latest-tag.outputs.tag }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "stashed/stash"
-          ref: 'v0.18.0'
+          ref: '${{ steps.get-latest-tag.outputs.tag }}'
           path: 'stash-git'
 
       - name: Set up Docker Buildx

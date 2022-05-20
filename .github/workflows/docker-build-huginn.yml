@@ -71,12 +71,12 @@ jobs:
         shell: bash
 
       - name: Downgrade libv8
-        id: downgrade-libv8
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          sed -i 's/7.3.492.27.1/6.3.292.48.1/g' ./huginn-git/Gemfile.lock
-          sed -i 's/0.2.9/0.2.4/g' ./huginn-git/Gemfile.lock
-          sed -i 's/6.9.411/6.3/g' ./huginn-git/Gemfile.lock
+          mv ./huginn/patches/*.patch ./huginn-git
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          cd ./huginn-git && git am *.patch
         shell: bash
 
       - name: Build and push docker image single process
