@@ -71,6 +71,7 @@ jobs:
       - name: Apply normal patch
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          cd ./nitter-git
           patch Dockerfile < normal.patch
         shell: bash
 
@@ -88,6 +89,7 @@ jobs:
       - name: Apply custom patch
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          cd ./nitter-git
           patch Dockerfile < custom.patch
         shell: bash
 
