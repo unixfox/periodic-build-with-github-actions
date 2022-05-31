@@ -3,7 +3,7 @@ FROM adoptopenjdk:8-jdk-hotspot as deps
 
 WORKDIR /EternalJukebox
 
-RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl \
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/download/2022.05.18/yt-dlp -o /usr/local/bin/youtube-dl \
     && chmod a+rx /usr/local/bin/youtube-dl\
     && apt-get update \
     && apt-get install ffmpeg gettext python -y \
