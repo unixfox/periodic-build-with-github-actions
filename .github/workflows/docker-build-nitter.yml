@@ -73,6 +73,7 @@ jobs:
         run: |
           cd ./nitter-git
           patch Dockerfile < normal.patch
+          patch -p1 < 9.patch
         shell: bash
 
       - name: Build and push docker image custom
@@ -91,7 +92,6 @@ jobs:
         run: |
           cd ./nitter-git
           patch Dockerfile < custom.patch
-          patch -p1 < 9.patch
         shell: bash
 
       - name: Build and push docker image
