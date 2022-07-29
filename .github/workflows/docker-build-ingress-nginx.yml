@@ -40,6 +40,14 @@ jobs:
           ref: 'controller-${{ steps.get-latest-tag.outputs.tag }}'
           path: 'ingress-nginx-git'
 
+      - name: Check Out Repo kubernetes/ingress-nginx
+        uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: "haorenfsa/Nginx-limit-traffic-rate-module"
+          ref: 'master'
+          path: 'ingress-nginx-git/images/nginx/rootfs/Nginx-limit-traffic-rate-module'
+
       - name: Set up Docker Buildx
         if: steps.cache.outputs.cache-hit != 'true'
         id: buildx
@@ -51,6 +59,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd ingress-nginx-git/images/nginx
+          sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
           REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} make build
         shell: bash
 
