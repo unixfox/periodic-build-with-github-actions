@@ -40,7 +40,7 @@ jobs:
           ref: 'controller-${{ steps.get-latest-tag.outputs.tag }}'
           path: 'ingress-nginx-git'
 
-      - name: Check Out Repo kubernetes/ingress-nginx
+      - name: Check Out Repo haorenfsa/Nginx-limit-traffic-rate-module
         uses: actions/checkout@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
