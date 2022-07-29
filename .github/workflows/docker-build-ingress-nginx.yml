@@ -63,7 +63,7 @@ jobs:
           REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} make build
         shell: bash
 
-      - name: Build docker image
+      - name: Push docker image
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
