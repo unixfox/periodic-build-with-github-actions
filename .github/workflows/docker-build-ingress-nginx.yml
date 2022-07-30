@@ -60,7 +60,7 @@ jobs:
         run: |
           cd ingress-nginx-git/images/nginx
           sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
-          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} PLATFORMS?=linux/amd64,linux/arm64 make build
+          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} PLATFORMS=linux/amd64,linux/arm64 make build
         shell: bash
 
       - name: Push docker image
