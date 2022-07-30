@@ -70,7 +70,6 @@ jobs:
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd ingress-nginx-git/images/nginx
           REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} make push
-        shell: bash
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
