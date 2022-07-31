@@ -62,7 +62,7 @@ jobs:
           cd ingress-nginx-git/images/nginx
           sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
           sed -i 's/^make/make -j2/g' rootfs/build.sh
-          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} PLATFORMS=linux/amd64,linux/arm64 make build
+          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
