@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: ingress-nginx
-          key: ${{ runner.os }}-v1-${{ steps.get-latest-tag.outputs.tag }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v2-${{ steps.get-latest-tag.outputs.tag }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -55,7 +55,7 @@ jobs:
         with:
           version: latest
 
-      - name: Build and push docker image
+      - name: Build and push docker base image nginx
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
@@ -63,6 +63,19 @@ jobs:
           sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
           sed -i 's/^make/make -j2/g' rootfs/build.sh
           REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
+        env:
+          REGISTRY: quay.io/unixfox
+          DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
+          USERNAME: ${{ secrets.QUAY_USERNAME }}
+
+      - name: Build and push docker image nginx controller
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
+          cd ingress-nginx-git
+          sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
+          sed -i 's/^make/make -j2/g' rootfs/build.sh
+          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} BASE_IMAGE=quay.io/unixfox/nginx:${{ steps.get-latest-tag.outputs.tag }} PLATFORMS="amd64 arm64" BUILDX_PLATFORMS=linux/amd64,linux/arm64 make release
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
