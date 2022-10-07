@@ -12,6 +12,16 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres-version:
+          - 14
+          - 13
+          - 12
+          - 11
+          - 10
 
     steps:
       - name: Get latest commit hash of github.com/docker-library/postgres
@@ -30,7 +40,7 @@ jobs:
         id: cache
         with:
           path: stolon
-          key: ${{ runner.os }}-v3-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v4-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -77,5 +87,5 @@ jobs:
           file: ./stolon/Dockerfile
           platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
           push: true
-          tags: quay.io/unixfox/stolon:latest-pg10, quay.io/unixfox/stolon:${{ steps.get-latest-tag.outputs.tag }}-pg10, quay.io/unixfox/stolon:${{ steps.get-latest-tag.outputs.tag }}-pg10-build-${{ env.timestamp }}
-          build-args: PGVERSION=10
+          tags: quay.io/unixfox/stolon:latest-pg${{ matrix.postgres-version }}, quay.io/unixfox/stolon:${{ steps.get-latest-tag.outputs.tag }}-pg${{ matrix.postgres-version }}, quay.io/unixfox/stolon:${{ steps.get-latest-tag.outputs.tag }}-pg${{ matrix.postgres-version }}-build-${{ env.timestamp }}
+          build-args: PGVERSION=${{ matrix.postgres-version }}
