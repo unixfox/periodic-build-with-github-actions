@@ -1,25 +1,62 @@
-From 22b1eb285a0664c28d59c57de59ec192e0fe1a69 Mon Sep 17 00:00:00 2001
+From dac321bc5fdc6064bb149ec85c23802c0a92ee11 Mon Sep 17 00:00:00 2001
 From: Emilien Devos <contact@emiliendevos.be>
 Date: Sat, 8 Oct 2022 17:01:51 +0200
 Subject: [PATCH 1/1] reduce hops
 
 ---
- Dockerfile | 2 ++
- 1 file changed, 2 insertions(+)
+ Dockerfile |  4 ++++
+ torrc-dist | 16 ++--------------
+ 2 files changed, 6 insertions(+), 14 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 7046cb1..4300515 100644
+index 7046cb1..040d4c5 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -46,6 +46,8 @@ WORKDIR /tor-$VERSION/
  
  COPY  --from=preparer /tor-$VERSION/  ./
  
-+RUN sed -i 's/DEFAULT_ROUTE_LEN 3/DEFAULT_ROUTE_LEN 1/g' ./src/core/or/or.h
++RUN sed -i 's/DEFAULT_ROUTE_LEN 2/DEFAULT_ROUTE_LEN 1/g' ./src/core/or/or.h
 +
  RUN ./configure --sysconfdir=/etc --datadir=/var/lib
  RUN make -j$(nproc)
  RUN make install
+@@ -68,6 +70,8 @@ COPY  --from=builder /usr/lib /usr/lib
+ # Copy all the TOR files
+ COPY  --from=builder /usr/local/bin/tor*  /usr/local/bin/
+ 
++COPY torrc-dist /etc/tor/torrc
++
+ # NOTE: Default GID == UID == 1000
+ RUN adduser --disabled-password \
+             --home "$DIR/" \
+diff --git a/torrc-dist b/torrc-dist
+index 0f82b26..bdc90b1 100644
+--- a/torrc-dist
++++ b/torrc-dist
+@@ -1,19 +1,7 @@
+ # This is a sample configuration
+ 
+ # Ports
+-SocksPort   127.0.0.1:9050
++SocksPort   0.0.0.0:9050
+ ControlPort 127.0.0.1:9051
+ 
+-# Default Password (Please change)
+-# Refer to https://github.com/lncm/docker-tor#generating-tor-passwords
+-HashedControlPassword 16:C171CBB3DECE55156066E90509F28E3E5FDFACFB6211701926A200E70D
+-
+-# SSH v3
+-HiddenServiceDir /var/lib/tor/ssh
+-HiddenServiceVersion 3
+-HiddenServicePort 22 127.0.0.1:22
+-
+-# Bitcoin P2P v3
+-HiddenServiceDir /var/lib/tor/bitcoin-p2p
+-HiddenServiceVersion 3
+-HiddenServicePort 8333 127.0.0.1:8333
++ExitNodes {NL}
+\ No newline at end of file
 -- 
 2.38.0
 
