@@ -35,11 +35,11 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v2
 
-      - name: Check Out Repo github.com/lncm/docker-tor
+      - name: Check Out Repo lncm/docker-tor
         uses: actions/checkout@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          repository: "github.com/lncm/docker-tor"
+          repository: "lncm/docker-tor"
           ref: 'master'
           path: 'tor-git'
           
