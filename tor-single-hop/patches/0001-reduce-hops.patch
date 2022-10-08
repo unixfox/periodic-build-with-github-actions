@@ -1,0 +1,25 @@
+From 22b1eb285a0664c28d59c57de59ec192e0fe1a69 Mon Sep 17 00:00:00 2001
+From: Emilien Devos <contact@emiliendevos.be>
+Date: Sat, 8 Oct 2022 17:01:51 +0200
+Subject: [PATCH 1/1] reduce hops
+
+---
+ Dockerfile | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Dockerfile b/Dockerfile
+index 7046cb1..4300515 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -46,6 +46,8 @@ WORKDIR /tor-$VERSION/
+ 
+ COPY  --from=preparer /tor-$VERSION/  ./
+ 
++RUN sed -i 's/DEFAULT_ROUTE_LEN 3/DEFAULT_ROUTE_LEN 1/g' ./src/core/or/or.h
++
+ RUN ./configure --sysconfdir=/etc --datadir=/var/lib
+ RUN make -j$(nproc)
+ RUN make install
+-- 
+2.38.0
+
