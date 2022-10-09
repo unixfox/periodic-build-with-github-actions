@@ -1,0 +1,7 @@
+# This is a sample configuration
+
+# Ports
+SocksPort   0.0.0.0:9050
+ControlPort 127.0.0.1:9051
+
+ExitNodes {nl}

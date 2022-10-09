@@ -24,7 +24,7 @@ jobs:
         id: cache
         with:
           path: keel
-          key: ${{ runner.os }}-v2-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v4-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -65,7 +65,7 @@ jobs:
       - name: Reduce hops and override files
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          cp -R ./tor-single-hop/* ./tor-git
+          cp -R ./tor-single-hop/override ./tor-git/override
           mv ./tor-single-hop/patches/*.patch ./tor-git
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"

@@ -25,7 +25,7 @@ index 7046cb1..040d4c5 100644
  # Copy all the TOR files
  COPY  --from=builder /usr/local/bin/tor*  /usr/local/bin/
  
-+COPY torrc-dist /etc/tor/torrc
++COPY override/ /
 +
  # NOTE: Default GID == UID == 1000
  RUN adduser --disabled-password \
