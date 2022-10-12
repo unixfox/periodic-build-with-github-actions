@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "stashed/stash"
-          ref: '${{ steps.get-latest-tag.outputs.tag }}'
+          ref: '${{ env.tag }}'
           path: 'stash-git'
 
       - name: Set up Docker Buildx

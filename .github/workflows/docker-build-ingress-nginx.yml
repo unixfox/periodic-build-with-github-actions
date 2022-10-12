@@ -17,14 +17,14 @@ jobs:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          echo "commit=$(git ls-remote --refs --tags https://github.com/kubernetes/ingress-nginx|grep controller-v|cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1| awk -F- '{print $NF}')" >> $GITHUB_ENV
+          echo "tag=$(git ls-remote --refs --tags https://github.com/kubernetes/ingress-nginx|grep controller-v|cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1| awk -F- '{print $NF}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: ingress-nginx
-          key: ${{ runner.os }}-v2-${{ steps.get-latest-tag.outputs.tag }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-v2-${{ env.tag }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -37,7 +37,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "kubernetes/ingress-nginx"
-          ref: 'controller-${{ steps.get-latest-tag.outputs.tag }}'
+          ref: 'controller-${{ env.tag }}'
           path: 'ingress-nginx-git'
 
       - name: Check Out Repo haorenfsa/Nginx-limit-traffic-rate-module
@@ -62,7 +62,7 @@ jobs:
           cd ingress-nginx-git/images/nginx
           sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
           sed -i 's/^make/make -j2/g' rootfs/build.sh
-          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
+          REGISTRY=quay.io/unixfox TAG=${{ env.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
@@ -73,7 +73,7 @@ jobs:
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd ingress-nginx-git
-          REGISTRY=quay.io/unixfox TAG=${{ steps.get-latest-tag.outputs.tag }} BASE_IMAGE=quay.io/unixfox/nginx:${{ steps.get-latest-tag.outputs.tag }} PLATFORMS="amd64 arm64" BUILDX_PLATFORMS=linux/amd64,linux/arm64 make release
+          REGISTRY=quay.io/unixfox TAG=${{ env.tag }} BASE_IMAGE=quay.io/unixfox/nginx:${{ env.tag }} PLATFORMS="amd64 arm64" BUILDX_PLATFORMS=linux/amd64,linux/arm64 make release
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}

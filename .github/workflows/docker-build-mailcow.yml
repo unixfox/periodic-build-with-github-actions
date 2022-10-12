@@ -40,7 +40,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "mailcow/mailcow-dockerized"
-          ref: '${{ steps.get-latest-tag.outputs.tag }}'
+          ref: '${{ env.tag }}'
           path: 'mailcow-git'
       
       - name: Login to Quay.io
@@ -71,7 +71,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/acme/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/acme:latest, quay.io/mailcowarm64/acme:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/acme:latest, quay.io/mailcowarm64/acme:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push dockerapi
         if: steps.cache.outputs.cache-hit != 'true'
@@ -82,7 +82,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/dockerapi/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/dockerapi:latest, quay.io/mailcowarm64/dockerapi:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/dockerapi:latest, quay.io/mailcowarm64/dockerapi:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push netfilter
         if: steps.cache.outputs.cache-hit != 'true'
@@ -93,7 +93,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/netfilter/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/netfilter:latest, quay.io/mailcowarm64/netfilter:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/netfilter:latest, quay.io/mailcowarm64/netfilter:${{ env.tag }}-${{ env.timestamp }}
       
       - name: Build and push olefy
         if: steps.cache.outputs.cache-hit != 'true'
@@ -104,7 +104,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/olefy/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/olefy:latest, quay.io/mailcowarm64/olefy:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/olefy:latest, quay.io/mailcowarm64/olefy:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push phpfpm
         if: steps.cache.outputs.cache-hit != 'true'
@@ -115,7 +115,7 @@ jobs:
           file: ./mailcow-phpfpm/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/phpfpm:latest, quay.io/mailcowarm64/phpfpm:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/phpfpm:latest, quay.io/mailcowarm64/phpfpm:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push postfix
         if: steps.cache.outputs.cache-hit != 'true'
@@ -126,7 +126,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/postfix/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/postfix:latest, quay.io/mailcowarm64/postfix:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/postfix:latest, quay.io/mailcowarm64/postfix:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push solr
         if: steps.cache.outputs.cache-hit != 'true'
@@ -137,7 +137,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/solr/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/solr:latest, quay.io/mailcowarm64/solr:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/solr:latest, quay.io/mailcowarm64/solr:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push unbound
         if: steps.cache.outputs.cache-hit != 'true'
@@ -148,7 +148,7 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/unbound/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/unbound:latest, quay.io/mailcowarm64/unbound:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/unbound:latest, quay.io/mailcowarm64/unbound:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push watchdog
         if: steps.cache.outputs.cache-hit != 'true'
@@ -159,4 +159,4 @@ jobs:
           file: ./mailcow-git/data/Dockerfiles/watchdog/Dockerfile
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/mailcowarm64/watchdog:latest, quay.io/mailcowarm64/watchdog:${{ steps.get-latest-tag.outputs.tag }}-${{ env.timestamp }}
+          tags: quay.io/mailcowarm64/watchdog:latest, quay.io/mailcowarm64/watchdog:${{ env.tag }}-${{ env.timestamp }}
