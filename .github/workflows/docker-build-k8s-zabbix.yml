@@ -17,26 +17,26 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "::set-output name=commit::$(git ls-remote https://github.com/zabbix-tooling/k8s-zabbix.git | head -n1 | awk '{print $1;}')"
+          echo "commit=$(git ls-remote https://github.com/zabbix-tooling/k8s-zabbix.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: k8s-zabbix
-          key: ${{ runner.os }}-${{ steps.get-latest-commit.outputs.commit }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-${{ env.commit }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Check Out Repo zabbix-tooling/k8s-zabbix
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "zabbix-tooling/k8s-zabbix"
@@ -45,7 +45,7 @@ jobs:
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Docker Buildx
         if: steps.cache.outputs.cache-hit != 'true'
         id: buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
         with:
           version: latest
 
@@ -65,7 +65,7 @@ jobs:
       - name: Build and push docker image
         if: steps.cache.outputs.cache-hit != 'true'
         id: docker_build_new
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: ./k8s-zabbix-git
           file: ./k8s-zabbix-git/Dockerfile
