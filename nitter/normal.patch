@@ -2,7 +2,7 @@
 +++ Dockerfile	2022-05-20 16:07:01.887924669 +0000
 @@ -1,4 +1,4 @@
 -FROM nimlang/nim:alpine as build
-+FROM ghcr.io/maxisoft/nim-docker-images/nim as build
++FROM ghcr.io/maxisoft/nim-docker-images/nim:v1.6.8 as build
  
  ARG  REPO=https://github.com/zedeus/nitter.git
  
