@@ -68,11 +68,14 @@ jobs:
           cp ./nitter/* ./nitter-git
         shell: bash
 
-      - name: Apply normal patch
+      - name: Apply normal patches
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd ./nitter-git
-          patch Dockerfile < normal.patch
+          patch Dockerfile < patches-normal/normal.patch
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git am patches-normal/git/*.patch
         shell: bash
 
       - name: Build and push docker image
@@ -90,7 +93,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd ./nitter-git
-          patch Dockerfile < custom.patch
+          patch Dockerfile < patches-custom/custom.patch
         shell: bash
 
       - name: Build and push docker image custom
