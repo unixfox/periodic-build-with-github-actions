@@ -75,7 +75,7 @@ jobs:
           patch Dockerfile < patches-normal/normal.patch
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
-          git am patches-normal/git/*.patch
+          patch -p1 < patches-normal/git/*.patch
         shell: bash
 
       - name: Build and push docker image
