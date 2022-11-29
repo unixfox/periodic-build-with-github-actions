@@ -73,9 +73,6 @@ jobs:
         run: |
           cd ./nitter-git
           patch Dockerfile < patches-normal/normal.patch
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
-          patch -p1 < patches-normal/git/*.patch
         shell: bash
 
       - name: Build and push docker image
