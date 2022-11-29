@@ -65,7 +65,7 @@ jobs:
       - name: Copy override files for nitter
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          cp ./nitter/* ./nitter-git
+          cp -R ./nitter/* ./nitter-git
         shell: bash
 
       - name: Apply normal patches
