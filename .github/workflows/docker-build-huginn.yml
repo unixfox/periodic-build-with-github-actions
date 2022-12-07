@@ -1,6 +1,7 @@
 name: Docker build huginn image
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 * * * *"
   push:
