@@ -1,5 +1,7 @@
 FROM ruby:2.6-buster
 
+RUN apt-get update && apt-get install shared-mime-info
+
 COPY docker/scripts/prepare /scripts/
 RUN /scripts/prepare
 
