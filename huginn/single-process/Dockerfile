@@ -1,6 +1,4 @@
-FROM ruby:2.6-buster
-
-RUN apt-get update && apt-get install shared-mime-info
+FROM ubuntu:18.04
 
 COPY docker/scripts/prepare /scripts/
 RUN /scripts/prepare
@@ -13,7 +11,10 @@ COPY vendor/gems/ /app/vendor/gems/
 
 # Get rid of annoying "fatal: Not a git repository (or any of the parent directories): .git" messages
 RUN umask 002 && git init && \
-    LC_ALL=en_US.UTF-8 RAILS_ENV=production APP_SECRET_TOKEN=secret DATABASE_ADAPTER=mysql2 ON_HEROKU=true bundle install --without test development --path vendor/bundle -j 4
+    export LC_ALL=en_US.UTF-8 RAILS_ENV=production APP_SECRET_TOKEN=secret DATABASE_ADAPTER=mysql2 ON_HEROKU=true && \
+    bundle config set --local path vendor/bundle && \
+    bundle config set --local without 'test development' && \
+    bundle install -j 4
 
 COPY ./ /app/
 

@@ -71,7 +71,7 @@ jobs:
           cp huginn/multi-process/scripts/standalone-packages huginn-git/docker/multi-process/scripts/standalone-packages
         shell: bash
 
-      - name: Downgrade libv8
+      - name: Apply patches
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mv ./huginn/patches/*.patch ./huginn-git
