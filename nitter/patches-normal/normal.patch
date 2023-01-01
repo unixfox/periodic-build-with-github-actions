@@ -1,16 +1,21 @@
---- Dockerfile.1	2022-05-20 16:04:10.693905933 +0000
-+++ Dockerfile	2022-05-20 16:07:01.887924669 +0000
+From 72b964a23ad9675700a6ffc2c3599205000c5fa2 Mon Sep 17 00:00:00 2001
+From: Emilien Devos <contact@emiliendevos.be>
+Date: Sun, 1 Jan 2023 19:50:22 +0100
+Subject: [PATCH 1/1] use arm docker image
+
+---
+ Dockerfile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 0831dd0..93d7096 100644
+--- a/Dockerfile
++++ b/Dockerfile
 @@ -1,4 +1,4 @@
 -FROM nimlang/nim:alpine as build
-+FROM ghcr.io/maxisoft/nim-docker-images/nim:v1.6.8 as build
++FROM ghcr.io/maxisoft/nim-docker-images/nim as build
  
- ARG  REPO=https://github.com/zedeus/nitter.git
+ ARG  REPO=https://github.com/goodtiding5/nitter.git
  
-@@ -35,7 +35,7 @@
-      NITTER_NAME="nitter" \
-      NITTER_THEME="Nitter" \
-      REPLACE_TWITTER="nitter.net" \
--     REPLACE_YOUTUBE="piped.kavin.rocks" \
-+     REPLACE_YOUTUBE="invidious.io" \
-      REPLACE_REDDIT="teddit.net" \
-      REPLACE_INSTAGRAM=""
+-- 
+2.39.0
