@@ -24,14 +24,14 @@ jobs:
       - name: Get latest mysql version
         id: get-latest-mysql-version
         run: |
-          echo "$(curl -s -L "https://github.com/mysql/mysql-server/raw/8.0/MYSQL_VERSION" | grep MYSQL_VERSION_PATCH)" >> $GITHUB_ENV
+          echo "$(curl -s -L "https://github.com/mysql/mysql-server/raw/8.0/MYSQL_VERSION")" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: mysql-router
-          key: ${{ runner.os }}-v0-${{ env.MYSQL_VERSION_PATCH }}
+          key: ${{ runner.os }}-v0-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -81,8 +81,10 @@ jobs:
           push: true
           tags: |
             quay.io/unixfox/mysql-router:latest
-            quay.io/unixfox/mysql-router:8.0.${{ env.MYSQL_VERSION_PATCH }}
-            quay.io/unixfox/mysql-router:8.0.${{ env.MYSQL_VERSION_PATCH }}-build-${{ env.timestamp }}
+            quay.io/unixfox/mysql-router:${{ env.MYSQL_VERSION_MAJOR }}
+            quay.io/unixfox/mysql-router:${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}
+            quay.io/unixfox/mysql-router:${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
+            quay.io/unixfox/mysql-router:${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}-build-${{ env.timestamp }}
           build-args: |
-            MYSQL_SERVER_PACKAGE=mysql-community-server-minimal-8.0.${{ env.MYSQL_VERSION_PATCH }}
-            MYSQL_ROUTER_PACKAGE=mysql-router-community-8.0.${{ env.MYSQL_VERSION_PATCH }}
+            MYSQL_SERVER_PACKAGE=mysql-community-server-minimal-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
+            MYSQL_ROUTER_PACKAGE=mysql-router-community-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
