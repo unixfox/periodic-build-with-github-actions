@@ -64,7 +64,7 @@ jobs:
 
       - name: Fix gpg conflict
         if: steps.cache.outputs.cache-hit != 'true'
-        run: sed -i 's/https:\/\/repo.mysql.com\/mysql-community-minimal-release-el7.rpm//' ./mysql-router-git/8.0/Dockerfile
+        run: sed -i 's/https:\/\/repo.mysql.com\/mysql-community-release-el7.rpm//' ./mysql-router-git/8.0/Dockerfile
 
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
