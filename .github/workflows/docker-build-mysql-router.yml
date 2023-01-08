@@ -18,30 +18,33 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/mysql/mysql-docker.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/mysql/mysql-docker.git | grep refs/heads/mysql-cluster | awk '{print $1;}')" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Get latest mysql version
+        id: get-latest-mysql-version
+        run: |
+          echo "$(curl -s -L "https://github.com/mysql/mysql-server/raw/8.0/MYSQL_VERSION" | grep MYSQL_VERSION_PATCH)" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: mysql-router
-          key: ${{ runner.os }}-v11-${{ env.commit }}
+          key: ${{ runner.os }}-v0-${{ env.MYSQL_VERSION_PATCH }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          platforms: linux/arm64
-
-      - name: Check Out Repo
-        uses: actions/checkout@v3
+          platforms: all
           
       - name: Check Out Repo mysql/mysql-docker
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "mysql/mysql-docker"
-          ref: 'master'
+          ref: 'mysql-router'
           path: 'mysql-router-git'
       
       - name: Login to Quay.io
@@ -72,4 +75,10 @@ jobs:
           file: ./mysql-router-git/8.0/Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/mysql-router:latest, quay.io/unixfox/mysql-router:8.0, quay.io/unixfox/mysql-router:8.0-build-${{ env.timestamp }}
+          tags: |
+            quay.io/unixfox/mysql-router:latest
+            quay.io/unixfox/mysql-router:8.0.${{ env.MYSQL_VERSION_PATCH }}
+            quay.io/unixfox/mysql-router:8.0.${{ env.MYSQL_VERSION_PATCH }}-build-${{ env.timestamp }}
+          build-args: |
+            MYSQL_SERVER_PACKAGE=mysql-community-server-minimal-8.0.${{ env.MYSQL_VERSION_PATCH }}
+            MYSQL_ROUTER_PACKAGE=mysql-router-community-8.0.${{ env.MYSQL_VERSION_PATCH }}
