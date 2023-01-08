@@ -64,7 +64,7 @@ jobs:
 
       - name: Fix gpg conflict
         if: steps.cache.outputs.cache-hit != 'true'
-        run: sed -i 's/https:\/\/repo.mysql.com\/mysql-community-release-el7.rpm//' ./mysql-router-git/8.0/Dockerfile
+        run: sed -i 's/https:\/\/repo.mysql.com\/mysql-community-release-el7.rpm/https:\/\/repo.mysql.com\/mysql80-community-release-el7.rpm/' ./mysql-router-git/8.0/Dockerfile
 
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
@@ -86,5 +86,5 @@ jobs:
             quay.io/unixfox/mysql-router:${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
             quay.io/unixfox/mysql-router:${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}-build-${{ env.timestamp }}
           build-args: |
-            MYSQL_SERVER_PACKAGE=mysql-community-server-minimal-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
+            MYSQL_SERVER_PACKAGE=mysql-community-client-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
             MYSQL_ROUTER_PACKAGE=mysql-router-community-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
