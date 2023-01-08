@@ -31,7 +31,7 @@ jobs:
         id: cache
         with:
           path: mysql-router
-          key: ${{ runner.os }}-v0-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
+          key: ${{ runner.os }}-v1-${{ env.MYSQL_VERSION_MAJOR }}.${{ env.MYSQL_VERSION_MINOR }}.${{ env.MYSQL_VERSION_PATCH }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
