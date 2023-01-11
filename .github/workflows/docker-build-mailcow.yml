@@ -25,7 +25,7 @@ jobs:
         id: cache
         with:
           path: mailcow
-          key: ${{ runner.os }}-v1-${{ env.tag }}
+          key: ${{ runner.os }}-v2-${{ env.tag }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -113,7 +113,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ./mailcow-git/data/Dockerfiles/phpfpm
-          file: ./mailcow-phpfpm/Dockerfile
+          file: ./mailcow-git/data/Dockerfiles/phpfpm/Dockerfile
           platforms: linux/arm64/v8
           push: true
           tags: quay.io/mailcowarm64/phpfpm:latest, quay.io/mailcowarm64/phpfpm:${{ env.tag }}-${{ env.timestamp }}
