@@ -161,3 +161,47 @@ jobs:
           platforms: linux/arm64/v8
           push: true
           tags: quay.io/mailcowarm64/watchdog:latest, quay.io/mailcowarm64/watchdog:${{ env.tag }}-${{ env.timestamp }}
+
+      - name: Build and push rspamd
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_rspamd
+        uses: docker/build-push-action@v3
+        with:
+          context: ./mailcow-git/data/Dockerfiles/rspamd
+          file: ./mailcow-git/data/Dockerfiles/rspamd/Dockerfile
+          platforms: linux/arm64/v8
+          push: true
+          tags: quay.io/mailcowarm64/rspamd:latest, quay.io/mailcowarm64/rspamd:${{ env.tag }}-${{ env.timestamp }}
+
+      - name: Build and push dovecot
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_dovecot
+        uses: docker/build-push-action@v3
+        with:
+          context: ./mailcow-git/data/Dockerfiles/dovecot
+          file: ./mailcow-git/data/Dockerfiles/dovecot/Dockerfile
+          platforms: linux/arm64/v8
+          push: true
+          tags: quay.io/mailcowarm64/dovecot:latest, quay.io/mailcowarm64/dovecot:${{ env.tag }}-${{ env.timestamp }}
+
+      - name: Build and push clamd
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_clamd
+        uses: docker/build-push-action@v3
+        with:
+          context: ./mailcow-git/data/Dockerfiles/clamd
+          file: ./mailcow-git/data/Dockerfiles/clamd/Dockerfile
+          platforms: linux/arm64/v8
+          push: true
+          tags: quay.io/mailcowarm64/clamd:latest, quay.io/mailcowarm64/clamd:${{ env.tag }}-${{ env.timestamp }}
+
+      - name: Build and push sogo
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_sogo
+        uses: docker/build-push-action@v3
+        with:
+          context: ./mailcow-git/data/Dockerfiles/sogo
+          file: ./mailcow-git/data/Dockerfiles/sogo/Dockerfile
+          platforms: linux/arm64/v8
+          push: true
+          tags: quay.io/mailcowarm64/sogo:latest, quay.io/mailcowarm64/sogo:${{ env.tag }}-${{ env.timestamp }}
