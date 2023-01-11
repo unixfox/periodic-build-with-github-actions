@@ -62,6 +62,12 @@ jobs:
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
         run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
+        
+      - name: Patch rspamd
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sed -i 's/debian:bullseye-slim/ubuntu:jammy/' ./mailcow-git/data/Dockerfiles/acme/Dockerfile
+        shell: bash
 
       - name: Build and push acme
         if: steps.cache.outputs.cache-hit != 'true'
@@ -128,6 +134,17 @@ jobs:
           platforms: linux/arm64/v8
           push: true
           tags: quay.io/mailcowarm64/postfix:latest, quay.io/mailcowarm64/postfix:${{ env.tag }}-${{ env.timestamp }}
+
+      - name: Build and push patched rspamd
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_rspamd
+        uses: docker/build-push-action@v3
+        with:
+          context: ./mailcow-git/data/Dockerfiles/rspamd
+          file: ./mailcow-git/data/Dockerfiles/rspamd/Dockerfile
+          platforms: linux/arm64/v8
+          push: true
+          tags: quay.io/mailcowarm64/rspamd:latest, quay.io/mailcowarm64/rspamd:${{ env.tag }}-${{ env.timestamp }}
 
       - name: Build and push solr
         if: steps.cache.outputs.cache-hit != 'true'
