@@ -1,14 +1,14 @@
-From 737c7575df0906e392edb9d6030660ffd476829f Mon Sep 17 00:00:00 2001
+From 2ac2dcc64ec139158997af57d0ec7ebf3307d81b Mon Sep 17 00:00:00 2001
 From: Emilien Devos <contact@emiliendevos.be>
 Date: Thu, 19 Jan 2023 09:21:12 +0100
 Subject: [PATCH 1/1] use alpine nim version
 
 ---
- Dockerfile | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ Dockerfile | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 0831dd0..2a4d50a 100644
+index 0831dd0..6afb4c2 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -1,4 +1,4 @@
@@ -17,14 +17,17 @@ index 0831dd0..2a4d50a 100644
  
  ARG  REPO=https://github.com/goodtiding5/nitter.git
  
-@@ -9,6 +9,8 @@ RUN apk update \
+@@ -9,6 +9,10 @@ RUN apk update \
  	pcre \
  	unzip \
  	git \
 +        nim \
 +        nimble \
++        gcc \
++        libc-dev \
  &&  mkdir -p /build
  
  WORKDIR /build
 -- 
 2.39.0
+
