@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-stash.yml'
+      - '.github/workflows/docker-build-stash.yml'
       - 'stash/**'
 
 jobs:

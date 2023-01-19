@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-onlyoffice.yml'
+      - '.github/workflows/docker-build-onlyoffice.yml'
       - 'onlyoffice/**'
 
 jobs:

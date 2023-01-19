@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-mysql-router.yml'
+      - '.github/workflows/docker-build-mysql-router.yml'
       - 'mysql-router/**'
 
 jobs:

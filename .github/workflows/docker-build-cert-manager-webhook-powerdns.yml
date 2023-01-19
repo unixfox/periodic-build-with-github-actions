@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-cert-manager-webhook-powerdns.yml'
+      - '.github/workflows/docker-build-cert-manager-webhook-powerdns.yml'
       - 'cert-manager-webhook-powerdns/**'
 
 jobs:

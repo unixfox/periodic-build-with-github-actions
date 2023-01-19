@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-ingress-nginx.yml'
+      - '.github/workflows/docker-build-ingress-nginx.yml'
       - 'ingress-nginx/**'
 
 jobs:

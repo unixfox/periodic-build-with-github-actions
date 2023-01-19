@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-keel.yml'
+      - '.github/workflows/docker-build-keel.yml'
       - 'keel/**'
 
 jobs:

@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-brudi.yml'
+      - '.github/workflows/docker-build-brudi.yml'
       - 'brudi/**'
 
 jobs:

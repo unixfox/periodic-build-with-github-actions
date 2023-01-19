@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-languagetool.yml'
+      - '.github/workflows/docker-build-languagetool.yml'
       - 'languagetool/**'
 
 jobs:

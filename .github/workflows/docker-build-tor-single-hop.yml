@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-tor-single-hop.yml'
+      - '.github/workflows/docker-build-tor-single-hop.yml'
       - 'tor-single-hop/**'
 
 jobs:

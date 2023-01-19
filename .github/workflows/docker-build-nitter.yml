@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-nitter.yml'
+      - '.github/workflows/docker-build-nitter.yml'
       - 'nitter/**'
 
 jobs:

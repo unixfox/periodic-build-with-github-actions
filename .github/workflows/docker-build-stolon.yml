@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-stolon.yml'
+      - '.github/workflows/docker-build-stolon.yml'
       - 'stolon/**'
 
 jobs:

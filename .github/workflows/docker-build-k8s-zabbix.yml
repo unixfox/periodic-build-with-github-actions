@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-k8s-zabbix.yml'
+      - '.github/workflows/docker-build-k8s-zabbix.yml'
       - 'k8s-zabbix/**'
 
 jobs:

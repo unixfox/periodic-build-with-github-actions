@@ -6,7 +6,7 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - 'docker-build-pgbouncer.yml'
+      - '.github/workflows/docker-build-pgbouncer.yml'
       - 'pgbouncer/**'
 
 jobs:
