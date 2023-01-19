@@ -74,9 +74,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd ./nitter-git
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
-          git am patches-normal/*.patch
+          patch Dockerfile < patches-normal/normal.patch
         shell: bash
 
       - name: Build and push docker image
