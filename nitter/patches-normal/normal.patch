@@ -1,4 +1,4 @@
-From 640857354989d3bfdee3eecef5efcd8f532d993e Mon Sep 17 00:00:00 2001
+From 737c7575df0906e392edb9d6030660ffd476829f Mon Sep 17 00:00:00 2001
 From: Emilien Devos <contact@emiliendevos.be>
 Date: Thu, 19 Jan 2023 09:21:12 +0100
 Subject: [PATCH 1/1] use alpine nim version
@@ -8,7 +8,7 @@ Subject: [PATCH 1/1] use alpine nim version
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 0831dd0..532c212 100644
+index 0831dd0..2a4d50a 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -1,4 +1,4 @@
@@ -22,7 +22,7 @@ index 0831dd0..532c212 100644
  	unzip \
  	git \
 +        nim \
-+        nimble
++        nimble \
  &&  mkdir -p /build
  
  WORKDIR /build
