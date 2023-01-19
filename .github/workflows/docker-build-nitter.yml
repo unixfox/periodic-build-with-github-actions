@@ -75,7 +75,7 @@ jobs:
           cd ./nitter-git
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
-          git am ../nitter/patches-normal/*.patch
+          git am patches-normal/*.patch
         shell: bash
 
       - name: Build and push docker image

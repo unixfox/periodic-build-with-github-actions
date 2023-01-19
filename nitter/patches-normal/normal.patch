@@ -1,25 +1,30 @@
-From 2f9443e0185a24ca6b4103f97afff96cc5a25c73 Mon Sep 17 00:00:00 2001
+From 640857354989d3bfdee3eecef5efcd8f532d993e Mon Sep 17 00:00:00 2001
 From: Emilien Devos <contact@emiliendevos.be>
-Date: Thu, 19 Jan 2023 09:08:51 +0100
-Subject: [PATCH 1/1] use alpine edge for nim
+Date: Thu, 19 Jan 2023 09:21:12 +0100
+Subject: [PATCH 1/1] use alpine nim version
 
 ---
- Dockerfile | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ Dockerfile | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index f65c3ed..ed40a2a 100644
+index 0831dd0..532c212 100644
 --- a/Dockerfile
 +++ b/Dockerfile
-@@ -1,7 +1,7 @@
--FROM nimlang/nim:1.6.10-alpine-regular as nim
-+FROM alpine:latest as nim
- LABEL maintainer="setenforce@protonmail.com"
+@@ -1,4 +1,4 @@
+-FROM nimlang/nim:alpine as build
++FROM alpine:edge as build
  
--RUN apk --no-cache add libsass-dev pcre
-+RUN apk --no-cache add libsass-dev pcre gcc git libc-dev nim nimble
+ ARG  REPO=https://github.com/goodtiding5/nitter.git
  
- WORKDIR /src/nitter
+@@ -9,6 +9,8 @@ RUN apk update \
+ 	pcre \
+ 	unzip \
+ 	git \
++        nim \
++        nimble
+ &&  mkdir -p /build
  
+ WORKDIR /build
 -- 
 2.39.0
