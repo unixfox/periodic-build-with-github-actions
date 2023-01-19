@@ -5,8 +5,9 @@ on:
   schedule:
     - cron: "0 * * * *"
   push:
-    branches:
-      - master
+    paths:
+      - 'docker-build-k8s-zabbix.yml'
+      - 'k8s-zabbix/**'
 
 jobs:
 
