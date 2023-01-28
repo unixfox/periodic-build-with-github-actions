@@ -88,20 +88,20 @@ jobs:
           push: true
           tags: quay.io/unixfox/nitter:latest, quay.io/unixfox/nitter:build-${{ env.timestamp }}
 
-      - name: Apply custom patch
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          cd ./nitter-git
-          patch Dockerfile < patches-custom/custom.patch
-        shell: bash
+      # - name: Apply custom patch
+      #   if: steps.cache.outputs.cache-hit != 'true'
+      #   run: |
+      #     cd ./nitter-git
+      #     patch Dockerfile < patches-custom/custom.patch
+      #   shell: bash
 
-      - name: Build and push docker image custom
-        if: steps.cache.outputs.cache-hit != 'true'
-        id: docker_build_new_custom
-        uses: docker/build-push-action@v3
-        with:
-          context: ./nitter-git
-          file: ./nitter-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
-          push: true
-          tags: quay.io/unixfox/nitter-custom:latest, quay.io/unixfox/nitter-custom:build-${{ env.timestamp }}
+      # - name: Build and push docker image custom
+      #   if: steps.cache.outputs.cache-hit != 'true'
+      #   id: docker_build_new_custom
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: ./nitter-git
+      #     file: ./nitter-git/Dockerfile
+      #     platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+      #     push: true
+      #     tags: quay.io/unixfox/nitter-custom:latest, quay.io/unixfox/nitter-custom:build-${{ env.timestamp }}
