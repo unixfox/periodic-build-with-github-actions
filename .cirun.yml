@@ -9,7 +9,7 @@ runners:
   - name: azure-runner
     cloud: azure
     instance_type: Standard_F4s_v2
-    region: eastus2
-    machine_image: "Canonical:UbuntuServer:22.04-LTS:latest"
+    region: eastus
+    machine_image: "Canonical:0001-com-ubuntu-server-jammy:22_04-lts-gen2:latest"
     labels:
       - cirun-azure-runner
