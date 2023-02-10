@@ -8,7 +8,7 @@ runners:
       - cirun-runner
   - name: azure-runner
     cloud: azure
-    instance_type: F4s_v2
+    instance_type: Standard_F4s_v2
     region: eastus
     machine_image: "Debian:debian-10:10:latest"
     labels:
