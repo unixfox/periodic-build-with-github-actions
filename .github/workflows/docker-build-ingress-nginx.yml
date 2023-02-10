@@ -28,6 +28,9 @@ jobs:
           path: ingress-nginx
           key: ${{ runner.os }}-v3-${{ env.tag }}
 
+      - uses: docker-practice/actions-setup-docker@master
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         if: steps.cache.outputs.cache-hit != 'true'
