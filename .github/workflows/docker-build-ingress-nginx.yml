@@ -19,7 +19,7 @@ jobs:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          echo "tag=$(git ls-remote --refs --tags https://github.com/kubernetes/ingress-nginx|grep controller-v|cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1| awk -F- '{print $NF}')" >> $GITHUB_ENV
+          echo "tag="v1.5.1" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
