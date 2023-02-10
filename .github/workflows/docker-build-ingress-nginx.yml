@@ -35,9 +35,6 @@ jobs:
           sudo sh /tmp/get-docker.sh
           sudo apt install golang -y
 
-      - uses: actions/setup-go@v3
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         if: steps.cache.outputs.cache-hit != 'true'
