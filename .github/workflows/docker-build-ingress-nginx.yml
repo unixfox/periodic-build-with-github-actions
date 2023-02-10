@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'workflow_dispatch') && fromJSON('[ "cirun-azure-runner" ]') || (github.event_name == 'push') && fromJSON('[ "cirun-azure-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'workflow_dispatch') && fromJSON('[ "cirun-runner" ]') || (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest tag
