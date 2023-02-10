@@ -42,14 +42,6 @@ jobs:
           ref: 'controller-${{ env.tag }}'
           path: 'ingress-nginx-git'
 
-      - name: Check Out Repo haorenfsa/Nginx-limit-traffic-rate-module
-        uses: actions/checkout@v3
-        if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          repository: "haorenfsa/Nginx-limit-traffic-rate-module"
-          ref: 'master'
-          path: 'ingress-nginx-git/images/nginx/rootfs/Nginx-limit-traffic-rate-module'
-
       - name: Set up Docker Buildx
         if: steps.cache.outputs.cache-hit != 'true'
         id: buildx
@@ -60,10 +52,12 @@ jobs:
       - name: Build and push docker base image nginx
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          cp ingress-nginx/patches/* ingress-nginx-git
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git am *.patch
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd ingress-nginx-git/images/nginx
-          sed -i 's/WITH_FLAGS="/WITH_FLAGS="--add-module=\/Nginx-limit-traffic-rate-module /' rootfs/build.sh
-          sed -i 's/^make/make -j2/g' rootfs/build.sh
           REGISTRY=quay.io/unixfox TAG=${{ env.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
         env:
           REGISTRY: quay.io/unixfox

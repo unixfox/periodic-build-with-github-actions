@@ -1,0 +1,98 @@
+From 474682890fa6c4ecc0a2a44912fbbacae3822f56 Mon Sep 17 00:00:00 2001
+From: Emilien Devos <contact@emiliendevos.be>
+Date: Fri, 10 Feb 2023 16:08:53 +0100
+Subject: [PATCH 1/1] add quic to nginx ingress
+
+---
+ images/nginx/rootfs/build.sh | 32 ++++++++++++++++++++++++++------
+ 1 file changed, 26 insertions(+), 6 deletions(-)
+
+diff --git a/images/nginx/rootfs/build.sh b/images/nginx/rootfs/build.sh
+index 8023575c0..4b08d3efb 100755
+--- a/images/nginx/rootfs/build.sh
++++ b/images/nginx/rootfs/build.sh
+@@ -20,6 +20,8 @@ set -o pipefail
+ 
+ export NGINX_VERSION=1.21.6
+ 
++export BORINGSSL_COMMIT=edbdc240ecb6a2d5a500b8e2eedfe3e6a2423c0a
++
+ # Check for recent changes: https://github.com/vision5/ngx_devel_kit/compare/v0.3.1...master
+ export NDK_VERSION=0.3.1
+ 
+@@ -195,7 +197,9 @@ apk add \
+   unzip \
+   dos2unix \
+   yaml-cpp \
+-  coreutils
++  coreutils \
++  ninja \
++  go
+ 
+ mkdir -p /etc/nginx
+ 
+@@ -477,6 +481,18 @@ cmake -DCMAKE_BUILD_TYPE=Release \
+ make
+ make install
+ 
++# build boringssl
++cd "$BUILD_PATH"
++git clone -n https://github.com/google/boringssl
++cd boringssl
++git checkout $BORINGSSL_COMMIT
++
++echo "Building boringssl ..."
++mkdir build
++cd build
++cmake -GNinja ..
++ninja
++
+ # Get Brotli source and deps
+ cd "$BUILD_PATH"
+ git clone --depth=1 https://github.com/google/ngx_brotli.git
+@@ -574,7 +590,9 @@ Include /etc/nginx/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTE
+ " > /etc/nginx/owasp-modsecurity-crs/nginx-modsecurity.conf
+ 
+ # build nginx
+-cd "$BUILD_PATH/nginx-$NGINX_VERSION"
++cd "$BUILD_PATH"
++hg clone -b quic --rev release-$NGINX_VERSION https://hg.nginx.org/nginx-quic nginx
++cd nginx
+ 
+ # apply nginx patches
+ for PATCH in `ls /patches`;do
+@@ -586,7 +604,8 @@ for PATCH in `ls /patches`;do
+   fi
+ done
+ 
+-WITH_FLAGS="--with-debug \
++WITH_FLAGS="--build=quic-$NGINX_VERSION-boringssl-$BORINGSSL_COMMIT
++  --with-debug \
+   --with-compat \
+   --with-pcre-jit \
+   --with-http_ssl_module \
+@@ -618,9 +637,10 @@ CC_OPT="-g -O2 -fPIE -fstack-protector-strong \
+   -DTCP_FASTOPEN=23 \
+   -fPIC \
+   -I$HUNTER_INSTALL_DIR/include \
+-  -Wno-cast-function-type"
++  -Wno-cast-function-type \
++  -I../boringssl/include"
+ 
+-LD_OPT="-fPIE -fPIC -pie -Wl,-z,relro -Wl,-z,now -L$HUNTER_INSTALL_DIR/lib"
++LD_OPT="-fPIE -fPIC -pie -Wl,-z,relro -Wl,-z,now -L$HUNTER_INSTALL_DIR/lib -L../boringssl/build/ssl -L../boringssl/build/crypto"
+ 
+ if [[ ${ARCH} != "aarch64" ]]; then
+   WITH_FLAGS+=" --with-file-aio"
+@@ -646,7 +666,7 @@ WITH_MODULES=" \
+   --add-dynamic-module=$BUILD_PATH/ngx_http_geoip2_module-${GEOIP2_VERSION} \
+   --add-dynamic-module=$BUILD_PATH/ngx_brotli"
+ 
+-./configure \
++./auto/configure \
+   --prefix=/usr/local/nginx \
+   --conf-path=/etc/nginx/nginx.conf \
+   --modules-path=/etc/nginx/modules \
+-- 
+2.39.1
+
