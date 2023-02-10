@@ -29,7 +29,6 @@ jobs:
           key: ${{ runner.os }}-v3-${{ env.tag }}
 
       - name: Build and push docker base image nginx
-        if: steps.cache.outputs.cache-hit != 'true'
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: |
           curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
