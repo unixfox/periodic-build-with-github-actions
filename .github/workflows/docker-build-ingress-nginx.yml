@@ -58,9 +58,10 @@ jobs:
           cp ingress-nginx/patches/* ingress-nginx-git
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
+          cd ingress-nginx-git
           git am *.patch
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
-          cd ingress-nginx-git/images/nginx
+          cd images/nginx
           REGISTRY=quay.io/unixfox TAG=${{ env.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
         env:
           REGISTRY: quay.io/unixfox
