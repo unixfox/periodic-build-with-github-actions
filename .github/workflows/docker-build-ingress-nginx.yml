@@ -62,7 +62,7 @@ jobs:
           git am *.patch
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd images/nginx
-          sudo apt install build-essential -y
+          sudo apt update && sudo apt install build-essential -y
           REGISTRY=quay.io/unixfox TAG=${{ env.tag }} PLATFORMS=linux/amd64,linux/arm64 make push
         env:
           REGISTRY: quay.io/unixfox
