@@ -9,6 +9,7 @@ runners:
   - name: azure-runner
     cloud: azure
     instance_type: Standard_F4s_v2
+    preemptible: true
     region:
       - "eastus"
       - "eastus2"
