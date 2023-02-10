@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest tag
@@ -33,6 +33,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           platforms: all
+
+      - name: Check Out Repo
+        uses: actions/checkout@v3
           
       - name: Check Out Repo kubernetes/ingress-nginx
         uses: actions/checkout@v3
