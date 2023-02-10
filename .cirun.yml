@@ -11,9 +11,9 @@ runners:
     instance_type: F4s_v2
     region: eastus
     machine_image:
-      publisher: "Canonical"
-      offer: "UbuntuServer"
-      sku: "22.04-LTS"
+      publisher: "Debian"
+      offer: "debian-10"
+      sku: "10"
       version: "latest"
     labels:
       - cirun-azure-runner
