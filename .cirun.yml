@@ -9,7 +9,7 @@ runners:
   - name: azure-runner
     cloud: azure
     instance_type: Standard_F4s_v2
-    region: eastus
-    machine_image: "Debian:debian-10:10:latest"
+    region: eastus2
+    machine_image: "Canonical:UbuntuServer:22.04-LTS:latest"
     labels:
       - cirun-azure-runner
