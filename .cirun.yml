@@ -10,10 +10,6 @@ runners:
     cloud: azure
     instance_type: F4s_v2
     region: eastus
-    machine_image:
-      publisher: "Debian"
-      offer: "debian-10"
-      sku: "10"
-      version: "latest"
+    machine_image: "Debian:debian-10:10:latest"
     labels:
       - cirun-azure-runner
