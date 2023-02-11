@@ -1,26 +1,28 @@
-From ee31ab71f0790b4e7d9b3ac889cd8ca04fe02f74 Mon Sep 17 00:00:00 2001
+From 2667581dc096a08731006a0b7a6fa1dbf924dfa1 Mon Sep 17 00:00:00 2001
 From: Emilien Devos <contact@emiliendevos.be>
 Date: Fri, 10 Feb 2023 16:08:53 +0100
 Subject: [PATCH 1/1] add quic to nginx ingress
 
 ---
- images/nginx/rootfs/build.sh | 33 +++++++++++++++++++++++++++------
- 1 file changed, 27 insertions(+), 6 deletions(-)
+ images/nginx/rootfs/build.sh | 35 +++++++++++++++++++++++++++++------
+ 1 file changed, 29 insertions(+), 6 deletions(-)
 
 diff --git a/images/nginx/rootfs/build.sh b/images/nginx/rootfs/build.sh
-index 8023575c0..bd09c1407 100755
+index 8023575c0..ad3d878d4 100755
 --- a/images/nginx/rootfs/build.sh
 +++ b/images/nginx/rootfs/build.sh
-@@ -20,6 +20,8 @@ set -o pipefail
+@@ -20,6 +20,10 @@ set -o pipefail
  
  export NGINX_VERSION=1.21.6
  
++export NGINX_COMMIT=7c2adf237091
++
 +export BORINGSSL_COMMIT=edbdc240ecb6a2d5a500b8e2eedfe3e6a2423c0a
 +
  # Check for recent changes: https://github.com/vision5/ngx_devel_kit/compare/v0.3.1...master
  export NDK_VERSION=0.3.1
  
-@@ -195,7 +197,9 @@ apk add \
+@@ -195,7 +199,9 @@ apk add \
    unzip \
    dos2unix \
    yaml-cpp \
@@ -31,7 +33,7 @@ index 8023575c0..bd09c1407 100755
  
  mkdir -p /etc/nginx
  
-@@ -477,6 +481,18 @@ cmake -DCMAKE_BUILD_TYPE=Release \
+@@ -477,6 +483,18 @@ cmake -DCMAKE_BUILD_TYPE=Release \
  make
  make install
  
@@ -50,18 +52,18 @@ index 8023575c0..bd09c1407 100755
  # Get Brotli source and deps
  cd "$BUILD_PATH"
  git clone --depth=1 https://github.com/google/ngx_brotli.git
-@@ -574,7 +590,9 @@ Include /etc/nginx/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTE
+@@ -574,7 +592,9 @@ Include /etc/nginx/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTE
  " > /etc/nginx/owasp-modsecurity-crs/nginx-modsecurity.conf
  
  # build nginx
 -cd "$BUILD_PATH/nginx-$NGINX_VERSION"
 +cd "$BUILD_PATH"
-+hg clone -b quic --rev release-$NGINX_VERSION https://hg.nginx.org/nginx-quic nginx
++hg clone -b quic --rev $NGINX_COMMIT https://hg.nginx.org/nginx-quic nginx
 +cd nginx
  
  # apply nginx patches
  for PATCH in `ls /patches`;do
-@@ -586,7 +604,9 @@ for PATCH in `ls /patches`;do
+@@ -586,7 +606,9 @@ for PATCH in `ls /patches`;do
    fi
  done
  
@@ -72,7 +74,7 @@ index 8023575c0..bd09c1407 100755
    --with-compat \
    --with-pcre-jit \
    --with-http_ssl_module \
-@@ -618,9 +638,10 @@ CC_OPT="-g -O2 -fPIE -fstack-protector-strong \
+@@ -618,9 +640,10 @@ CC_OPT="-g -O2 -fPIE -fstack-protector-strong \
    -DTCP_FASTOPEN=23 \
    -fPIC \
    -I$HUNTER_INSTALL_DIR/include \
@@ -85,7 +87,7 @@ index 8023575c0..bd09c1407 100755
  
  if [[ ${ARCH} != "aarch64" ]]; then
    WITH_FLAGS+=" --with-file-aio"
-@@ -646,7 +667,7 @@ WITH_MODULES=" \
+@@ -646,7 +669,7 @@ WITH_MODULES=" \
    --add-dynamic-module=$BUILD_PATH/ngx_http_geoip2_module-${GEOIP2_VERSION} \
    --add-dynamic-module=$BUILD_PATH/ngx_brotli"
  
