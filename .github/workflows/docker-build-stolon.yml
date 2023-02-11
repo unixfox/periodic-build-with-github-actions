@@ -24,7 +24,6 @@ jobs:
           - 13
           - 12
           - 11
-          - 10
 
     steps:
       - name: Get latest commit hash of github.com/docker-library/postgres
