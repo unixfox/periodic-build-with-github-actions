@@ -1,14 +1,14 @@
-From 474682890fa6c4ecc0a2a44912fbbacae3822f56 Mon Sep 17 00:00:00 2001
+From ee31ab71f0790b4e7d9b3ac889cd8ca04fe02f74 Mon Sep 17 00:00:00 2001
 From: Emilien Devos <contact@emiliendevos.be>
 Date: Fri, 10 Feb 2023 16:08:53 +0100
 Subject: [PATCH 1/1] add quic to nginx ingress
 
 ---
- images/nginx/rootfs/build.sh | 32 ++++++++++++++++++++++++++------
- 1 file changed, 26 insertions(+), 6 deletions(-)
+ images/nginx/rootfs/build.sh | 33 +++++++++++++++++++++++++++------
+ 1 file changed, 27 insertions(+), 6 deletions(-)
 
 diff --git a/images/nginx/rootfs/build.sh b/images/nginx/rootfs/build.sh
-index 8023575c0..4b08d3efb 100755
+index 8023575c0..bd09c1407 100755
 --- a/images/nginx/rootfs/build.sh
 +++ b/images/nginx/rootfs/build.sh
 @@ -20,6 +20,8 @@ set -o pipefail
@@ -61,17 +61,18 @@ index 8023575c0..4b08d3efb 100755
  
  # apply nginx patches
  for PATCH in `ls /patches`;do
-@@ -586,7 +604,8 @@ for PATCH in `ls /patches`;do
+@@ -586,7 +604,9 @@ for PATCH in `ls /patches`;do
    fi
  done
  
 -WITH_FLAGS="--with-debug \
-+WITH_FLAGS="--build=quic-$NGINX_VERSION-boringssl-$BORINGSSL_COMMIT
++WITH_FLAGS="--with-http_v3_module \
++  --build=quic-$NGINX_VERSION-boringssl-$BORINGSSL_COMMIT \
 +  --with-debug \
    --with-compat \
    --with-pcre-jit \
    --with-http_ssl_module \
-@@ -618,9 +637,10 @@ CC_OPT="-g -O2 -fPIE -fstack-protector-strong \
+@@ -618,9 +638,10 @@ CC_OPT="-g -O2 -fPIE -fstack-protector-strong \
    -DTCP_FASTOPEN=23 \
    -fPIC \
    -I$HUNTER_INSTALL_DIR/include \
@@ -84,7 +85,7 @@ index 8023575c0..4b08d3efb 100755
  
  if [[ ${ARCH} != "aarch64" ]]; then
    WITH_FLAGS+=" --with-file-aio"
-@@ -646,7 +666,7 @@ WITH_MODULES=" \
+@@ -646,7 +667,7 @@ WITH_MODULES=" \
    --add-dynamic-module=$BUILD_PATH/ngx_http_geoip2_module-${GEOIP2_VERSION} \
    --add-dynamic-module=$BUILD_PATH/ngx_brotli"
  
