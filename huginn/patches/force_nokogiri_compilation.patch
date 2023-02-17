@@ -9,11 +9,11 @@ Subject: [PATCH 1/1] force nokogiri compilation
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/Gemfile b/Gemfile
-index c7d286d7..c524e46a 100644
+index d3b094c9..30921ddc 100644
 --- a/Gemfile
 +++ b/Gemfile
-@@ -116,7 +116,7 @@ gem 'liquid', '~> 5.1'
- gem 'loofah', '~> 2.0'
+@@ -117,7 +117,7 @@ gem 'loofah', '~> 2.0'
+ gem 'mail', '>= 2.8.1'
  gem 'mini_magick', ">= 4.9.4"
  gem 'multi_xml'
 -gem "nokogiri", ">= 1.10.8"
@@ -22,14 +22,12 @@ index c7d286d7..c524e46a 100644
  gem 'rails', '~> 6.0.4'
  gem 'sprockets', '~> 3.7.2'
 diff --git a/Gemfile.lock b/Gemfile.lock
-index befcc94c..214fc10f 100644
+index adda050a..9770c8b0 100644
 --- a/Gemfile.lock
 +++ b/Gemfile.lock
-@@ -874,4 +874,4 @@ RUBY VERSION
+@@ -889,4 +889,4 @@ RUBY VERSION
     ruby 2.7.6p219
-
+ 
  BUNDLED WITH
 -   2.3.10
 +   2.3.26
---
-2.39.0
