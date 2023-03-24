@@ -10,7 +10,7 @@
 - mailcow: https://quay.io/mailcowarm64
 - moco: https://quay.io/unixfox/moco-backup && https://quay.io/unixfox/moco-controller
 - mysql-router: https://quay.io/unixfox/mysql-router
-- nitter: https://quay.io/unixfox/nitter
+- nitter: https://quay.io/unixfox/nitter (not supported anymore)
 - ingress-nginx: https://quay.io/unixfox/nginx
 - onlyoffice: https://quay.io/unixfox/onlyoffice
 - pgbouncer: https://quay.io/unixfox/pgbouncer
