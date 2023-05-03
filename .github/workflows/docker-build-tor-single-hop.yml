@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest commit hash
@@ -81,6 +81,6 @@ jobs:
         with:
           context: ./tor-git
           file: ./tor-git/Dockerfile
-          platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/tor-single-hop:latest, quay.io/unixfox/tor-single-hop:build-${{ env.timestamp }}

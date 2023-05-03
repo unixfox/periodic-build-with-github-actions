@@ -1,4 +1,4 @@
-name: Docker build EternalJukebox image
+name: Docker build brudi image
 
 on:
   workflow_dispatch:
@@ -6,27 +6,27 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - '.github/workflows/docker-build-eternaljukebox.yml'
-      - 'eternaljukebox/**'
+      - '.github/workflows/docker-build-brudi.yml'
+      - 'brudi/**'
 
 jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/UnderMybrella/EternalJukebox.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/mittwald/brudi.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
-          path: eternaljukebox
-          key: ${{ runner.os }}-v2-${{ env.commit }}
+          path: brudi
+          key: ${{ runner.os }}-${{ env.commit }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -37,13 +37,13 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v3
 
-      - name: Check Out Repo UnderMybrella/EternalJukebox
+      - name: Check Out Repo mittwald/brudi
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          repository: "UnderMybrella/EternalJukebox"
+          repository: "mittwald/brudi"
           ref: 'master'
-          path: 'eternaljukebox-git'
+          path: 'brudi-git'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
@@ -64,17 +64,13 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
 
-      - name: Fix maven URL
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: sed -i 's/maven.abimon.org/maven.brella.dev/g' ./eternaljukebox-git/build.gradle
-
       - name: Build and push docker image
         if: steps.cache.outputs.cache-hit != 'true'
         id: docker_build_new
         uses: docker/build-push-action@v3
         with:
-          context: ./eternaljukebox-git
-          file: ./eternaljukebox/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+          context: ./brudi-git
+          file: ./brudi/Dockerfile
+          platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/eternaljukebox:latest, quay.io/unixfox/eternaljukebox:build-${{ env.timestamp }}
+          tags: quay.io/unixfox/brudi:latest, quay.io/unixfox/brudi:build-${{ env.timestamp }}

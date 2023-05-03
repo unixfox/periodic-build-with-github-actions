@@ -1,4 +1,4 @@
-name: Docker build Languagetool image
+name: Docker build keel image
 
 on:
   workflow_dispatch:
@@ -6,26 +6,26 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - '.github/workflows/docker-build-languagetool.yml'
-      - 'languagetool/**'
+      - '.github/workflows/docker-build-keel.yml'
+      - 'keel/**'
 
 jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
 
-    steps:      
+    steps:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/Erikvl87/docker-languagetool | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/keel-hq/keel.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
-          path: languagetool
+          path: keel
           key: ${{ runner.os }}-${{ env.commit }}
 
       - name: Set up QEMU
@@ -36,6 +36,14 @@ jobs:
 
       - name: Check Out Repo
         uses: actions/checkout@v3
+
+      - name: Check Out Repo keel-hq/keel
+        uses: actions/checkout@v3
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: "keel-hq/keel"
+          ref: 'master'
+          path: 'keel-git'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
@@ -51,7 +59,6 @@ jobs:
         uses: docker/setup-buildx-action@v2
         with:
           version: latest
-          config: .github/buildkitd.toml
 
       - name: Set up build timestamp
         if: steps.cache.outputs.cache-hit != 'true'
@@ -62,8 +69,8 @@ jobs:
         id: docker_build_new
         uses: docker/build-push-action@v3
         with:
-          context: ./
-          file: ./languagetool/Dockerfile
+          context: ./keel-git
+          file: ./keel-git/Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/languagetool:latest, quay.io/unixfox/languagetool:build-${{ env.timestamp }}
+          tags: quay.io/unixfox/keel:latest, quay.io/unixfox/keel:build-${{ env.timestamp }}

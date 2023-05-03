@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
     
     strategy:
       fail-fast: false
@@ -87,7 +87,7 @@ jobs:
         with:
           context: ./stolon-git
           file: ./stolon/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+          platforms: linux/amd64,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/stolon:latest-pg${{ matrix.postgres-version }}, quay.io/unixfox/stolon:${{ env.tag }}-pg${{ matrix.postgres-version }}, quay.io/unixfox/stolon:${{ env.tag }}-pg${{ matrix.postgres-version }}-build-${{ env.timestamp }}
           build-args: PGVERSION=${{ matrix.postgres-version }}

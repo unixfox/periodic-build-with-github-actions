@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest commit hash
@@ -71,6 +71,6 @@ jobs:
         with:
           context: ./cert-manager-webhook-powerdns-git
           file: ./cert-manager-webhook-powerdns-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
+          platforms: linux/amd64,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/cert-manager-webhook-powerdns:latest, quay.io/unixfox/cert-manager-webhook-powerdns:build-${{ env.timestamp }}

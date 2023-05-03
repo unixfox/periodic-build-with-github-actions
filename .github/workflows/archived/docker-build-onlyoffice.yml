@@ -1,4 +1,4 @@
-name: Docker build brudi image
+name: Docker build onlyoffice image
 
 on:
   workflow_dispatch:
@@ -6,44 +6,44 @@ on:
     - cron: "0 * * * *"
   push:
     paths:
-      - '.github/workflows/docker-build-brudi.yml'
-      - 'brudi/**'
+      - '.github/workflows/docker-build-onlyoffice.yml'
+      - 'onlyoffice/**'
 
 jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "cirun-runner" ]') || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/mittwald/brudi.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/jiriks74/Docker-DocumentServer-Arm64.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
         id: cache
         with:
-          path: brudi
+          path: onlyoffice
           key: ${{ runner.os }}-${{ env.commit }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          platforms: all
+          platforms: arm64
 
       - name: Check Out Repo
         uses: actions/checkout@v3
 
-      - name: Check Out Repo mittwald/brudi
+      - name: Check Out Repo jiriks74/Docker-DocumentServer-Arm64
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          repository: "mittwald/brudi"
+          repository: "jiriks74/Docker-DocumentServer-Arm64"
           ref: 'master'
-          path: 'brudi-git'
+          path: 'onlyoffice-git'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
@@ -69,8 +69,8 @@ jobs:
         id: docker_build_new
         uses: docker/build-push-action@v3
         with:
-          context: ./brudi-git
-          file: ./brudi/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7,linux/386
+          context: ./onlyoffice-git
+          file: ./onlyoffice-git/Dockerfile
+          platforms: linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/brudi:latest, quay.io/unixfox/brudi:build-${{ env.timestamp }}
+          tags: quay.io/unixfox/onlyoffice:latest, quay.io/unixfox/onlyoffice:build-${{ env.timestamp }}
