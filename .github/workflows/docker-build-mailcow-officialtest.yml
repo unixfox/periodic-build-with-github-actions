@@ -67,7 +67,7 @@ jobs:
       - name: Patch rspamd
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          sed -i 's/debian:bullseye-slim/ubuntu:jammy/' ./mailcow-git/data/Dockerfiles/acme/Dockerfile
+          sed -i 's/[arch=amd64]//' ./mailcow-git/data/Dockerfiles/acme/Dockerfile
         shell: bash
 
       - name: Build and push acme
