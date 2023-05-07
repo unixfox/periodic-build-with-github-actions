@@ -45,6 +45,14 @@ jobs:
           ref: '${{ env.tag }}'
           path: 'pulsejet-go-vod-git'
 
+      - name: Login to Quay.io
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
       - name: Set up Docker Buildx
         if: steps.cache.outputs.cache-hit != 'true'
         id: buildx
