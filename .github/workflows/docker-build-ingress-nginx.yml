@@ -14,13 +14,13 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     outputs:
-      cachehit: ${{ steps.cache.outputs.cache-hit }}
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
       env-tag: ${{ env.tag }}
     steps:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          echo "tag=v1.5.2" >> $GITHUB_ENV
+          echo "tag=v1.6.4" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
@@ -38,8 +38,6 @@ jobs:
 
       - name: Setup build base
         run: |
-          curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-          sudo sh /tmp/get-docker.sh
           sudo apt install golang -y
 
       - name: Set up QEMU
@@ -54,7 +52,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: "kubernetes/ingress-nginx"
-          ref: 'controller-${{ needs.checks.outputs.envtag }}'
+          ref: 'controller-${{ needs.checks.outputs.env-tag }}'
           path: 'ingress-nginx-git'
 
       - name: Set up Docker Buildx
@@ -73,7 +71,7 @@ jobs:
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd images/nginx
           sudo apt update && sudo apt install build-essential -y
-          REGISTRY=quay.io/unixfox TAG=${{ needs.checks.outputs.envtag }} PLATFORMS=linux/arm64 make push
+          REGISTRY=quay.io/unixfox TAG=${{ needs.checks.outputs.env-tag }} PLATFORMS=linux/arm64 make push
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
@@ -83,7 +81,7 @@ jobs:
         run: |
           docker login quay.io --username ${USERNAME} --password ${DOCKER_TOKEN}
           cd ingress-nginx-git
-          REGISTRY=quay.io/unixfox TAG=${{ needs.checks.outputs.envtag }} BASE_IMAGE=quay.io/unixfox/nginx:${{ needs.checks.outputs.envtag }} PLATFORMS="arm64" BUILDX_PLATFORMS=linux/arm64 make release
+          REGISTRY=quay.io/unixfox TAG=${{ needs.checks.outputs.env-tag }} BASE_IMAGE=quay.io/unixfox/nginx:${{ needs.checks.outputs.env-tag }} PLATFORMS="arm64" BUILDX_PLATFORMS=linux/arm64 make release
         env:
           REGISTRY: quay.io/unixfox
           DOCKER_TOKEN: ${{ secrets.QUAY_PASSWORD }}
