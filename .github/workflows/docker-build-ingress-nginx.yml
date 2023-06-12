@@ -32,7 +32,7 @@ jobs:
   build:
 
     needs: checks
-    runs-on: buildjet-4vcpu-ubuntu-2204-arm
+    runs-on: buildjet-32vcpu-ubuntu-2204-arm
     if: needs.checks.outputs.cache-hit != 'true'
     steps:
 
