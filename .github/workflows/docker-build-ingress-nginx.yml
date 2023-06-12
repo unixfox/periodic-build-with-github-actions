@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       cachehit: ${{ steps.cache.outputs.cache-hit }}
-      env-tag: ${{ steps.cache.outputs.cache-hit }}
+      env-tag: ${{ env.tag }}
     steps:
       - name: Get latest tag
         id: get-latest-tag
