@@ -1,0 +1,78 @@
+name: Docker build litefs patched docker image
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+  push:
+    paths:
+      - '.github/workflows/docker-build-litefs-patched.yml'
+      - 'litefs-patched/**'
+
+jobs:
+
+  build:
+
+    runs-on: ${{ 'ubuntu-latest' }}
+
+    steps:      
+      - name: Get latest tag
+        id: get-latest-tag
+        run: |
+          echo "tag=$(git ls-remote --refs --tags https://github.com/superfly/litefs.git|cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1)" >> $GITHUB_ENV
+        shell: bash
+
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: litefs
+          key: ${{ runner.os }}-v2-${{ env.tag }}
+
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+          
+      - name: Check Out Repo mailcow/mailcow-dockerized
+        uses: actions/checkout@v3
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: "superfly/litefs"
+          ref: '${{ env.tag }}'
+          path: 'litefs-git'
+
+      - name: patch litefs main repo
+        run: |
+          cd litefs-git
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+          git am ../litefs-patched/*.patch
+      
+      - name: Login to Quay.io
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+
+      - name: Set up build timestamp
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Build and push patched litefs
+        if: steps.cache.outputs.cache-hit != 'true'
+        id: docker_build_new_custom
+        uses: docker/build-push-action@v3
+        with:
+          context: ./litefs-git
+          file: ./litefs-git/Dockerfile
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          tags: quay.io/unixfox/litefs-patched:latest, quay.io/unixfox/litefs-patched:${{ env.tag }}-${{ env.timestamp }}
+          build-args: LITEFS_VERSION=${{ env.tag }}

@@ -1,0 +1,92 @@
+From 9f08b3758fd4a38e804c5f2da2029394ab315c8a Mon Sep 17 00:00:00 2001
+From: Emilien Devos <4016501+unixfox@users.noreply.github.com>
+Date: Sun, 30 Jul 2023 20:38:10 +0200
+Subject: [PATCH 1/1] force all requests to master + get method also
+
+---
+ http/proxy_server.go | 23 +++++++++++------------
+ 1 file changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/http/proxy_server.go b/http/proxy_server.go
+index 7d6a3ff..a31de70 100644
+--- a/http/proxy_server.go
++++ b/http/proxy_server.go
+@@ -163,13 +163,11 @@ func (s *ProxyServer) serveHTTP(w http.ResponseWriter, r *http.Request) {
+ 	// If request matches any passthrough regexes, send directly to target.
+ 	if s.isPassthrough(r) {
+ 		s.logf("proxy: %s %s: matches passthrough expression, proxying to target", r.Method, r.URL.Path)
+-		s.proxyToTarget(w, r, true)
++		s.proxyToTarget(w, r, true, s.Target)
+ 		return
+ 	}
+ 
+ 	switch r.Method {
+-	case http.MethodGet:
+-		s.serveRead(w, r)
+ 	case http.MethodHead:
+ 		s.serveRead(w, r)
+ 	default:
+@@ -187,7 +185,7 @@ func (s *ProxyServer) serveRead(w http.ResponseWriter, r *http.Request) {
+ 	// No TXID or we couldn't parse it. Just send to the target.
+ 	if txid == 0 {
+ 		s.logf("proxy: %s %s: no client txid, proxying to target", r.Method, r.URL.Path)
+-		s.proxyToTarget(w, r, false)
++		s.proxyToTarget(w, r, false, s.Target)
+ 		return
+ 	}
+ 
+@@ -196,7 +194,7 @@ func (s *ProxyServer) serveRead(w http.ResponseWriter, r *http.Request) {
+ 	db := s.store.DB(s.DBName)
+ 	if db == nil {
+ 		s.logf("proxy: %s %s: no database %q, proxying to target", r.Method, r.URL.Path, s.DBName)
+-		s.proxyToTarget(w, r, false)
++		s.proxyToTarget(w, r, false, s.Target)
+ 		return
+ 	}
+ 
+@@ -225,7 +223,7 @@ LOOP:
+ 	}
+ 
+ 	// Send request to the target once we've caught up to the last write seen.
+-	s.proxyToTarget(w, r, false)
++	s.proxyToTarget(w, r, false, s.Target)
+ }
+ 
+ func (s *ProxyServer) serveNonRead(w http.ResponseWriter, r *http.Request) {
+@@ -234,7 +232,7 @@ func (s *ProxyServer) serveNonRead(w http.ResponseWriter, r *http.Request) {
+ 	// If this is the primary, send the request to the target.
+ 	if isPrimary {
+ 		s.logf("proxy: %s %s: node is primary, proxying to target", r.Method, r.URL.Path)
+-		s.proxyToTarget(w, r, false)
++		s.proxyToTarget(w, r, false, s.Target)
+ 		return
+ 	}
+ 
+@@ -242,18 +240,19 @@ func (s *ProxyServer) serveNonRead(w http.ResponseWriter, r *http.Request) {
+ 	// go ahead and send the request
+ 	if info == nil {
+ 		s.logf("proxy: %s %s: no primary available, proxying to target", r.Method, r.URL.Path)
+-		s.proxyToTarget(w, r, false)
++		s.proxyToTarget(w, r, false, s.Target)
+ 		return
+ 	}
+ 
+-	// If this is a replica, then we'll redirect the request to the primary.
+-	w.Header().Set("fly-replay", "instance="+info.Hostname)
++	_, targetPort, _ := net.SplitHostPort(s.Target)
++
++	s.proxyToTarget(w, r, false, info.Hostname+targetPort)
+ }
+ 
+-func (s *ProxyServer) proxyToTarget(w http.ResponseWriter, r *http.Request, passthrough bool) {
++func (s *ProxyServer) proxyToTarget(w http.ResponseWriter, r *http.Request, passthrough bool, host string) {
+ 	// Update request URL to target server.
+ 	r.URL.Scheme = "http"
+-	r.URL.Host = s.Target
++	r.URL.Host = host
+ 
+ 	resp, err := s.HTTPTransport.RoundTrip(r)
+ 	if err != nil {
+-- 
+2.41.0
+
