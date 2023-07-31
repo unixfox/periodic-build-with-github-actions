@@ -31,7 +31,7 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v3
           
-      - name: Check Out Repo mailcow/mailcow-dockerized
+      - name: Check Out Repo superfly/litefs
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
