@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: litefs
-          key: ${{ runner.os }}-v3-${{ env.tag }}
+          key: ${{ runner.os }}-v4-${{ env.tag }}
 
       - name: Check Out Repo
         uses: actions/checkout@v3
@@ -73,7 +73,7 @@ jobs:
         with:
           context: ./litefs-git
           file: ./litefs-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
           push: true
           tags: quay.io/unixfox/litefs-patched:latest, quay.io/unixfox/litefs-patched:${{ env.tag }}-${{ env.timestamp }}
           build-args: LITEFS_VERSION=${{ env.tag }}
