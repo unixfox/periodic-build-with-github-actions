@@ -75,7 +75,7 @@ index 7d6a3ff..a31de70 100644
 -	w.Header().Set("fly-replay", "instance="+info.Hostname)
 +	_, targetPort, _ := net.SplitHostPort(s.Target)
 +
-+	s.proxyToTarget(w, r, false, info.Hostname+targetPort)
++	s.proxyToTarget(w, r, false, info.Hostname+":"+targetPort)
  }
  
 -func (s *ProxyServer) proxyToTarget(w http.ResponseWriter, r *http.Request, passthrough bool) {

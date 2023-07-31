@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: litefs
-          key: ${{ runner.os }}-v2-${{ env.tag }}
+          key: ${{ runner.os }}-v3-${{ env.tag }}
 
       - name: Check Out Repo
         uses: actions/checkout@v3
