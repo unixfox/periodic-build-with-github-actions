@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: 'ubuntu-latest'
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest commit hash
@@ -26,13 +26,13 @@ jobs:
         id: cache
         with:
           path: nitter-tokens
-          key: ${{ runner.os }}-v1-${{ env.commit }}
+          key: ${{ runner.os }}-${{ env.commit }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          platforms: all
+          platforms: arm64
 
       - name: Check Out Repo zedeus/nitter
         uses: actions/checkout@v3
