@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: 'ubuntu-latest'
+    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-8vcpu-ubuntu-2204" ]') || 'ubuntu-latest' }}
 
     steps:
       - name: Get latest tag

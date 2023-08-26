@@ -25,8 +25,8 @@ WORKDIR /src/njs-nginx-module
 RUN curl -L https://github.com/nginx/njs/archive/refs/tags/0.8.0.tar.gz | tar --strip-components=1 -xz
 
 WORKDIR /tmp/nginx
-RUN ./configure --add-dynamic-module=/src/njs-nginx-module/nginx && \
-    make
+RUN ./configure --with-compat --add-dynamic-module=/src/njs-nginx-module/nginx && \
+    make modules
 
 FROM registry.k8s.io/ingress-nginx/controller:${INGRESS_NGINX_CONTROLLER_VERSION}
 
