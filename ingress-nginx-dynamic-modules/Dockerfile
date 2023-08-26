@@ -18,13 +18,13 @@ RUN apk add \
 RUN NGINX_VERSION=$(nginx -V 2>&1 |sed -n -e 's/nginx version: //p' |cut -d'/' -f2); \
     curl -L "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -C /tmp/nginx --strip-components=1 -xz
 
-WORKDIR /src/echo-nginx-module
-RUN curl -L https://github.com/openresty/echo-nginx-module/archive/refs/tags/v0.63.tar.gz | tar --strip-components=1 -xz
+WORKDIR /src/njs-nginx-module
+RUN curl -L https://github.com/nginx/njs/archive/refs/tags/0.8.0.tar.gz | tar --strip-components=1 -xz
 
 WORKDIR /tmp/nginx
-RUN ./configure --with-compat --add-dynamic-module=/src/echo-nginx-module && \
-    make modules
+RUN ./configure --add-dynamic-module=/src/njs-nginx-module && \
+    make
 
 FROM registry.k8s.io/ingress-nginx/controller:${INGRESS_NGINX_CONTROLLER_VERSION}
 
-COPY --from=build /tmp/nginx/objs/ngx_http_echo_module.so /etc/nginx/modules/
+COPY --from=build /tmp/nginx/objs/ngx_http_js_module.so.so /etc/nginx/modules/
