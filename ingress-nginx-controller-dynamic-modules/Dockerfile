@@ -30,4 +30,4 @@ RUN ./configure --add-dynamic-module=/src/njs-nginx-module/nginx && \
 
 FROM registry.k8s.io/ingress-nginx/controller:${INGRESS_NGINX_CONTROLLER_VERSION}
 
-COPY --from=build /tmp/nginx/objs/ngx_http_js_module.so.so /etc/nginx/modules/
+COPY --from=build /tmp/nginx/objs/ngx_http_js_module.so /usr/local/nginx/modules
