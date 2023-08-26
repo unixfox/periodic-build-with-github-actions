@@ -13,7 +13,8 @@ RUN apk add \
         g++ \
         make \
         pcre-dev \
-        zlib-dev
+        zlib-dev \
+        openssl
 
 RUN NGINX_VERSION=$(nginx -V 2>&1 |sed -n -e 's/nginx version: //p' |cut -d'/' -f2); \
     curl -L "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -C /tmp/nginx --strip-components=1 -xz
