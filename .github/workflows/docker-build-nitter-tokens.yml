@@ -19,7 +19,7 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/zedeus/nitter.git |grep guest_accounts | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/unixfox/nitter.git |grep guest_accounts | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
@@ -34,11 +34,11 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Check Out Repo zedeus/nitter
+      - name: Check Out Repo unixfox/nitter
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
         with:
-          repository: "zedeus/nitter"
+          repository: "unixfox/nitter"
           ref: 'guest_accounts'
           path: 'nitter-tokens-git'
           
