@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM debian:12-slim
 
 ARG OPENSSL_VERSION=openssl-3.2
 ARG NGINX_VERSION=release-1.25.5
@@ -27,4 +27,4 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 EXPOSE 443 80
 
-CMD ./nginx/objs/nginx -p /build -g 'daemon off;' -c /etc/nginx/nginx.conf
+CMD /usr/local/nginx/sbin/nginx -g 'daemon off;' -c /etc/nginx/nginx.conf
