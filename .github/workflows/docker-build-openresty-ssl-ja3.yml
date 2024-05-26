@@ -43,7 +43,7 @@ jobs:
         with:
           repository: "fooinha/nginx-ssl-ja3"
           ref: 'master'
-          path: 'nginx-ssl-fingerprint-git'
+          path: 'openresty-ssl-ja3-git'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
