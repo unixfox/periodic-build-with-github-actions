@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - '.github/workflows/docker-build-logrotate.yml'
+      - 'logrotate/**'
 
 jobs:
 
@@ -69,7 +70,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ./logrotate-git
-          file: ./logrotate-git/Dockerfile
+          file: ./logrotate/Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: true
           tags: quay.io/unixfox/logrotate:latest, quay.io/unixfox/logrotate:build-${{ env.timestamp }}
