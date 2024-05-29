@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: logrotate
-          key: ${{ runner.os }}-v1-${{ env.commit }}
+          key: ${{ runner.os }}-v2-${{ env.commit }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
