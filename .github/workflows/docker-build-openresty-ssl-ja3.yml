@@ -19,7 +19,7 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/fooinha/openresty-ssl-ja3.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/fooinha/nginx-ssl-ja3.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v2
@@ -71,6 +71,6 @@ jobs:
         with:
           context: ./openresty-ssl-ja3-git
           file: ./openresty-ssl-ja3/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64/v8, linux/amd64
           push: true
           tags: quay.io/unixfox/openresty-ssl-ja3:openssl111w-nginx1253-latest, quay.io/unixfox/openresty-ssl-ja3:openssl111w-nginx1253-${{ env.timestamp }}
