@@ -2,12 +2,12 @@
 - cert-manager-webhook-powerdns: https://quay.io/unixfox/cert-manager-webhook-powerdns
 - clustersecret: https://quay.io/unixfox/clustersecret
 - kwatch: https://quay.io/unixfox/kwatch
-- mailcow: https://quay.io/mailcowarm64
 - ingress-nginx: https://quay.io/unixfox/nginx
 - samba: https://quay.io/unixfox/samba
 - stash: https://quay.io/repository/unixfox/stash
 - stolon: https://quay.io/repository/unixfox/stolon
 - tor-single-hop: https://quay.io/unixfox/tor-single-hop
+- openresty-ssl-ja3: https://quay.io/unixfox/openresty-ssl-ja3
 
 # frozen/inactive
 Broken, need to be fixed.
@@ -26,6 +26,7 @@ Don't plan to maintain anymore.
 - nitter: https://quay.io/unixfox/nitter
 - onlyoffice: https://quay.io/unixfox/onlyoffice
 - pgbouncer: https://quay.io/unixfox/pgbouncer
+- mailcow: https://quay.io/mailcowarm64
 
 # just for commit
-2
+3
