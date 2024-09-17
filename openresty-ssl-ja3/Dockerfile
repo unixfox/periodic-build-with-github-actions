@@ -56,7 +56,7 @@ ARG RESTY_CONFIG_OPTIONS_MORE=""
 ARG RESTY_LUAJIT_OPTIONS="--with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT'"
 ARG RESTY_PCRE_OPTIONS="--with-pcre-jit"
 
-ARG RESTY_ADD_PACKAGE_BUILDDEPS=""
+ARG RESTY_ADD_PACKAGE_BUILDDEPS="perl"
 ARG RESTY_ADD_PACKAGE_RUNDEPS=""
 ARG RESTY_EVAL_PRE_CONFIGURE=""
 ARG RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE=""
@@ -95,7 +95,6 @@ RUN apk add --no-cache --virtual .build-deps \
         build-base \
         coreutils \
         curl \
-        perl \
         gd-dev \
         geoip-dev \
         libxslt-dev \
