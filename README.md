@@ -1,7 +1,5 @@
 # active
 - cert-manager-webhook-powerdns: https://quay.io/unixfox/cert-manager-webhook-powerdns
-- clustersecret: https://quay.io/unixfox/clustersecret
-- kwatch: https://quay.io/unixfox/kwatch
 - ingress-nginx: https://quay.io/unixfox/nginx
 - samba: https://quay.io/unixfox/samba
 - stash: https://quay.io/repository/unixfox/stash
@@ -26,6 +24,8 @@ Don't plan to maintain anymore.
 - pgbouncer: https://quay.io/unixfox/pgbouncer
 - mailcow: https://quay.io/mailcowarm64
 - huginn: https://quay.io/unixfox/huginn-single-process
+- clustersecret: https://quay.io/unixfox/clustersecret
+- kwatch: https://quay.io/unixfox/kwatch
 
 # just for commit
 4
