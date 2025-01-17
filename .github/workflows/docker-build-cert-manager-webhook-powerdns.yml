@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-4vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Get latest commit hash
@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: cert-manager-webhook-powerdns
-          key: ${{ runner.os }}-${{ env.commit }}
+          key: ${{ runner.os }}-v1-${{ env.commit }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
