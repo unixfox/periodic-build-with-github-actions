@@ -12,8 +12,6 @@
 # frozen/inactive
 Broken, need to be fixed.
 
-- huginn: https://quay.io/unixfox/huginn-single-process
-
 # archived
 Don't plan to maintain anymore.
 
@@ -27,6 +25,7 @@ Don't plan to maintain anymore.
 - onlyoffice: https://quay.io/unixfox/onlyoffice
 - pgbouncer: https://quay.io/unixfox/pgbouncer
 - mailcow: https://quay.io/mailcowarm64
+- huginn: https://quay.io/unixfox/huginn-single-process
 
 # just for commit
 4
