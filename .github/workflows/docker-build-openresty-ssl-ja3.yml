@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ (github.event_name == 'push') && fromJSON('[ "buildjet-16vcpu-ubuntu-2204-arm" ]') || 'ubuntu-latest' }}
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Get latest commit hash
@@ -26,13 +26,13 @@ jobs:
         id: cache
         with:
           path: openresty-ssl-ja3
-          key: ${{ runner.os }}-v4-${{ env.commit }}
+          key: ${{ runner.os }}-v5-${{ env.commit }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          platforms: all
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v2
+      #   if: steps.cache.outputs.cache-hit != 'true'
+      #   with:
+      #     platforms: all
 
       - name: Check Out Repo
         uses: actions/checkout@v3
