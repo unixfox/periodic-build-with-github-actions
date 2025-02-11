@@ -22,7 +22,7 @@ jobs:
           echo "commit=$(git ls-remote https://github.com/keel-hq/keel.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         id: cache
         with:
           path: keel
