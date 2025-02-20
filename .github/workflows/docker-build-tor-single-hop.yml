@@ -19,7 +19,7 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/lncm/docker-tor.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/m0wer/docker-tor.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v4
@@ -87,7 +87,7 @@ jobs:
       - name: Get latest commit hash
         id: get-latest-commit
         run: |
-          echo "commit=$(git ls-remote https://github.com/lncm/docker-tor.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "commit=$(git ls-remote https://github.com/lncm/m0wer/docker-tor.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
         shell: bash
 
       - uses: actions/cache@v4
