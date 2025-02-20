@@ -1,4 +1,4 @@
-FROM ghcr.io/pufferffish/wireproxy:latest as build
+FROM ghcr.io/whyvl/wireproxy:latest as build
 FROM debian:latest
 RUN apt-get update && apt-get install -y --no-install-recommends \
   && apt-get install -y jq curl \
