@@ -13,7 +13,7 @@ jobs:
 
   build:
 
-    runs-on: ${{ 'ubuntu-latest' }}
+    runs-on: ubuntu-24.04-arm
 
     steps:      
       - name: Get latest commit
@@ -25,8 +25,13 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          path: litefs
+          path: nitter
           key: ${{ runner.os }}-v1-${{ env.commit }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
 
       - name: Check Out Repo
         uses: actions/checkout@v3
@@ -73,6 +78,6 @@ jobs:
         with:
           context: ./nitter-git
           file: ./nitter/Dockerfile.arm64
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/arm64/v8
           push: true
           tags: quay.io/unixfox/nitter-patched:latest, quay.io/unixfox/nitter-patched:${{ env.tag }}-${{ env.timestamp }}
