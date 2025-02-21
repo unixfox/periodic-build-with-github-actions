@@ -75,4 +75,4 @@ jobs:
           file: ./nitter/Dockerfile.arm64
           platforms: linux/arm64/v8
           push: true
-          tags: quay.io/unixfox/nitter-patched:latest, quay.io/unixfox/nitter-patched:${{ env.tag }}-${{ env.timestamp }}
+          tags: quay.io/unixfox/nitter-patched:latest, quay.io/unixfox/nitter-patched:${{ env.commit }}-${{ env.timestamp }}
