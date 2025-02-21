@@ -28,11 +28,6 @@ jobs:
           path: nitter
           key: ${{ runner.os }}-v1-${{ env.commit }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: all
-
       - name: Check Out Repo
         uses: actions/checkout@v3
           
