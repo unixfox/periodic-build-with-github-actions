@@ -36,10 +36,10 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         with:
           repository: "zedeus/nitter"
-          ref: 'main'
+          ref: 'master'
           path: 'nitter-git'
 
-      - name: patch nitter main repo
+      - name: patch nitter master repo
         if: steps.cache.outputs.cache-hit != 'true' 
         run: |
           cd nitter-git
