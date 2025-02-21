@@ -1,0 +1,482 @@
+From f08398bb801272a7fd5990a7a8a7211824f9acfa Mon Sep 17 00:00:00 2001
+From: Emilien <4016501+unixfox@users.noreply.github.com>
+Date: Fri, 21 Feb 2025 22:23:39 +0100
+Subject: [PATCH 1/1] proxy pictures support
+
+---
+ nitter.example.conf           |  1 +
+ public/js/proxyneededcheck.js | 17 ++++++++++++++++
+ src/parser.nim                |  2 +-
+ src/prefs_impl.nim            |  3 +++
+ src/routes/list.nim           |  2 +-
+ src/routes/router_utils.nim   |  2 +-
+ src/routes/status.nim         |  2 +-
+ src/utils.nim                 | 38 ++++++++++++++++++++++++++---------
+ src/views/general.nim         | 11 ++++++----
+ src/views/list.nim            |  6 +++---
+ src/views/profile.nim         | 16 +++++++--------
+ src/views/renderutils.nim     |  8 ++++----
+ src/views/rss.nimf            | 12 +++++------
+ src/views/timeline.nim        |  2 +-
+ src/views/tweet.nim           | 26 ++++++++++++------------
+ 15 files changed, 95 insertions(+), 53 deletions(-)
+ create mode 100644 public/js/proxyneededcheck.js
+
+diff --git a/nitter.example.conf b/nitter.example.conf
+index dd2faef..8db364f 100644
+--- a/nitter.example.conf
++++ b/nitter.example.conf
+@@ -35,5 +35,6 @@ replaceTwitter = "nitter.net"
+ replaceYouTube = "piped.video"
+ replaceReddit = "teddit.net"
+ proxyVideos = true
++proxyPics = true
+ hlsPlayback = false
+ infiniteScroll = false
+diff --git a/public/js/proxyneededcheck.js b/public/js/proxyneededcheck.js
+new file mode 100644
+index 0000000..8cc5010
+--- /dev/null
++++ b/public/js/proxyneededcheck.js
+@@ -0,0 +1,17 @@
++// This check if the browser can't load pbs.twimg.com domain.
++// If it can't then we force proxy on videos and pictures.
++if (!document.cookie.includes("proxyPics") && !document.cookie.includes("proxyVideos")) {
++    var img = new Image();
++    img.onerror = function () {
++        var expires = (new Date(Date.now() + 360 * 24 * 60 * 60 * 1000)).toUTCString();
++        if (location.protocol === 'https:') {
++            document.cookie = "proxyPics=on; path=/; Secure; expires=" + expires;
++            document.cookie = "proxyVideos=on; path=/; Secure; expires=" + expires;
++        } else {
++            document.cookie = "proxyPics=on; path=/; expires=" + expires;
++            document.cookie = "proxyVideos=on; path=/; expires=" + expires;
++        }
++        location.reload();
++    };
++    img.src = 'https://pbs.twimg.com/favicon.ico';
++}
+diff --git a/src/parser.nim b/src/parser.nim
+index 6e0be73..fb2272b 100644
+--- a/src/parser.nim
++++ b/src/parser.nim
+@@ -198,7 +198,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
+ 
+   if kind in {promoImageConvo, promoImageApp, imageDirectMessage} and
+      result.url.len == 0 or result.url.startsWith("card://"):
+-    result.url = getPicUrl(result.image)
++    result.url = getPicUrl(result.image, true)
+ 
+ proc parseTweet(js: JsonNode; jsCard: JsonNode = newJNull()): Tweet =
+   if js.isNull: return
+diff --git a/src/prefs_impl.nim b/src/prefs_impl.nim
+index 8e2ac8f..a647d1f 100644
+--- a/src/prefs_impl.nim
++++ b/src/prefs_impl.nim
+@@ -88,6 +88,9 @@ genPrefs:
+     proxyVideos(checkbox, true):
+       "Proxy video streaming through the server (might be slow)"
+ 
++    proxyPics(checkbox, true):
++      "Proxy pictures through the server (might be slow)"
++
+     muteVideos(checkbox, false):
+       "Mute videos by default"
+ 
+diff --git a/src/routes/list.nim b/src/routes/list.nim
+index ac3e97e..d0d1fbe 100644
+--- a/src/routes/list.nim
++++ b/src/routes/list.nim
+@@ -12,7 +12,7 @@ template respList*(list, timeline, title, vnode: typed) =
+     resp Http404, showError(&"""List "{@"id"}" not found""", cfg)
+ 
+   let
+-    html = renderList(vnode, timeline.query, list)
++    html = renderList(vnode, timeline.query, list, prefs.proxyPics)
+     rss = &"""/i/lists/{@"id"}/rss"""
+ 
+   resp renderMain(html, request, cfg, prefs, titleText=title, rss=rss, banner=list.banner)
+diff --git a/src/routes/router_utils.nim b/src/routes/router_utils.nim
+index a071a0d..5a11b13 100644
+--- a/src/routes/router_utils.nim
++++ b/src/routes/router_utils.nim
+@@ -9,7 +9,7 @@ export utils, prefs, types, uri
+ template savePref*(pref, value: string; req: Request; expire=false) =
+   if not expire or pref in cookies(req):
+     setCookie(pref, value, daysForward(when expire: -10 else: 360),
+-              httpOnly=true, secure=cfg.useHttps, sameSite=None)
++              httpOnly=false, secure=cfg.useHttps, sameSite=None)
+ 
+ template cookiePrefs*(): untyped {.dirty.} =
+   getPrefs(cookies(request))
+diff --git a/src/routes/status.nim b/src/routes/status.nim
+index 7e89220..91caad6 100644
+--- a/src/routes/status.nim
++++ b/src/routes/status.nim
+@@ -54,7 +54,7 @@ proc createStatusRouter*(cfg: Config) =
+         video = getVideoEmbed(cfg, conv.tweet.id)
+       elif conv.tweet.gif.isSome():
+         images = @[get(conv.tweet.gif).thumb]
+-        video = getPicUrl(get(conv.tweet.gif).url)
++        video = getPicUrl(get(conv.tweet.gif).url, prefs.proxyPics)
+       elif conv.tweet.card.isSome():
+         let card = conv.tweet.card.get()
+         if card.image.len > 0:
+diff --git a/src/utils.nim b/src/utils.nim
+index cdb6f3a..5a831c5 100644
+--- a/src/utils.nim
++++ b/src/utils.nim
+@@ -46,19 +46,37 @@ proc getVidUrl*(link: string): string =
+   else:
+     &"{cdnUrl}/video/{sig}/{encodeUrl(link)}"
+ 
+-proc getPicUrl*(link: string): string =
+-  let sig = getHmac(link)
+-  if base64Media:
+-    &"{cdnUrl}/pic/enc/{sig}/{encode(link, safe=true)}"
++proc getPicUrl*(link: string, proxyPics: bool): string =
++  if not proxyPics:
++    var url = link
++    if "twimg.com" notin url:
++      url.insert(twimg)
++    if not url.startsWith(https):
++      url.insert(https)
++    & "{url}"
+   else:
+-    &"{cdnUrl}/pic/{sig}/{encodeUrl(link)}"
++    let sig = getHmac(link)
++    if base64Media:
++      &"{cdnUrl}/pic/enc/{sig}/{encode(link, safe=true)}"
++    else:
++      &"{cdnUrl}/pic/{sig}/{encodeUrl(link)}"
++  
+ 
+-proc getOrigPicUrl*(link: string): string =
+-  let sig = getHmac(link)
+-  if base64Media:
+-    &"{cdnUrl}/pic/orig/enc/{sig}/{encode(link, safe=true)}"
++proc getOrigPicUrl*(link: string, proxyPics: bool): string =
++  if not proxyPics:
++    var url = link
++    if "twimg.com" notin url:
++      url.insert(twimg)
++    if not url.startsWith(https):
++      url.insert(https)
++    url.add("?name=orig")
++    & "{url}"
+   else:
+-    &"{cdnUrl}/pic/orig/{sig}/{encodeUrl(link)}"
++    let sig = getHmac(link)
++    if base64Media:
++      &"{cdnUrl}/pic/orig/enc/{sig}/{encode(link, safe=true)}"
++    else:
++      &"{cdnUrl}/pic/orig/{sig}/{encodeUrl(link)}"
+ 
+ proc filterParams*(params: Table): seq[(string, string)] =
+   for p in params.pairs():
+diff --git a/src/views/general.nim b/src/views/general.nim
+index 69ba668..f08b478 100644
+--- a/src/views/general.nim
++++ b/src/views/general.nim
+@@ -66,6 +66,9 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+     link(rel="search", type="application/opensearchdescription+xml", title=cfg.title,
+                             href=opensearchUrl)
+ 
++    if not prefs.proxyPics and not prefs.proxyVideos:
++      script(src="/js/proxyneededcheck.js")
++
+     if canonical.len > 0:
+       link(rel="canonical", href=canonical)
+ 
+@@ -94,15 +97,15 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+     meta(property="og:locale", content="en_US")
+ 
+     if banner.len > 0 and not banner.startsWith('#'):
+-      let bannerUrl = getPicUrl(banner)
++      let bannerUrl = getPicUrl(banner, prefs.proxyPics)
+       link(rel="preload", type="image/png", href=bannerUrl, `as`="image")
+ 
+     for url in images:
+-      let preloadUrl = if "400x400" in url: getPicUrl(url)
+-                       else: getSmallPic(url)
++      let preloadUrl = if "400x400" in url: getPicUrl(url, prefs.proxyPics)
++                       else: getSmallPic(url, prefs.proxyPics)
+       link(rel="preload", type="image/png", href=preloadUrl, `as`="image")
+ 
+-      let image = getPicUrl(url)
++      let image = getPicUrl(url, prefs.proxyPics)
+       meta(property="og:image", content=image)
+       meta(property="twitter:image:src", content=image)
+ 
+diff --git a/src/views/list.nim b/src/views/list.nim
+index e5639d1..bffbea2 100644
+--- a/src/views/list.nim
++++ b/src/views/list.nim
+@@ -12,12 +12,12 @@ proc renderListTabs*(query: Query; path: string): VNode =
+     li(class=query.getTabClass(userList)):
+       a(href=(path & "/members")): text "Members"
+ 
+-proc renderList*(body: VNode; query: Query; list: List): VNode =
++proc renderList*(body: VNode; query: Query; list: List; proxyPics: bool): VNode =
+   buildHtml(tdiv(class="timeline-container")):
+     if list.banner.len > 0:
+       tdiv(class="timeline-banner"):
+-        a(href=getPicUrl(list.banner), target="_blank"):
+-          genImg(list.banner)
++        a(href=getPicUrl(list.banner, proxyPics), target="_blank"):
++          genImg(list.banner, proxyPics)
+ 
+     tdiv(class="timeline-header"):
+       text &"\"{list.name}\" by @{list.username}"
+diff --git a/src/views/profile.nim b/src/views/profile.nim
+index 2b2e410..3c187e4 100644
+--- a/src/views/profile.nim
++++ b/src/views/profile.nim
+@@ -16,13 +16,13 @@ proc renderUserCard*(user: User; prefs: Prefs): VNode =
+   buildHtml(tdiv(class="profile-card")):
+     tdiv(class="profile-card-info"):
+       let
+-        url = getPicUrl(user.getUserPic())
++        url = getPicUrl(user.getUserPic(), prefs.proxyPics)
+         size =
+           if prefs.autoplayGifs and user.userPic.endsWith("gif"): ""
+           else: "_400x400"
+ 
+       a(class="profile-card-avatar", href=url, target="_blank"):
+-        genImg(user.getUserPic(size))
++        genImg(user.getUserPic(size), prefs.proxyPics)
+ 
+       tdiv(class="profile-card-tabs-name"):
+         linkUser(user, class="profile-card-fullname")
+@@ -63,7 +63,7 @@ proc renderUserCard*(user: User; prefs: Prefs): VNode =
+           renderStat(user.followers, "followers")
+           renderStat(user.likes, "likes")
+ 
+-proc renderPhotoRail(profile: Profile): VNode =
++proc renderPhotoRail(profile: Profile; proxyPics: bool): VNode =
+   let count = insertSep($profile.user.media, ',')
+   buildHtml(tdiv(class="photo-rail-card")):
+     tdiv(class="photo-rail-header"):
+@@ -82,16 +82,16 @@ proc renderPhotoRail(profile: Profile): VNode =
+           if "format" in photo.url or "placeholder" in photo.url: ""
+           else: ":thumb"
+         a(href=(&"/{profile.user.username}/status/{photo.tweetId}#m")):
+-          genImg(photo.url & photoSuffix)
++          genImg(photo.url & photoSuffix, proxyPics)
+ 
+-proc renderBanner(banner: string): VNode =
++proc renderBanner(banner: string; proxyPics: bool): VNode =
+   buildHtml():
+     if banner.len == 0:
+       a()
+     elif banner.startsWith('#'):
+       a(style={backgroundColor: banner})
+     else:
+-      a(href=getPicUrl(banner), target="_blank"): genImg(banner)
++      a(href=getPicUrl(banner, proxyPics), target="_blank"): genImg(banner, proxyPics)
+ 
+ proc renderProtected(username: string): VNode =
+   buildHtml(tdiv(class="timeline-container")):
+@@ -105,13 +105,13 @@ proc renderProfile*(profile: var Profile; prefs: Prefs; path: string): VNode =
+   buildHtml(tdiv(class="profile-tabs")):
+     if not prefs.hideBanner:
+       tdiv(class="profile-banner"):
+-        renderBanner(profile.user.banner)
++        renderBanner(profile.user.banner, prefs.proxyPics)
+ 
+     let sticky = if prefs.stickyProfile: " sticky" else: ""
+     tdiv(class=("profile-tab" & sticky)):
+       renderUserCard(profile.user, prefs)
+       if profile.photoRail.len > 0:
+-        renderPhotoRail(profile)
++        renderPhotoRail(profile, prefs.proxyPics)
+ 
+     if profile.user.protected:
+       renderProtected(profile.user.username)
+diff --git a/src/views/renderutils.nim b/src/views/renderutils.nim
+index 41ef8df..3124567 100644
+--- a/src/views/renderutils.nim
++++ b/src/views/renderutils.nim
+@@ -5,11 +5,11 @@ import ".."/[types, utils]
+ 
+ const smallWebp* = "?name=small&format=webp"
+ 
+-proc getSmallPic*(url: string): string =
++proc getSmallPic*(url: string; proxyPics: bool): string =
+   result = url
+   if "?" notin url and not url.endsWith("placeholder.png"):
+     result &= smallWebp
+-  result = getPicUrl(result)
++  result = getPicUrl(result, proxyPics)
+ 
+ proc icon*(icon: string; text=""; title=""; class=""; href=""): VNode =
+   var c = "icon-" & icon
+@@ -89,9 +89,9 @@ proc genDate*(pref, state: string): VNode =
+     input(name=pref, `type`="date", value=state)
+     icon "calendar"
+ 
+-proc genImg*(url: string; class=""): VNode =
++proc genImg*(url: string; proxyPics: bool; class="";): VNode =
+   buildHtml():
+-    img(src=getPicUrl(url), class=class, alt="", loading="lazy")
++    img(src=getPicUrl(url, proxyPics), class=class, alt="", loading="lazy")
+ 
+ proc getTabClass*(query: Query; tab: QueryKind): string =
+   if query.kind == tab: "tab-item active"
+diff --git a/src/views/rss.nimf b/src/views/rss.nimf
+index e29b070..9a06325 100644
+--- a/src/views/rss.nimf
++++ b/src/views/rss.nimf
+@@ -39,19 +39,19 @@ Twitter feed for: ${desc}. Generated by ${cfg.hostname}
+ #end if
+ #if tweet.photos.len > 0:
+ #  for photo in tweet.photos:
+-<img src="${getPicUrl(photo)}" style="max-width:250px;" />
++<img src="${getPicUrl(photo, false)}" style="max-width:250px;" />
+ #  end for
+ #elif tweet.video.isSome:
+-<img src="${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
++<img src="${getPicUrl(get(tweet.video).thumb, false)}" style="max-width:250px;" />
+ #elif tweet.gif.isSome:
+-#  let thumb = &"{getPicUrl(get(tweet.gif).thumb)}"
+-#  let url = &"{getPicUrl(get(tweet.gif).url)}"
++#  let thumb = &"{getPicUrl(get(tweet.gif).thumb, false)}"
++#  let url = &"{getPicUrl(get(tweet.gif).url, false)}"
+ <video poster="${thumb}" autoplay muted loop style="max-width:250px;">
+   <source src="${url}" type="video/mp4"></video>
+ #elif tweet.card.isSome:
+ #  let card = tweet.card.get()
+ #  if card.image.len > 0:
+-<img src="${getPicUrl(card.image)}" style="max-width:250px;" />
++<img src="${getPicUrl(card.image, false)}" style="max-width:250px;" />
+ #  end if
+ #end if
+ #end proc
+@@ -102,7 +102,7 @@ Twitter feed for: ${desc}. Generated by ${cfg.hostname}
+     <image>
+       <title>${title}</title>
+       <link>${urlPrefix}/${profile.user.username}</link>
+-      <url>${getPicUrl(profile.user.getUserPic(style="_400x400"))}</url>
++      <url>${getPicUrl(profile.user.getUserPic(style="_400x400"), false)}</url>
+       <width>128</width>
+       <height>128</height>
+     </image>
+diff --git a/src/views/timeline.nim b/src/views/timeline.nim
+index abeb6d3..23e5a84 100644
+--- a/src/views/timeline.nim
++++ b/src/views/timeline.nim
+@@ -61,7 +61,7 @@ proc renderUser(user: User; prefs: Prefs): VNode =
+     tdiv(class="tweet-body profile-result"):
+       tdiv(class="tweet-header"):
+         a(class="tweet-avatar", href=("/" & user.username)):
+-          genImg(user.getUserPic("_bigger"), class=prefs.getAvatarClass)
++          genImg(user.getUserPic("_bigger"), prefs.proxyPics, class=prefs.getAvatarClass)
+ 
+         tdiv(class="tweet-name-row"):
+           tdiv(class="fullname-and-username"):
+diff --git a/src/views/tweet.nim b/src/views/tweet.nim
+index 34dcd4c..6c7445d 100644
+--- a/src/views/tweet.nim
++++ b/src/views/tweet.nim
+@@ -10,7 +10,7 @@ import general
+ const doctype = "<!DOCTYPE html>\n"
+ 
+ proc renderMiniAvatar(user: User; prefs: Prefs): VNode =
+-  genImg(user.getUserPic("_mini"), class=(prefs.getAvatarClass & " mini"))
++  genImg(user.getUserPic("_mini"), prefs.proxyPics, class=(prefs.getAvatarClass & " mini"))
+ 
+ proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VNode =
+   buildHtml(tdiv):
+@@ -26,7 +26,7 @@ proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VN
+         var size = "_bigger"
+         if not prefs.autoplayGifs and tweet.user.userPic.endsWith("gif"):
+           size = "_400x400"
+-        genImg(tweet.user.getUserPic(size), class=prefs.getAvatarClass)
++        genImg(tweet.user.getUserPic(size), prefs.proxyPics, class=prefs.getAvatarClass)
+ 
+       tdiv(class="tweet-name-row"):
+         tdiv(class="fullname-and-username"):
+@@ -37,7 +37,7 @@ proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VN
+           a(href=getLink(tweet), title=tweet.getTime):
+             text tweet.getShortTime
+ 
+-proc renderAlbum(tweet: Tweet): VNode =
++proc renderAlbum(tweet: Tweet; proxyPics: bool): VNode =
+   let
+     groups = if tweet.photos.len < 3: @[tweet.photos]
+              else: tweet.photos.distribute(2)
+@@ -51,8 +51,8 @@ proc renderAlbum(tweet: Tweet): VNode =
+             let
+               named = "name=" in photo
+               small = if named: photo else: photo & smallWebp
+-            a(href=getOrigPicUrl(photo), class="still-image", target="_blank"):
+-              genImg(small)
++            a(href=getOrigPicUrl(photo, proxyPics), class="still-image", target="_blank"):
++              genImg(small, proxyPics)
+ 
+ proc isPlaybackEnabled(prefs: Prefs; playbackType: VideoType): bool =
+   case playbackType
+@@ -88,7 +88,7 @@ proc renderVideo*(video: Video; prefs: Prefs; path: string): VNode =
+   buildHtml(tdiv(class="attachments card")):
+     tdiv(class="gallery-video" & container):
+       tdiv(class="attachment video-container"):
+-        let thumb = getSmallPic(video.thumb)
++        let thumb = getSmallPic(video.thumb, prefs.proxyPics)
+         if not video.available:
+           img(src=thumb, loading="lazy")
+           renderVideoUnavailable(video)
+@@ -120,9 +120,9 @@ proc renderGif(gif: Gif; prefs: Prefs): VNode =
+   buildHtml(tdiv(class="attachments media-gif")):
+     tdiv(class="gallery-gif", style={maxHeight: "unset"}):
+       tdiv(class="attachment"):
+-        video(class="gif", poster=getSmallPic(gif.thumb), autoplay=prefs.autoplayGifs,
++        video(class="gif", poster=getSmallPic(gif.thumb, prefs.proxyPics), autoplay=prefs.autoplayGifs,
+               controls="", muted="", loop=""):
+-          source(src=getPicUrl(gif.url), `type`="video/mp4")
++          source(src=getPicUrl(gif.url, prefs.proxyPics), `type`="video/mp4")
+ 
+ proc renderPoll(poll: Poll): VNode =
+   buildHtml(tdiv(class="poll")):
+@@ -139,10 +139,10 @@ proc renderPoll(poll: Poll): VNode =
+     span(class="poll-info"):
+       text &"{insertSep($poll.votes, ',')} votes • {poll.status}"
+ 
+-proc renderCardImage(card: Card): VNode =
++proc renderCardImage(card: Card; proxyPics: bool): VNode =
+   buildHtml(tdiv(class="card-image-container")):
+     tdiv(class="card-image"):
+-      genImg(card.image)
++      genImg(card.image, proxyPics)
+       if card.kind == player:
+         tdiv(class="card-overlay"):
+           tdiv(class="overlay-circle"):
+@@ -170,7 +170,7 @@ proc renderCard(card: Card; prefs: Prefs; path: string): VNode =
+     else:
+       a(class="card-container", href=url):
+         if card.image.len > 0:
+-          renderCardImage(card)
++          renderCardImage(card, prefs.proxyPics)
+         tdiv(class="card-content-container"):
+           renderCardContent(card)
+ 
+@@ -212,7 +212,7 @@ proc renderMediaTags(tags: seq[User]): VNode =
+ proc renderQuoteMedia(quote: Tweet; prefs: Prefs; path: string): VNode =
+   buildHtml(tdiv(class="quote-media-container")):
+     if quote.photos.len > 0:
+-      renderAlbum(quote)
++      renderAlbum(quote, prefs.proxyPics)
+     elif quote.video.isSome:
+       renderVideo(quote.video.get(), prefs, path)
+     elif quote.gif.isSome:
+@@ -322,7 +322,7 @@ proc renderTweet*(tweet: Tweet; prefs: Prefs; path: string; class=""; index=0;
+         renderCard(tweet.card.get(), prefs, path)
+ 
+       if tweet.photos.len > 0:
+-        renderAlbum(tweet)
++        renderAlbum(tweet, prefs.proxyPics)
+       elif tweet.video.isSome:
+         renderVideo(tweet.video.get(), prefs, path)
+         views = tweet.video.get().views
+-- 
+2.48.0
+
