@@ -34,6 +34,10 @@ jobs:
       #   with:
       #     platforms: all
 
+      - name: Set number of cores
+        run: |
+          echo "NUMBER_OF_CORES=$(nproc)" >> $GITHUB_ENV
+
       - name: Check Out Repo openresty/docker-openresty
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
@@ -74,4 +78,6 @@ jobs:
           file: ./periodic-build/openresty-ssl-ja3/Dockerfile
           platforms: linux/arm64/v8
           push: true
+          build-args: |
+            RESTY_J=${{ env.NUMBER_OF_CORES }}
           tags: quay.io/unixfox/openresty-ssl-ja3:openssl3w-nginx1271-latest, quay.io/unixfox/openresty-ssl-ja3:openssl3w-nginx1271-${{ env.timestamp }}
