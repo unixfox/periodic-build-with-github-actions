@@ -66,6 +66,125 @@ unsigned char *append_uint16(unsigned char* dst, uint16_t n)
     return dst;
 }
 
+static inline
+unsigned char *append_uint32(unsigned char* dst, uint32_t n)
+{
+    if (n < 10) {
+        dst[0] = n + '0';
+        dst++;
+    } else if (n < 100) {
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 2;
+    } else if (n < 1000) {
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 3;
+    } else if (n < 10000) {
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 4;
+    } else if (n < 100000) {
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 5;
+    } else if (n < 1000000) {
+        dst[5] = n % 10 + '0';
+        n /= 10;
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 6;
+    } else if (n < 10000000) {
+        dst[6] = n % 10 + '0';
+        n /= 10;
+        dst[5] = n % 10 + '0';
+        n /= 10;
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 7;
+    } else if (n < 100000000) {
+        dst[7] = n % 10 + '0';
+        n /= 10;
+        dst[6] = n % 10 + '0';
+        n /= 10;
+        dst[5] = n % 10 + '0';
+        n /= 10;
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 8;
+    } else if (n < 1000000000) {
+        dst[8] = n % 10 + '0';
+        n /= 10;
+        dst[7] = n % 10 + '0';
+        n /= 10;
+        dst[6] = n % 10 + '0';
+        n /= 10;
+        dst[5] = n % 10 + '0';
+        n /= 10;
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 9;
+    } else {
+        dst[9] = n % 10 + '0';
+        n /= 10;
+        dst[8] = n % 10 + '0';
+        n /= 10;
+        dst[7] = n % 10 + '0';
+        n /= 10;
+        dst[6] = n % 10 + '0';
+        n /= 10;
+        dst[5] = n % 10 + '0';
+        n /= 10;
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 10;
+    }
+
+    return dst;
+}
+
 /**
  * Params:
  *      c and h2c should be a valid pointers
