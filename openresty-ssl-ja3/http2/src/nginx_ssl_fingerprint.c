@@ -4,6 +4,68 @@
 #include <ngx_log.h>
 #include <ngx_http_v2.h>
 
+#include <nginx_ssl_fingerprint.h>
+
+static inline
+unsigned char *append_uint8(unsigned char* dst, uint8_t n)
+{
+    if (n < 10) {
+        dst[0] = n + '0';
+        dst++;
+    } else if (n < 100) {
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 2;
+    } else {
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 3;
+    }
+
+    return dst;
+}
+
+static inline
+unsigned char *append_uint16(unsigned char* dst, uint16_t n)
+{
+    if (n < 10) {
+        dst[0] = n + '0';
+        dst++;
+    } else if (n < 100) {
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 2;
+    } else if (n < 1000) {
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 3;
+    }  else if (n < 10000) {
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 4;
+    } else {
+        dst[4] = n % 10 + '0';
+        n /= 10;
+        dst[3] = n % 10 + '0';
+        n /= 10;
+        dst[2] = n % 10 + '0';
+        n /= 10;
+        dst[1] = n % 10 + '0';
+        dst[0] = n / 10 + '0';
+        dst += 5;
+    }
+
+    return dst;
+}
+
 /**
  * Params:
  *      c and h2c should be a valid pointers
