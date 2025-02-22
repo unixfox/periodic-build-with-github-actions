@@ -45,7 +45,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --without-mail_smtp_module \
     --with-http_addition_module \
     --add-module=/tmp/nginx-ssl-ja3 \
-    --add-module=/nginx-ssl-fingerprint/src \
+    --add-module=/nginx-ssl-fingerprint \
     --with-http_auth_request_module \
     --with-http_dav_module \
     --with-http_flv_module \
