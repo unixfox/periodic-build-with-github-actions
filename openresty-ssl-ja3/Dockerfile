@@ -184,7 +184,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && if [ -n "${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}); fi \
     && cd bundle/nginx-1.27.1 \
     && curl -s https://raw.githubusercontent.com/fooinha/nginx-ssl-ja3/master/patches/nginx.1.27.2.ssl.extensions.patch | patch -p1 \
-    && cat /nginx-ssl-fingerprint/nginx-1.27.patch | patch -p1 ; \
+    && cat /nginx-ssl-fingerprint/nginx-1.27.patch | patch -p1 \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} ${RESTY_LUAJIT_OPTIONS} ${RESTY_PCRE_OPTIONS} \
     && make -j${RESTY_J} \
