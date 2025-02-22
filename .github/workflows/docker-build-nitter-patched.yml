@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: nitter
-          key: ${{ runner.os }}-v1-${{ env.commit }}
+          key: ${{ runner.os }}-v2-${{ env.commit }}
 
       - name: Check Out Repo
         uses: actions/checkout@v3
@@ -71,7 +71,7 @@ jobs:
         id: docker_build_new_custom
         uses: docker/build-push-action@v3
         with:
-          context: ./nitter-git
+          context: ./nitter/Dockerfile
           file: ./nitter-git/Dockerfile.arm64
           platforms: linux/arm64/v8
           push: true
