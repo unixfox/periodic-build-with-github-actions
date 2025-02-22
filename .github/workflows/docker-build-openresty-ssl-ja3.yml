@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: openresty-ssl-ja3
-          key: ${{ runner.os }}-v5-${{ env.commit }}
+          key: ${{ runner.os }}-v6-${{ env.commit }}
 
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v2
