@@ -6,6 +6,8 @@
 #include <nginx_ssl_fingerprint.h>
 
 static ngx_int_t ngx_http_ssl_fingerprint_init(ngx_conf_t *cf);
+static ngx_int_t ngx_http_http2_fingerprint(ngx_http_request_t *r,
+                            ngx_http_variable_value_t *v, uintptr_t data);
 
 static ngx_http_module_t ngx_http_ssl_fingerprint_module_ctx = {
     ngx_http_ssl_fingerprint_init,  /* preconfiguration */
@@ -31,9 +33,6 @@ ngx_module_t ngx_http_ssl_fingerprint_module = {
     NULL,                                 /* exit process */
     NULL,                                 /* exit master */
     NGX_MODULE_V1_PADDING};
-
-static ngx_int_t ngx_http_http2_fingerprint(ngx_http_request_t *r,
-                            ngx_http_variable_value_t *v, uintptr_t data);
 
 static ngx_http_variable_t ngx_http_ssl_fingerprint_variables_list[] = {
     {ngx_string("http2_fingerprint"), NULL, ngx_http_http2_fingerprint,
@@ -62,6 +61,25 @@ ngx_http_http2_fingerprint(ngx_http_request_t *r,
     v->data = r->stream->connection->fp_str.data;
     v->len = r->stream->connection->fp_str.len;
     v->not_found = 0;
+
+    return NGX_OK;
+}
+
+static ngx_int_t
+ngx_http_ssl_fingerprint_init(ngx_conf_t *cf)
+{
+    ngx_http_variable_t  *var, *v;
+
+    for (v = ngx_http_ssl_fingerprint_variables_list; v->name.len; v++) {
+
+        var = ngx_http_add_variable(cf, &v->name, v->flags);
+        if (var == NULL) {
+            return NGX_ERROR;
+        }
+        /** NOTE: update it, if set_handler will be needed */
+        var->get_handler = v->get_handler;
+        var->data = v->data;
+    }
 
     return NGX_OK;
 }
