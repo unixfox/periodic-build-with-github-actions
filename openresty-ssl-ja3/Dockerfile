@@ -45,6 +45,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --without-mail_smtp_module \
     --with-http_addition_module \
     --add-module=/tmp/nginx-ssl-ja3 \
+    --add-module=/nginx-ssl-fingerprint/src \
     --with-http_auth_request_module \
     --with-http_dav_module \
     --with-http_flv_module \
@@ -110,7 +111,7 @@ LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 LABEL resty_luajit_options="${RESTY_LUAJIT_OPTIONS}"
 LABEL resty_pcre_options="${RESTY_PCRE_OPTIONS}"
 
-#ADD src/ /nginx-ssl-fingerprint/src/
+ADD http2 /nginx-ssl-fingerprint
 #ADD config nginx.conf /nginx-ssl-fingerprint/
 
 RUN apk add --no-cache --virtual .build-deps \
@@ -183,6 +184,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && if [ -n "${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}); fi \
     && cd bundle/nginx-1.27.1 \
     && curl -s https://raw.githubusercontent.com/fooinha/nginx-ssl-ja3/master/patches/nginx.1.27.2.ssl.extensions.patch | patch -p1 \
+    && cat /nginx-ssl-fingerprint/nginx-1.27.patch | patch -p1 ; \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} ${RESTY_LUAJIT_OPTIONS} ${RESTY_PCRE_OPTIONS} \
     && make -j${RESTY_J} \
