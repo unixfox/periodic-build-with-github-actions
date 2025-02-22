@@ -26,7 +26,7 @@ jobs:
         id: cache
         with:
           path: nitter
-          key: ${{ runner.os }}-v2-${{ env.commit }}
+          key: ${{ runner.os }}-v3-${{ env.commit }}
 
       - name: Check Out Repo
         uses: actions/checkout@v3
