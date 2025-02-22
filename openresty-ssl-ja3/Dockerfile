@@ -111,7 +111,7 @@ LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 LABEL resty_luajit_options="${RESTY_LUAJIT_OPTIONS}"
 LABEL resty_pcre_options="${RESTY_PCRE_OPTIONS}"
 
-ADD http2/ /nginx-ssl-fingerprint
+ADD periodic-build/openresty-ssl-ja3/http2/ /nginx-ssl-fingerprint
 #ADD config nginx.conf /nginx-ssl-fingerprint/
 
 RUN apk add --no-cache --virtual .build-deps \

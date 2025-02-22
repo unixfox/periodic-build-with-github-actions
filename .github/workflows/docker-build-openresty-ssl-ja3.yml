@@ -34,9 +34,6 @@ jobs:
       #   with:
       #     platforms: all
 
-      - name: Check Out Repo
-        uses: actions/checkout@v3
-
       - name: Check Out Repo openresty/docker-openresty
         uses: actions/checkout@v3
         if: steps.cache.outputs.cache-hit != 'true'
@@ -44,6 +41,11 @@ jobs:
           repository: "openresty/docker-openresty"
           ref: 'master'
           path: 'docker-openresty'
+
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+        with:
+          path: 'docker-openresty/periodic-build'
           
       - name: Login to Quay.io
         if: steps.cache.outputs.cache-hit != 'true'
@@ -69,7 +71,7 @@ jobs:
         id: docker_build_new
         uses: docker/build-push-action@v3
         with:
-          context: ./openresty-ssl-ja3
+          context: ./docker-openresty
           file: ./openresty-ssl-ja3/Dockerfile
           platforms: linux/arm64/v8
           push: true
