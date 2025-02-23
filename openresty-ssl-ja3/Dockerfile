@@ -44,6 +44,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --without-mail_imap_module \
     --without-mail_smtp_module \
     --with-http_addition_module \
+    --add-module=/tmp/njs/nginx \
     --add-module=/tmp/nginx-ssl-ja3 \
     --add-module=/nginx-ssl-fingerprint \
     --with-http_auth_request_module \
@@ -86,8 +87,8 @@ ARG RESTY_EVAL_POST_MAKE=""
 
 # These are not intended to be user-specified
 ARG _RESTY_CONFIG_DEPS="--with-pcre \
-    --with-cc-opt='-DNGX_LUA_ABORT_AT_PANIC -I/usr/local/openresty/pcre2/include -I/usr/local/openresty/openssl3/include' \
-    --with-ld-opt='-L/usr/local/openresty/pcre2/lib -L/usr/local/openresty/openssl3/lib -Wl,-rpath,/usr/local/openresty/pcre2/lib:/usr/local/openresty/openssl3/lib' \
+    --with-cc-opt='-DNGX_LUA_ABORT_AT_PANIC -I/usr/local/openresty/pcre2/include -I/usr/local/openresty/openssl3/include -I /tmp/quickjs' \
+    --with-ld-opt='-L/usr/local/openresty/pcre2/lib -L/usr/local/openresty/openssl3/lib -Wl,-rpath,/usr/local/openresty/pcre2/lib:/usr/local/openresty/openssl3/lib -L /tmp/quickjs' \
     "
 
 LABEL resty_image_base="${RESTY_IMAGE_BASE}"
@@ -177,6 +178,9 @@ RUN apk add --no-cache --virtual .build-deps \
     && CFLAGS="-g -O3" make -j${RESTY_J} \
     && CFLAGS="-g -O3" make -j${RESTY_J} install \
     && cd /tmp \
+    && git clone -b 0.8.9 https://github.com/nginx/njs \
+    && git clone https://github.com/bellard/quickjs \
+    && cd quickjs && CFLAGS='-fPIC' make libquickjs.a && .. && \
     && git clone https://github.com/fooinha/nginx-ssl-ja3.git \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
