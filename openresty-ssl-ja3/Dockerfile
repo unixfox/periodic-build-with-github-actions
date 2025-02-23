@@ -180,7 +180,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && cd /tmp \
     && git clone -b 0.8.9 https://github.com/nginx/njs \
     && git clone https://github.com/bellard/quickjs \
-    && cd quickjs && CFLAGS='-fPIC' make libquickjs.a && .. && \
+    && cd quickjs && CFLAGS='-fPIC' make libquickjs.a && cd .. \
     && git clone https://github.com/fooinha/nginx-ssl-ja3.git \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
