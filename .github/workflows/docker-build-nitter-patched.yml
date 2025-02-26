@@ -72,7 +72,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ./nitter-git
-          file: ./nitter-git/Dockerfile
+          file: ./nitter-git/Dockerfile.arm64
           platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/nitter-patched:latest, quay.io/unixfox/nitter-patched:${{ env.commit }}-${{ env.timestamp }}
