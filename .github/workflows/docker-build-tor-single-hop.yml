@@ -143,6 +143,6 @@ jobs:
         with:
           context: ./tor-git
           file: ./tor-git/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/tor-single-hop:latest-arm64, quay.io/unixfox/tor-single-hop:build-arm64-${{ env.timestamp }}

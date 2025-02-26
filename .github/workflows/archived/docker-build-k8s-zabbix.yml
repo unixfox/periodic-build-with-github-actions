@@ -71,6 +71,6 @@ jobs:
         with:
           context: ./k8s-zabbix-git
           file: ./k8s-zabbix-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: quay.io/unixfox/zabbix-tooling-k8s-zabbix:latest, quay.io/unixfox/zabbix-tooling-k8s-zabbix:build-${{ env.timestamp }}

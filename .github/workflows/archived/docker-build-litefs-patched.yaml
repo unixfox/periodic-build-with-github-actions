@@ -73,7 +73,7 @@ jobs:
         with:
           context: ./litefs-git
           file: ./litefs-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: quay.io/unixfox/litefs-patched:latest, quay.io/unixfox/litefs-patched:${{ env.tag }}-${{ env.timestamp }}
           build-args: LITEFS_VERSION=${{ env.tag }}

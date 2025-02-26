@@ -63,7 +63,7 @@ jobs:
         with:
           context: ./ingress-nginx-custom
           file: ./ingress-nginx-custom/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: quay.io/unixfox/ingress-nginx-custom:latest, quay.io/unixfox/ingress-nginx-custom:${{ env.tag }}, quay.io/unixfox/ingress-nginx-custom:${{ env.tag }}-build-${{ env.timestamp }}
           build-args: INGRESS_NGINX_CONTROLLER_VERSION=${{ env.tag }}

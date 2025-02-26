@@ -75,6 +75,6 @@ jobs:
         with:
           context: ./samba-git
           file: ./samba-git/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: quay.io/unixfox/samba:latest, quay.io/unixfox/samba:build-${{ env.timestamp }}

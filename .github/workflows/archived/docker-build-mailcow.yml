@@ -77,7 +77,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/acme
           file: ./mailcow-git/data/Dockerfiles/acme/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/acme:latest, quay.io/mailcowarm64/acme:${{ env.tag }}-${{ env.timestamp }}
 
@@ -88,7 +88,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/dockerapi
           file: ./mailcow-git/data/Dockerfiles/dockerapi/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/dockerapi:latest, quay.io/mailcowarm64/dockerapi:${{ env.tag }}-${{ env.timestamp }}
 
@@ -99,7 +99,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/netfilter
           file: ./mailcow-git/data/Dockerfiles/netfilter/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/netfilter:latest, quay.io/mailcowarm64/netfilter:${{ env.tag }}-${{ env.timestamp }}
       
@@ -110,7 +110,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/olefy
           file: ./mailcow-git/data/Dockerfiles/olefy/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/olefy:latest, quay.io/mailcowarm64/olefy:${{ env.tag }}-${{ env.timestamp }}
 
@@ -121,7 +121,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/phpfpm
           file: ./mailcow-git/data/Dockerfiles/phpfpm/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/phpfpm:latest, quay.io/mailcowarm64/phpfpm:${{ env.tag }}-${{ env.timestamp }}
 
@@ -132,7 +132,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/postfix
           file: ./mailcow-git/data/Dockerfiles/postfix/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/postfix:latest, quay.io/mailcowarm64/postfix:${{ env.tag }}-${{ env.timestamp }}
 
@@ -143,7 +143,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/rspamd
           file: ./mailcow-git/data/Dockerfiles/rspamd/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/rspamd:latest, quay.io/mailcowarm64/rspamd:${{ env.tag }}-${{ env.timestamp }}
 
@@ -154,7 +154,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/solr
           file: ./mailcow-git/data/Dockerfiles/solr/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/solr:latest, quay.io/mailcowarm64/solr:${{ env.tag }}-${{ env.timestamp }}
 
@@ -165,7 +165,7 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/unbound
           file: ./mailcow-git/data/Dockerfiles/unbound/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/unbound:latest, quay.io/mailcowarm64/unbound:${{ env.tag }}-${{ env.timestamp }}
 
@@ -176,6 +176,6 @@ jobs:
         with:
           context: ./mailcow-git/data/Dockerfiles/watchdog
           file: ./mailcow-git/data/Dockerfiles/watchdog/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/mailcowarm64/watchdog:latest, quay.io/mailcowarm64/watchdog:${{ env.tag }}-${{ env.timestamp }}

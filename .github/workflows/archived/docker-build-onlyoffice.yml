@@ -71,6 +71,6 @@ jobs:
         with:
           context: ./onlyoffice-git
           file: ./onlyoffice-git/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/onlyoffice:latest, quay.io/unixfox/onlyoffice:build-${{ env.timestamp }}

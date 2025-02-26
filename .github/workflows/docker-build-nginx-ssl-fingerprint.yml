@@ -71,6 +71,6 @@ jobs:
         with:
           context: ./nginx-ssl-fingerprint-git
           file: ./nginx-ssl-fingerprint/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/nginx-ssl-fingerprint:openssl32-nginx1255-latest, quay.io/unixfox/nginx-ssl-fingerprint:openssl32-nginx1255-${{ env.timestamp }}

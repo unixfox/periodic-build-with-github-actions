@@ -75,6 +75,6 @@ jobs:
         with:
           context: ./eternaljukebox-git
           file: ./eternaljukebox/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: quay.io/unixfox/eternaljukebox:latest, quay.io/unixfox/eternaljukebox:build-${{ env.timestamp }}

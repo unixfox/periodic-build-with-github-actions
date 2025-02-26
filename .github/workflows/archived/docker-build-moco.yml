@@ -71,7 +71,7 @@ jobs:
         with:
           context: ./moco-git
           file: ./moco/Dockerfile.controller
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/moco-controller:latest, quay.io/unixfox/moco-controller:${{ env.tag }}, quay.io/unixfox/moco-controller:${{ env.tag }}-build-${{ env.timestamp }}
       
@@ -82,6 +82,6 @@ jobs:
         with:
           context: ./moco-git
           file: ./moco/Dockerfile.backup
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/moco-backup:latest, quay.io/unixfox/moco-backup:${{ env.tag }}, quay.io/unixfox/moco-backup:${{ env.tag }}-build-${{ env.timestamp }}

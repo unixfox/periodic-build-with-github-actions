@@ -63,6 +63,6 @@ jobs:
         with:
           context: ./wireproxy-debian
           file: ./wireproxy-debian/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8,linux/arm/v7
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: quay.io/unixfox/wireproxy-debian:latest, quay.io/unixfox/wireproxy-debian:build-${{ env.timestamp }}

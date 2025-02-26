@@ -76,7 +76,7 @@ jobs:
         with:
           context: ./
           file: ./periodic-build/openresty-ssl-ja3/Dockerfile
-          platforms: linux/arm64/v8
+          platforms: linux/arm64
           push: true
           build-args: |
             RESTY_J=${{ env.NUMBER_OF_CORES }}

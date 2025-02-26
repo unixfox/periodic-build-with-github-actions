@@ -64,6 +64,6 @@ jobs:
         with:
           context: ./
           file: ./languagetool/Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: quay.io/unixfox/languagetool:latest, quay.io/unixfox/languagetool:build-${{ env.timestamp }}
