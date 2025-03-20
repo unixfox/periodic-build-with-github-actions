@@ -27,7 +27,6 @@ jobs:
         id: check-updates
         run: |
           declare -A repos=(
-            ["litefs"]="https://github.com/superfly/litefs.git refs/tags/"
             ["wireproxy"]="https://github.com/whyvl/wireproxy.git"
             ["nginx-ssl-ja3"]="https://github.com/fooinha/nginx-ssl-ja3.git"
             ["ingress-nginx"]="https://github.com/kubernetes/ingress-nginx.git refs/tags/controller"
@@ -94,9 +93,6 @@ jobs:
           IFS=',' read -ra UPDATES <<< "${{ needs.check-updates.outputs.updates }}"
           for repo in "${UPDATES[@]}"; do
             case $repo in
-              "litefs")
-                gh workflow run docker-build-litefs-patched.yaml
-                ;;
               "wireproxy")
                 gh workflow run docker-build-wireproxy-debian.yml
                 ;;
