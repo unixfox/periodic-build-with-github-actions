@@ -31,7 +31,7 @@ jobs:
             ["nginx-ssl-ja3"]="https://github.com/fooinha/nginx-ssl-ja3.git"
             ["ingress-nginx"]="https://github.com/kubernetes/ingress-nginx.git refs/tags/controller"
             ["samba"]="https://github.com/samba-team/samba.git refs/tags/"
-            ["stolon"]="https://github.com/sorintlab/stolon.git refs/tags/"
+            ["stolon"]="https://github.com/docker-library/postgres.git"
             ["nitter"]="https://github.com/zedeus/nitter.git"
             ["tor"]="https://github.com/m0wer/docker-tor.git"
             ["stash"]="https://github.com/stashed/stash.git refs/tags/"
