@@ -214,7 +214,7 @@ int ngx_http2_fingerprint(ngx_connection_t *c, ngx_http_v2_connection_t *h2c)
     }
     pstr = h2c->fp_str.data;
 
-    ngx_log_debug(NGX_LOG_DEBUG_EVENT, c->log, 0, "ngx_http2_fingerprint: alloc bytes: [%d]\n", n);
+    ngx_log_debug(NGX_LOG_DEBUG_EVENT, c->log, 0, "ngx_http2_fingerprint: alloc bytes: [%d]\\n", n);
 
     /* setting */
     for (i = 0; i < h2c->fp_settings.len; i+=5) {
@@ -255,7 +255,7 @@ int ngx_http2_fingerprint(ngx_connection_t *c, ngx_http_v2_connection_t *h2c)
 
     h2c->fp_fingerprinted = 1;
 
-    ngx_log_debug(NGX_LOG_DEBUG_EVENT, c->log, 0, "ngx_http2_fingerprint: http2 fingerprint: [%V], len=[%d]\n", &h2c->fp_str, h2c->fp_str.len);
+    ngx_log_debug(NGX_LOG_DEBUG_EVENT, c->log, 0, "ngx_http2_fingerprint: http2 fingerprint: [%V], len=[%d]\\n", &h2c->fp_str, h2c->fp_str.len);
 
     return NGX_OK;
 }

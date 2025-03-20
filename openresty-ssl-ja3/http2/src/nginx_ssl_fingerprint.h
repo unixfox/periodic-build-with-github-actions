@@ -1,11 +1,9 @@
-
 /*
  * Obj: nginx_ssl_fingerprint.c
  */
 
 #ifndef NGINX_SSL_FINGERPRINT_H_
 #define NGINX_SSL_FINGERPRINT_H_ 1
-
 
 #include <ngx_config.h>
 #include <ngx_core.h>

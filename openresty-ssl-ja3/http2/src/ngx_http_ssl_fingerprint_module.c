@@ -1,4 +1,3 @@
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
@@ -71,12 +70,10 @@ ngx_http_ssl_fingerprint_init(ngx_conf_t *cf)
     ngx_http_variable_t  *var, *v;
 
     for (v = ngx_http_ssl_fingerprint_variables_list; v->name.len; v++) {
-
         var = ngx_http_add_variable(cf, &v->name, v->flags);
         if (var == NULL) {
             return NGX_ERROR;
         }
-        /** NOTE: update it, if set_handler will be needed */
         var->get_handler = v->get_handler;
         var->data = v->data;
     }
