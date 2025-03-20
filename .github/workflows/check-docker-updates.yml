@@ -15,13 +15,13 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v3
 
-      - name: Download previous state
-        uses: actions/download-artifact@v4
-        continue-on-error: true
+      - name: Cache versions state
+        uses: actions/cache@v4
         with:
-          name: last-checked-versions
           path: .github/versions
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          key: ${{ runner.os }}-versions-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-versions-
 
       - name: Check for updates
         id: check-updates
@@ -65,15 +65,6 @@ jobs:
             updates=${updates%,}
             echo "updates=${updates}" >> $GITHUB_OUTPUT
           fi
-
-      - name: Upload new state
-        uses: actions/upload-artifact@v4
-        with:
-          name: last-checked-versions
-          path: .github/versions/
-          retention-days: 1
-          if-no-files-found: error
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-workflows:
     needs: check-updates
