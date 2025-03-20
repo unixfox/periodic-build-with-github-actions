@@ -1,0 +1,125 @@
+name: Check for Docker image updates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    outputs:
+      updates: ${{ steps.check-updates.outputs.updates }}
+    
+    steps:
+      - name: Download previous state
+        uses: actions/download-artifact@v3
+        continue-on-error: true
+        with:
+          name: last-checked-versions
+          path: .github/
+
+      - name: Check for updates
+        id: check-updates
+        run: |
+          declare -A repos=(
+            ["litefs"]="https://github.com/superfly/litefs.git refs/tags/"
+            ["wireproxy"]="https://github.com/whyvl/wireproxy.git"
+            ["nginx-ssl-ja3"]="https://github.com/fooinha/nginx-ssl-ja3.git"
+            ["ingress-nginx"]="https://github.com/kubernetes/ingress-nginx.git refs/tags/controller"
+            ["samba"]="https://github.com/samba-team/samba.git refs/tags/"
+            ["stolon"]="https://github.com/sorintlab/stolon.git refs/tags/"
+            ["nitter"]="https://github.com/zedeus/nitter.git"
+            ["tor"]="https://github.com/m0wer/docker-tor.git"
+            ["stash"]="https://github.com/stashed/stash.git refs/tags/"
+            ["logrotate"]="https://github.com/blacklabelops/logrotate.git"
+            ["cert-manager-webhook-powerdns"]="https://github.com/lordofsystem/cert-manager-webhook-powerdns.git"
+            ["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
+          )
+          
+          updates=""
+          mkdir -p .github/versions
+          
+          for repo in "${!repos[@]}"; do
+            if [[ "${repos[$repo]}" == *"refs/tags/"* ]]; then
+              latest=$(git ls-remote --refs --tags ${repos[$repo]%% *} | sort -t '/' -k 3 -V | tail -n1)
+            else
+              latest=$(git ls-remote ${repos[$repo]} | head -n1)
+            fi
+            
+            if [ -f ".github/versions/${repo}" ]; then
+              previous=$(cat ".github/versions/${repo}")
+              if [ "$latest" != "$previous" ]; then
+                updates="${updates}${repo},"
+              fi
+            else
+              updates="${updates}${repo},"
+            fi
+            echo "$latest" > ".github/versions/${repo}"
+          done
+          
+          if [ ! -z "$updates" ]; then
+            updates=${updates%,}
+            echo "updates=${updates}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload new state
+        uses: actions/upload-artifact@v3
+        with:
+          name: last-checked-versions
+          path: .github/versions/
+          retention-days: 1
+
+  trigger-workflows:
+    needs: check-updates
+    if: needs.check-updates.outputs.updates != ''
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger relevant workflows
+        run: |
+          IFS=',' read -ra UPDATES <<< "${{ needs.check-updates.outputs.updates }}"
+          for repo in "${UPDATES[@]}"; do
+            case $repo in
+              "litefs")
+                gh workflow run docker-build-litefs-patched.yaml
+                ;;
+              "wireproxy")
+                gh workflow run docker-build-wireproxy-debian.yml
+                ;;
+              "nginx-ssl-ja3")
+                gh workflow run docker-build-openresty-ssl-ja3.yml
+                ;;
+              "ingress-nginx")
+                gh workflow run docker-build-ingress-nginx.yml
+                gh workflow run docker-build-ingress-nginx-controller-dynamic-modules.yml
+                gh workflow run docker-build-ingress-nginx-custom.yml
+                ;;
+              "samba")
+                gh workflow run docker-build-samba.yml
+                ;;
+              "stolon")
+                gh workflow run docker-build-stolon.yml
+                ;;
+              "nitter")
+                gh workflow run docker-build-nitter-patched.yml
+                ;;
+              "tor")
+                gh workflow run docker-build-tor-single-hop.yml
+                ;;
+              "stash")
+                gh workflow run docker-build-stash.yml
+                ;;
+              "logrotate")
+                gh workflow run docker-build-logrotate.yml
+                ;;
+              "cert-manager-webhook-powerdns")
+                gh workflow run docker-build-cert-manager-webhook-powerdns.yml
+                ;;
+              "nginx-ssl-fingerprint")
+                gh workflow run docker-build-nginx-ssl-fingerprint.yml
+                ;;
+            esac
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

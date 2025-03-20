@@ -2,8 +2,6 @@ name: Docker build ingress-nginx image
 
 on:
   workflow_dispatch:
-  #schedule:
-  #  - cron: "0 * * * *"
   push:
     paths:
       - '.github/workflows/docker-build-ingress-nginx.yml'
