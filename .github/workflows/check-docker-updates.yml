@@ -12,12 +12,16 @@ jobs:
       updates: ${{ steps.check-updates.outputs.updates }}
     
     steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+
       - name: Download previous state
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: last-checked-versions
-          path: .github/
+          path: .github/versions
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check for updates
         id: check-updates
@@ -69,6 +73,8 @@ jobs:
           name: last-checked-versions
           path: .github/versions/
           retention-days: 1
+          if-no-files-found: error
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-workflows:
     needs: check-updates
