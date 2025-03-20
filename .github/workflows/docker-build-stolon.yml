@@ -17,11 +17,11 @@ jobs:
       fail-fast: false
       matrix:
         postgres-version:
+          - 17
+          - 16
           - 15
           - 14
           - 13
-          - 12
-          - 11
 
     steps:
       - name: Get latest commit hash of github.com/docker-library/postgres
