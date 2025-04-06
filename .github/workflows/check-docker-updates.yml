@@ -37,7 +37,7 @@ jobs:
             ["stash"]="https://github.com/stashed/stash.git refs/tags/"
             ["logrotate"]="https://github.com/blacklabelops/logrotate.git"
             ["cert-manager-webhook-powerdns"]="https://github.com/lordofsystem/cert-manager-webhook-powerdns.git"
-            ["gpt4free"]="https://github.com/xtekky/gpt4free.git"
+            #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
           
@@ -117,9 +117,9 @@ jobs:
               "cert-manager-webhook-powerdns")
                 gh workflow run docker-build-cert-manager-webhook-powerdns.yml
                 ;;
-              "gpt4free")
-                gh workflow run docker-build-gpt4free.yml
-                ;;
+              #"gpt4free")
+              #  gh workflow run docker-build-gpt4free.yml
+              #  ;;
               #"nginx-ssl-fingerprint")
               #  gh workflow run docker-build-nginx-ssl-fingerprint.yml
               #  ;;
