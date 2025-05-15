@@ -4,31 +4,36 @@ Date: Fri, 21 Feb 2025 22:02:42 +0100
 Subject: [PATCH 1/1] custom donation page
 
 ---
- public/md/about.md    | 28 ++++++++++++++++++++--------
+ public/md/about.md    | 30 +++++++++++++++++++++++++++++-
  src/views/general.nim |  4 +++-
- 2 files changed, 23 insertions(+), 9 deletions(-)
+ 2 files changed, 32 insertions(+), 2 deletions(-)
 
 diff --git a/public/md/about.md b/public/md/about.md
-index 3825e8f..d670f94 100644
+index 3825e8f..c03a666 100644
 --- a/public/md/about.md
 +++ b/public/md/about.md
-@@ -43,14 +43,26 @@ Twitter account.
+@@ -1,5 +1,7 @@
+ # About
+ 
++XCancel is an instance of Nitter.
++
+ Nitter is a free and open source alternative Twitter front-end focused on
+ privacy and performance. The source is available on GitHub at
+ <https://github.com/zedeus/nitter>
+@@ -43,6 +45,32 @@ Twitter account.
  
  ## Donating
  
--Liberapay: https://liberapay.com/zedeus \
--Patreon: https://patreon.com/nitter \
--BTC: bc1qpqpzjkcpgluhzf7x9yqe7jfe8gpfm5v08mdr55 \
--ETH: 0x24a0DB59A923B588c7A5EBd0dBDFDD1bCe9c4460 \
--XMR: 42hKayRoEAw4D6G6t8mQHPJHQcXqofjFuVfavqKeNMNUZfeJLJAcNU19i1bGdDvcdN6romiSscWGWJCczFLe9RFhM3d1zpL \
--SOL: ANsyGNXFo6osuFwr1YnUqif2RdoYRhc27WdyQNmmETSW \
--ZEC: u1vndfqtzyy6qkzhkapxelel7ams38wmfeccu3fdpy2wkuc4erxyjm8ncjhnyg747x6t0kf0faqhh2hxyplgaum08d2wnj4n7cyu9s6zhxkqw2aef4hgd4s6vh5hpqvfken98rg80kgtgn64ff70djy7s8f839z00hwhuzlcggvefhdlyszkvwy3c7yw623vw3rvar6q6evd3xcvveypt
-+### Credit/debit card and bank transfer
++You can either donate to XCancel or the Nitter project.
++
++### Donating to XCancel
++
++#### Credit/debit card and bank transfer
 +
 +Liberapay(recurrent donation): <https://liberapay.com/yewtube> \
 +Ko-fi (one time donation): <https://ko-fi.com/yewtube>
 +
-+### Cryptocurrency
++#### Cryptocurrency
 +
 +Bitcoin: 1fyoJKdFo5cDPt21CGHW2RDQtcktQU9cL (Segwit compatible) \
 +Bitcoin cash: qz6qvjt9m4wqrqhyet3v3gljrpnys3wl2yxz0jfuu2 \
@@ -42,6 +47,13 @@ index 3825e8f..d670f94 100644
 +Binance coin: bnb10vd22k3ujp9ezjc6s8x7vqvuh02hlvcwqtsepq (you can send any BEP20 token) \
 +Litecoin: ltc1qre3xwwjsnctpfrx6eu0y77nca3cwlhe8kzy27d \
 +USD Coin: 0xd415a7A9455DBf1a666F933c78A7325914E73C6b (ETH) - bnb10vd22k3ujp9ezjc6s8x7vqvuh02hlvcwqtsepq (BNB)
++
++### Donating to Nitter project.
++
+ Liberapay: https://liberapay.com/zedeus \
+ Patreon: https://patreon.com/nitter \
+ BTC: bc1qpqpzjkcpgluhzf7x9yqe7jfe8gpfm5v08mdr55 \
+@@ -53,4 +81,4 @@ ZEC: u1vndfqtzyy6qkzhkapxelel7ams38wmfeccu3fdpy2wkuc4erxyjm8ncjhnyg747x6t0kf0faq
  
  ## Contact
  
@@ -70,4 +82,4 @@ index 5ba40a3..12c2e9f 100644
          icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
  
 -- 
-2.48.0
+2.49.0
