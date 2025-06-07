@@ -8,11 +8,14 @@ on:
 jobs:
   del_runs:
     runs-on: 'ubuntu-latest'
+    permissions:
+      actions: write
+      contents: read
     steps:
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2
         with:
-          token: ${{ secrets.PAT_TOKEN_DELETE_WORKFLOWS }}
+          token: ${{ github.token }}
           repository: ${{ github.repository }}
           retain_days: 30
           keep_minimum_runs: 200
