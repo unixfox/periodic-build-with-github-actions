@@ -37,6 +37,7 @@ jobs:
             ["stash"]="https://github.com/stashed/stash.git refs/tags/"
             ["logrotate"]="https://github.com/blacklabelops/logrotate.git"
             ["cert-manager-webhook-powerdns"]="https://github.com/lordofsystem/cert-manager-webhook-powerdns.git"
+            ["caddy"]="https://github.com/caddyserver/caddy.git refs/tags/"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )

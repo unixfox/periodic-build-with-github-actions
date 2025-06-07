@@ -1,0 +1,46 @@
+name: Docker build caddy image
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/docker-build-caddy.yml'
+      - 'caddy/**'
+
+jobs:
+
+  build:
+
+    runs-on: 'ubuntu-24.04-arm'
+
+    steps:
+      - name: Get latest tag
+        id: get-latest-tag
+        run: |
+          echo "tag=$(git ls-remote --refs --tags https://github.com/caddyserver/caddy.git| grep -v beta | cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1|cut -d "v" -f2)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+
+      - name: Build and push docker image
+        id: docker_build_new
+        uses: docker/build-push-action@v3
+        with:
+          context: ./caddy
+          file: ./caddy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:build-${{ env.timestamp }}
+          build-args: CADDY_VERSION=${{ env.tag }}

@@ -6,6 +6,8 @@
 - stolon: https://quay.io/repository/unixfox/stolon
 - tor-single-hop: https://quay.io/unixfox/tor-single-hop
 - openresty-ssl-ja3: https://quay.io/unixfox/openresty-ssl-ja3
+- caddy: https://quay.io/unixfox/caddy
+- nitter: https://quay.io/unixfox/nitter
 
 # frozen/inactive
 Broken, need to be fixed.
@@ -19,7 +21,6 @@ Don't plan to maintain anymore.
 - keel: https://quay.io/unixfox/keel
 - languagetool: https://quay.io/unixfox/languagetool
 - mysql-router: https://quay.io/unixfox/mysql-router
-- nitter: https://quay.io/unixfox/nitter
 - onlyoffice: https://quay.io/unixfox/onlyoffice
 - pgbouncer: https://quay.io/unixfox/pgbouncer
 - mailcow: https://quay.io/mailcowarm64
