@@ -1,10 +1,11 @@
-ARG CADDY_VERSION=2.10.0
+ARG CADDY_VERSION=2.9.1
 
 FROM caddy:$CADDY_VERSION-builder AS builder
 
 RUN xcaddy build \
     --with github.com/tailscale/caddy-tailscale \
-    --with github.com/caddy-dns/powerdns
+    --with github.com/caddy-dns/powerdns \
+    --with github.com/pteich/caddy-tlsconsul
 
 FROM caddy:$CADDY_VERSION
 
