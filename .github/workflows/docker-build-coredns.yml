@@ -54,4 +54,6 @@ jobs:
 
       - name: Build coredns
         run: |
-          cd coredns-git && make VERSION=${{ env.tag }} DOCKER=quay.io/unixfox/coredns -f Makefile.docker release docker-push
+          cd coredns-git
+          make release
+          make VERSION=${{ env.tag }} DOCKER=quay.io/unixfox docker-push
