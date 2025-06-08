@@ -1,0 +1,63 @@
+name: Docker build coredns image
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/docker-build-coredns.yml'
+      - 'coredns/**'
+
+jobs:
+
+  build:
+
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: Get latest tag
+        id: get-latest-tag
+        run: |
+          echo "tag=$(git ls-remote --refs --tags https://github.com/coredns/coredns.git| grep -v beta | cut --delimiter='/' --fields=3| grep -v "v0" | sort --version-sort |tail --lines=1)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+
+      - name: Check Out Repo coredns
+        uses: actions/checkout@v3
+        with:
+          repository: "coredns/coredns"
+          ref: 'main'
+          path: 'coredns-git'
+
+      - name: Use docker base image that supports arm64
+        run: |
+          cat coredns-git/plugin.cfg coredns/plugin.cfg > coredns-git/plugin.cfg
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+
+      - name: Build and push docker image
+        id: docker_build_new
+        uses: docker/build-push-action@v3
+        with:
+          context: ./coredns-git
+          file: ./coredns-git/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: quay.io/unixfox/coredns:latest, quay.io/unixfox/coredns:${{ env.tag }}
