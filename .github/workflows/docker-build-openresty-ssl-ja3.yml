@@ -25,13 +25,13 @@ jobs:
           echo "NUMBER_OF_CORES=$(nproc)" >> $GITHUB_ENV
 
       - name: Check Out Repo openresty/docker-openresty
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "openresty/docker-openresty"
           ref: 'master'
 
       - name: Check Out Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: 'periodic-build'
           

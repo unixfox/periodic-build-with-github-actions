@@ -26,10 +26,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Check Out Repo coredns
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "coredns/coredns"
           ref: 'v${{ env.tag }}'

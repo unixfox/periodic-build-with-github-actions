@@ -21,10 +21,10 @@ jobs:
         shell: bash
 
       - name: Check Out Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Check Out Repo lncm/docker-tor
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "lncm/docker-tor"
           ref: 'master'
@@ -77,10 +77,10 @@ jobs:
         shell: bash
 
       - name: Check Out Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Check Out Repo lncm/docker-tor
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "lncm/docker-tor"
           ref: 'master'
