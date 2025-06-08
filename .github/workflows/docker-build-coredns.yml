@@ -17,7 +17,7 @@ jobs:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          echo "tag=$(git ls-remote --refs --tags https://github.com/coredns/coredns.git| grep -v beta | cut --delimiter='/' --fields=3| grep -v "v0" | sort --version-sort |tail --lines=1)" >> $GITHUB_ENV
+          echo "tag=$(git ls-remote --refs --tags https://github.com/coredns/coredns.git| grep -v beta | cut --delimiter='/' --fields=3| grep -v "v0" | sort --version-sort |tail --lines=1 |cut -d "v" -f2)" >> $GITHUB_ENV
         shell: bash
 
       - name: Set up QEMU
@@ -32,10 +32,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: "coredns/coredns"
-          ref: '${{ env.tag }}'
+          ref: 'v${{ env.tag }}'
           path: 'coredns-git'
 
-      - name: Use docker base image that supports arm64
+      - name: Add extra plugins
         run: |
           cat coredns-git/plugin.cfg coredns/plugin.cfg > coredns-git/plugin.cfg
 
@@ -52,12 +52,6 @@ jobs:
         with:
           version: latest
 
-      - name: Build and push docker image
-        id: docker_build_new
-        uses: docker/build-push-action@v3
-        with:
-          context: ./coredns-git
-          file: ./coredns-git/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: quay.io/unixfox/coredns:latest, quay.io/unixfox/coredns:${{ env.tag }}
+      - name: Build coredns
+        run: |
+          cd coredns-git && make VERSION=${{ env.tag }} DOCKER=quay.io/unixfox/coredns -f Makefile.docker release docker-push
