@@ -42,7 +42,6 @@ jobs:
           go get github.com/wenerme/coredns-pdsql
           go get github.com/jinzhu/gorm/dialects/postgres
           go generate
-          mkdir -p build/docker/amd64 build/docker/arm build/docker/arm64
 
       - name: Login to Quay.io
         uses: docker/login-action@v2
@@ -61,5 +60,6 @@ jobs:
         run: |
           cd coredns-git
           make LINUX_ARCH="amd64 arm arm64" -f Makefile.release release
+          mkdir -p build/docker/amd64 build/docker/arm build/docker/arm64
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-build
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-push
