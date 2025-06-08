@@ -26,10 +26,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
           
       - name: Check Out Repo stashed/stash
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: "stashed/stash"
           ref: '${{ env.tag }}'
