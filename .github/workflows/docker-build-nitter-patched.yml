@@ -53,7 +53,7 @@ jobs:
 
       - name: Build and push patched nitter
         id: docker_build_new_custom
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: ./nitter-git
           file: ./nitter-git/Dockerfile.arm64
