@@ -49,7 +49,7 @@ jobs:
 
       - name: Build and push docker image
         id: docker_build_new
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: ./gpt4free-git
           file: ./gpt4free-git/docker/Dockerfile

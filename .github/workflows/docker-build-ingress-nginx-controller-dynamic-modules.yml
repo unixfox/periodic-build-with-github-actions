@@ -46,7 +46,7 @@ jobs:
 
       - name: Build and push docker image
         id: docker_build_new
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: ./ingress-nginx-controller-dynamic-modules
           file: ./ingress-nginx-controller-dynamic-modules/Dockerfile

@@ -57,7 +57,7 @@ jobs:
 
       - name: Build and push docker image tor single hop
         id: docker_build_new_single_process
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: ./tor-git
           file: ./tor-git/Dockerfile
@@ -113,7 +113,7 @@ jobs:
 
       - name: Build and push docker image tor single hop
         id: docker_build_new_single_process
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: ./tor-git
           file: ./tor-git/Dockerfile

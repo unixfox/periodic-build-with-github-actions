@@ -56,7 +56,7 @@ jobs:
 
       - name: Build and push docker image
         id: docker_build_new
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: ./samba-git
           file: ./samba-git/Dockerfile
