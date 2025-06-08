@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: "coredns/coredns"
-          ref: 'main'
+          ref: '${{ env.tag }}'
           path: 'coredns-git'
 
       - name: Use docker base image that supports arm64
