@@ -39,8 +39,7 @@ jobs:
         run: |
           cat coredns-git/plugin.cfg coredns/plugin.cfg > coredns-git/plugin.cfg
           cd coredns-git
-          go get github.com/wenerme/coredns-pdsql
-          go get github.com/jinzhu/gorm/dialects/postgres
+          while IFS=: read -r _ pkg; do go get "$pkg"; done < coredns-git/plugin.cfg
           go generate
 
       - name: Login to Quay.io
