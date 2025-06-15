@@ -37,7 +37,8 @@ jobs:
 
       - name: Add extra plugins
         run: |
-          cat coredns-git/plugin.cfg coredns/plugin.cfg > coredns-git/plugin.cfg
+          cat coredns-git/plugin.cfg coredns/plugin.cfg > coredns-git/plugin-new.cfg
+          mv coredns-git/plugin-new.cfg coredns-git/plugin.cfg
           cd coredns-git
           go get github.com/wenerme/coredns-pdsql
           go get github.com/jinzhu/gorm/dialects/postgres
