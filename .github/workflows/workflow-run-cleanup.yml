@@ -12,10 +12,19 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Delete workflow runs
+      - name: Delete workflow runs for docker image updates
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
           retain_days: 30
-          keep_minimum_runs: 200
+          keep_minimum_runs: 100
+          delete_workflow_pattern: "Check for Docker image updates"
+      - name: Delete workflow runs for old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 7
+          keep_minimum_runs: 5
+          delete_workflow_pattern: "Delete old workflow runs"
