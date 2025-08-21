@@ -32,7 +32,7 @@ jobs:
         run: |
           cd nitter-git
           git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
+          git config --global user.name "Our Name"
           git am ../nitter/patches/*.patch
       
       - name: Login to Quay.io
