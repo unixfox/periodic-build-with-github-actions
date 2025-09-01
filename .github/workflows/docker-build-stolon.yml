@@ -42,10 +42,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check Out Repo sorintlab/stolon
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: "sorintlab/stolon"
           ref: '${{ env.tag }}'
