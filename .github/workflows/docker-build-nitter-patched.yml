@@ -19,10 +19,10 @@ jobs:
         shell: bash
 
       - name: Check Out Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
           
       - name: Check Out Repo zedeus/nitter
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: "zedeus/nitter"
           ref: 'master'
