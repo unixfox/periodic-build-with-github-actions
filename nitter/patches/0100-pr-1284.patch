@@ -1,0 +1,59 @@
+From 948504dfc0fe8cb5e277da3d630c951e48bfe1e1 Mon Sep 17 00:00:00 2001
+From: IRUZZ <iruzzgames@gmail.com>
+Date: Fri, 22 Aug 2025 23:45:02 +0100
+Subject: [PATCH] Add button to view quote tweets
+
+---
+ src/sass/tweet/_base.scss | 4 ++++
+ src/views/tweet.nim       | 8 ++++----
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/src/sass/tweet/_base.scss b/src/sass/tweet/_base.scss
+index 69f51c07a..17243ab99 100644
+--- a/src/sass/tweet/_base.scss
++++ b/src/sass/tweet/_base.scss
+@@ -201,6 +201,10 @@
+ .tweet-stats {
+     margin-bottom: -3px;
+     -webkit-user-select: none;
++
++    a {
++        pointer-events: all;
++    }
+ }
+ 
+ .tweet-stat {
+diff --git a/src/views/tweet.nim b/src/views/tweet.nim
+index 34dcd4c2d..aaebceec7 100644
+--- a/src/views/tweet.nim
++++ b/src/views/tweet.nim
+@@ -1,5 +1,5 @@
+ # SPDX-License-Identifier: AGPL-3.0-only
+-import strutils, sequtils, strformat, options, algorithm
++import strutils, sequtils, strformat, options, algorithm, uri
+ import karax/[karaxdsl, vdom, vstyles]
+ from jester import Request
+ 
+@@ -178,11 +178,11 @@ func formatStat(stat: int): string =
+   if stat > 0: insertSep($stat, ',')
+   else: ""
+ 
+-proc renderStats(stats: TweetStats; views: string): VNode =
++proc renderStats(tweet_id: int64; stats: TweetStats; views: string): VNode =
+   buildHtml(tdiv(class="tweet-stats")):
+     span(class="tweet-stat"): icon "comment", formatStat(stats.replies)
+     span(class="tweet-stat"): icon "retweet", formatStat(stats.retweets)
+-    span(class="tweet-stat"): icon "quote", formatStat(stats.quotes)
++    a(class="tweet-stat", href=("/search?q=" & encodeUrl(&"-from:quotedreplies url:{tweet_id}") & "&e-nativeretweets=on")): icon "quote", formatStat(stats.quotes)
+     span(class="tweet-stat"): icon "heart", formatStat(stats.likes)
+     if views.len > 0:
+       span(class="tweet-stat"): icon "play", insertSep(views, ',')
+@@ -343,7 +343,7 @@ proc renderTweet*(tweet: Tweet; prefs: Prefs; path: string; class=""; index=0;
+         renderMediaTags(tweet.mediaTags)
+ 
+       if not prefs.hideTweetStats:
+-        renderStats(tweet.stats, views)
++        renderStats(tweet.id, tweet.stats, views)
+ 
+       if showThread:
+         a(class="show-thread", href=("/i/status/" & $tweet.threadId)):
