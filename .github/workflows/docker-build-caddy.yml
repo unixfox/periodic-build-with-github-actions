@@ -49,8 +49,8 @@ jobs:
           file: ./caddy/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:2.9.1
-          build-args: CADDY_VERSION=2.9.1
+          tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:2.10.2
+          build-args: CADDY_VERSION=2.10.2
           # https://github.com/caddy-dns/powerdns/issues/4
           #build-args: CADDY_VERSION=${{ env.tag }}
           #tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:${{ env.tag }}
