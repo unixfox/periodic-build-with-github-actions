@@ -5,7 +5,8 @@ FROM caddy:$CADDY_VERSION-builder AS builder
 RUN xcaddy build \
     --with github.com/tailscale/caddy-tailscale \
     --with github.com/caddy-dns/powerdns \
-    --with github.com/pteich/caddy-tlsconsul
+    --with github.com/pteich/caddy-tlsconsul \
+    --with github.com/mholt/caddy-l4
 
 FROM caddy:$CADDY_VERSION
 
