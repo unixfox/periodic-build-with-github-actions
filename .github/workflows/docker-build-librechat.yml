@@ -17,7 +17,13 @@ jobs:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          echo "tag=$(git ls-remote --refs --tags https://github.com/danny-avila/LibreChat.git | grep -v 'rc' | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1 | cut -d "v" -f2)" >> $GITHUB_ENV
+          TAG=$(git ls-remote --refs --tags https://github.com/danny-avila/LibreChat.git | grep -v 'rc' | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1)
+          if [ -z "$TAG" ]; then
+            echo "Error: Could not fetch latest tag"
+            exit 1
+          fi
+          echo "tag=${TAG#v}" >> $GITHUB_ENV
+          echo "ref=$TAG" >> $GITHUB_ENV
         shell: bash
 
       - name: Check Out Repo
@@ -27,7 +33,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: "danny-avila/LibreChat"
-          ref: 'main'
+          ref: ${{ env.ref }}
           path: 'librechat-git'
 
       - name: Copy custom Dockerfile
