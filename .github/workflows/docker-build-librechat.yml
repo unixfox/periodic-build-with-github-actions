@@ -66,6 +66,6 @@ jobs:
         with:
           context: ./librechat-git
           file: ./librechat-git/Dockerfile
-          platforms: linux/amd64
+          platforms: linux/arm64
           push: true
           tags: quay.io/unixfox/librechat:latest, quay.io/unixfox/librechat:${{ env.tag }}
