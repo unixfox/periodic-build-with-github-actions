@@ -1,4 +1,4 @@
-name: Docker build LibreChat image
+@smithy/signature-v4name: Docker build LibreChat image
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ jobs:
 
   build:
 
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ubuntu-24.04-arm'
     permissions:
       contents: read
 
@@ -37,9 +37,9 @@ jobs:
           ref: ${{ env.ref }}
           path: 'librechat-git'
 
-      - name: Patch Dockerfile for Node.js 24 and uv 0.9.5
+      - name: Patch Dockerfile for Node.js 22 and uv 0.9.5
         run: |
-          sed -i 's|FROM node:20-alpine AS node|FROM node:24-alpine AS node|' librechat-git/Dockerfile
+          sed -i 's|FROM node:20-alpine AS node|FROM node:22-alpine AS node|' librechat-git/Dockerfile
           sed -i 's|COPY --from=ghcr.io/astral-sh/uv:0.6.13 /uv /uvx /bin/|COPY --from=ghcr.io/astral-sh/uv:0.9.5-python3.12-alpine /usr/local/bin/uv /usr/local/bin/uvx /bin/|' librechat-git/Dockerfile
 
       - name: Set up QEMU
@@ -66,6 +66,6 @@ jobs:
         with:
           context: ./librechat-git
           file: ./librechat-git/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: quay.io/unixfox/librechat:latest, quay.io/unixfox/librechat:${{ env.tag }}
