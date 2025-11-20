@@ -1,4 +1,4 @@
-@smithy/signature-v4name: Docker build LibreChat image
+name: Docker build LibreChat image
 
 on:
   workflow_dispatch:
