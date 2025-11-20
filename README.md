@@ -8,6 +8,7 @@
 - openresty-ssl-ja3: https://quay.io/unixfox/openresty-ssl-ja3
 - caddy: https://quay.io/unixfox/caddy
 - nitter: https://quay.io/unixfox/nitter
+- librechat: https://quay.io/unixfox/librechat
 
 # frozen/inactive
 Broken, need to be fixed.
