@@ -40,7 +40,7 @@ jobs:
       - name: Patch Dockerfile for Node.js 24 and uv 0.9.5
         run: |
           sed -i 's|FROM node:20-alpine AS node|FROM node:24-alpine AS node|' librechat-git/Dockerfile
-          sed -i 's|COPY --from=ghcr.io/astral-sh/uv:0.6.13 /uv /uvx /bin/|COPY --from=ghcr.io/astral-sh/uv:0.9.5-python3.12-alpine /uv /uvx /bin/|' librechat-git/Dockerfile
+          sed -i 's|COPY --from=ghcr.io/astral-sh/uv:0.6.13 /uv /uvx /bin/|COPY --from=ghcr.io/astral-sh/uv:0.9.5-python3.12-alpine /usr/local/bin/uv /usr/local/bin/uvx /bin/|' librechat-git/Dockerfile
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
