@@ -1,6 +1,6 @@
-From 8c6bde6b137a533742fcd004f53e5c6ccebc0610 Mon Sep 17 00:00:00 2001
+From 5cac6c70228da69dbcfeb8cd52b490d0c55cdf5b Mon Sep 17 00:00:00 2001
 From: GitHub Copilot <copilot@github.com>
-Date: Sun, 23 Nov 2025 16:56:57 +0000
+Date: Sun, 23 Nov 2025 21:22:07 +0000
 Subject: [PATCH] proxy pictures support
 
 ---
@@ -12,14 +12,14 @@ Subject: [PATCH] proxy pictures support
  src/routes/router_utils.nim   |  2 +-
  src/routes/status.nim         |  2 +-
  src/utils.nim                 | 38 ++++++++++++++++++++++++++---------
- src/views/general.nim         |  8 ++++----
+ src/views/general.nim         | 11 ++++++----
  src/views/list.nim            |  6 +++---
  src/views/profile.nim         | 16 +++++++--------
  src/views/renderutils.nim     |  8 ++++----
  src/views/rss.nimf            | 12 +++++------
  src/views/timeline.nim        |  2 +-
  src/views/tweet.nim           | 26 ++++++++++++------------
- 15 files changed, 92 insertions(+), 53 deletions(-)
+ 15 files changed, 95 insertions(+), 53 deletions(-)
  create mode 100644 public/js/proxyneededcheck.js
 
 diff --git a/nitter.example.conf b/nitter.example.conf
@@ -57,7 +57,7 @@ index 0000000..8cc5010
 +    img.src = 'https://pbs.twimg.com/favicon.ico';
 +}
 diff --git a/src/parser.nim b/src/parser.nim
-index 700e896..2c16790 100644
+index 5bf2b0b..5cff367 100644
 --- a/src/parser.nim
 +++ b/src/parser.nim
 @@ -275,7 +275,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
@@ -110,10 +110,10 @@ index a071a0d..5a11b13 100644
  template cookiePrefs*(): untyped {.dirty.} =
    getPrefs(cookies(request))
 diff --git a/src/routes/status.nim b/src/routes/status.nim
-index 7e89220..91caad6 100644
+index 0168dac..27926ba 100644
 --- a/src/routes/status.nim
 +++ b/src/routes/status.nim
-@@ -54,7 +54,7 @@ proc createStatusRouter*(cfg: Config) =
+@@ -52,7 +52,7 @@ proc createStatusRouter*(cfg: Config) =
          video = getVideoEmbed(cfg, conv.tweet.id)
        elif conv.tweet.gif.isSome():
          images = @[get(conv.tweet.gif).thumb]
@@ -175,10 +175,20 @@ index cdb6f3a..5a831c5 100644
  proc filterParams*(params: Table): seq[(string, string)] =
    for p in params.pairs():
 diff --git a/src/views/general.nim b/src/views/general.nim
-index e6ddca9..54e2e90 100644
+index e6ddca9..c7824d5 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
-@@ -94,15 +94,15 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+@@ -66,6 +66,9 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+     link(rel="search", type="application/opensearchdescription+xml", title=cfg.title,
+                             href=opensearchUrl)
+ 
++    if not prefs.proxyPics and not prefs.proxyVideos:
++      script(src="/js/proxyneededcheck.js")
++
+     if canonical.len > 0:
+       link(rel="canonical", href=canonical)
+ 
+@@ -94,15 +97,15 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
      meta(property="og:locale", content="en_US")
  
      if banner.len > 0 and not banner.startsWith('#'):
