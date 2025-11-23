@@ -1,7 +1,7 @@
-From 2b9b9fe23a9f54d1c8ac1ef248474e18991d56a3 Mon Sep 17 00:00:00 2001
-From: Emilien <4016501+unixfox@users.noreply.github.com>
-Date: Fri, 21 Feb 2025 22:02:42 +0100
-Subject: [PATCH 1/1] custom donation page
+From 465c3578f702a3f2df660fa3db40409bf75ecf27 Mon Sep 17 00:00:00 2001
+From: GitHub Copilot <copilot@github.com>
+Date: Sun, 23 Nov 2025 16:58:39 +0000
+Subject: [PATCH] custom donation page
 
 ---
  public/md/about.md    | 32 +++++++++++++++++++++++++++++++-
@@ -9,7 +9,7 @@ Subject: [PATCH 1/1] custom donation page
  2 files changed, 34 insertions(+), 2 deletions(-)
 
 diff --git a/public/md/about.md b/public/md/about.md
-index 3825e8f..91b30d0 100644
+index 3825e8f..fa4e9fa 100644
 --- a/public/md/about.md
 +++ b/public/md/about.md
 @@ -1,5 +1,7 @@
@@ -62,7 +62,7 @@ index 3825e8f..91b30d0 100644
 -Feel free to join our [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 +Feel free to join Nitter [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 diff --git a/src/views/general.nim b/src/views/general.nim
-index 5ba40a3..12c2e9f 100644
+index 54e2e90..48eb08b 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
@@ -76,7 +76,7 @@ index 5ba40a3..12c2e9f 100644
  
 @@ -32,7 +34,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
          if cfg.enableRss and rss.len > 0:
-           icon "rss-feed", title="RSS Feed", href=rss
+           icon "rss", title="RSS Feed", href=rss
          icon "bird", title="Open in Twitter", href=canonical
 -        a(href="https://liberapay.com/zedeus"): verbatim lp
 +        a(href="https://liberapay.com/yewtube"): verbatim lp
@@ -84,4 +84,5 @@ index 5ba40a3..12c2e9f 100644
          icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
  
 -- 
-2.49.0
+2.51.2
+
