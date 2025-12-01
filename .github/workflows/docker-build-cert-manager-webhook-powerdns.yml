@@ -26,10 +26,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check Out Repo lordofsystem/cert-manager-webhook-powerdns
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: "lordofsystem/cert-manager-webhook-powerdns"
           ref: 'main'

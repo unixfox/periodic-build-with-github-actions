@@ -44,10 +44,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
           
       - name: Check Out Repo kubernetes/ingress-nginx
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: "kubernetes/ingress-nginx"
           ref: 'controller-${{ needs.checks.outputs.env-tag }}'

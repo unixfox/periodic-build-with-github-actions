@@ -28,10 +28,10 @@ jobs:
         shell: bash
 
       - name: Check Out Repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Check Out Repo LibreChat
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: "danny-avila/LibreChat"
           ref: ${{ env.ref }}
