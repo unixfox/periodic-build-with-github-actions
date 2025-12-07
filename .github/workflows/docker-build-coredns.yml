@@ -1,4 +1,4 @@
-name: Docker build coredns image
+name: Docker and non docker build coredns image
 
 on:
   workflow_dispatch:
@@ -43,6 +43,7 @@ jobs:
           go get github.com/wenerme/coredns-pdsql
           go get github.com/jinzhu/gorm/dialects/postgres
           go get github.com/serverwentdown/alias
+          go get github.com/coredns/rrl
           go generate
 
       - name: Login to Quay.io
