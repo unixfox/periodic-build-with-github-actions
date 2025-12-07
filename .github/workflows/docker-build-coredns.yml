@@ -65,3 +65,64 @@ jobs:
           cp -R build/linux build/docker
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-build
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-push
+
+      - name: Publish binaries to dist branch
+        run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create a temporary directory for the dist branch
+          mkdir -p /tmp/coredns-dist
+          cd /tmp/coredns-dist
+          
+          # Clone the existing dist branch (or create if it doesn't exist)
+          if git ls-remote --heads https://github.com/${{ github.repository }}.git dist | grep -q dist; then
+            git clone --branch dist --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+          else
+            git init
+            git checkout -b dist
+          fi
+          
+          # Create directory for this version
+          mkdir -p binaries/v${{ env.tag }}
+          
+          # Copy only Linux binaries from build directory
+          for arch in amd64 arm arm64; do
+            if [ -f $GITHUB_WORKSPACE/coredns-git/build/linux/${arch}/coredns ]; then
+              cp $GITHUB_WORKSPACE/coredns-git/build/linux/${arch}/coredns binaries/v${{ env.tag }}/coredns-linux-${arch}
+              echo "Copied coredns-linux-${arch}"
+            fi
+          done
+          
+          # Copy only Linux release tarballs if they exist
+          if [ -d "$GITHUB_WORKSPACE/coredns-git/release" ]; then
+            cp $GITHUB_WORKSPACE/coredns-git/release/coredns_${{ env.tag }}_linux_*.tgz binaries/v${{ env.tag }}/ 2>/dev/null || true
+            cp $GITHUB_WORKSPACE/coredns-git/release/coredns_${{ env.tag }}_linux_*.sha256 binaries/v${{ env.tag }}/ 2>/dev/null || true
+            echo "Copied Linux release tarballs"
+          fi
+          
+          # Create a README for this version
+          cat > binaries/v${{ env.tag }}/README.md << EOF
+          # CoreDNS v${{ env.tag }} Linux Binaries
+          
+          Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          This directory contains the compiled CoreDNS Linux binaries for version v${{ env.tag }}.
+          
+          ## Available binaries:
+          
+          $(ls -lh binaries/v${{ env.tag }}/ | tail -n +2)
+          
+          ## Custom plugins included:
+          - pdsql (github.com/wenerme/coredns-pdsql)
+          - pdsql_postgres (github.com/jinzhu/gorm/dialects/postgres)
+          - alias (github.com/serverwentdown/alias)
+          EOF
+          
+          # Add and commit
+          git add binaries/v${{ env.tag }}
+          git commit -m "Add CoreDNS v${{ env.tag }} Linux binaries" || echo "No changes to commit"
+          
+          # Push to dist branch
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git dist
