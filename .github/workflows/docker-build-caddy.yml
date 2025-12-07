@@ -1,4 +1,4 @@
-name: Docker build caddy image
+name: Docker and non docker build caddy image
 
 on:
   workflow_dispatch:
@@ -28,6 +28,56 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v6
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Install xcaddy
+        run: |
+          go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Build Caddy binaries for amd64
+        run: |
+          mkdir -p build/linux/amd64
+          GOOS=linux GOARCH=amd64 xcaddy build v${{ env.tag }} \
+            --with github.com/tailscale/caddy-tailscale \
+            --with github.com/caddy-dns/powerdns \
+            --with github.com/pteich/caddy-tlsconsul \
+            --with github.com/mholt/caddy-l4=github.com/unixfox/caddy-l4@latest \
+            --with github.com/mholt/caddy-ratelimit \
+            --output build/linux/amd64/caddy
+
+      - name: Build Caddy binaries for arm64
+        run: |
+          mkdir -p build/linux/arm64
+          GOOS=linux GOARCH=arm64 xcaddy build v${{ env.tag }} \
+            --with github.com/tailscale/caddy-tailscale \
+            --with github.com/caddy-dns/powerdns \
+            --with github.com/pteich/caddy-tlsconsul \
+            --with github.com/mholt/caddy-l4=github.com/unixfox/caddy-l4@latest \
+            --with github.com/mholt/caddy-ratelimit \
+            --output build/linux/arm64/caddy
+
+      - name: Create release archives
+        run: |
+          mkdir -p release
+          
+          # Create archives for each architecture
+          for arch in amd64 arm64; do
+            if [ -f build/linux/${arch}/caddy ]; then
+              # Create tar.gz archive
+              tar -czf release/caddy_${{ env.tag }}_linux_${arch}.tar.gz -C build/linux/${arch} caddy
+              
+              # Generate SHA256 checksum
+              cd release
+              sha256sum caddy_${{ env.tag }}_linux_${arch}.tar.gz > caddy_${{ env.tag }}_linux_${arch}.tar.gz.sha256
+              cd ..
+              
+              echo "Created archive for ${arch}"
+            fi
+          done
+
       - name: Login to Quay.io
         uses: docker/login-action@v3
         with:
@@ -53,3 +103,66 @@ jobs:
           #build-args: CADDY_VERSION=2.10.2
           build-args: CADDY_VERSION=${{ env.tag }}
           tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:${{ env.tag }}
+
+      - name: Publish binaries to dist branch
+        run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create a temporary directory for the dist branch
+          mkdir -p /tmp/caddy-dist
+          cd /tmp/caddy-dist
+          
+          # Clone the existing dist branch (or create if it doesn't exist)
+          if git ls-remote --heads https://github.com/${{ github.repository }}.git dist | grep -q dist; then
+            git clone --branch dist --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+          else
+            git init
+            git checkout -b dist
+          fi
+          
+          # Create directory for this version
+          mkdir -p binaries/caddy/v${{ env.tag }}
+          
+          # Copy Linux binaries from build directory
+          for arch in amd64 arm64; do
+            if [ -f $GITHUB_WORKSPACE/build/linux/${arch}/caddy ]; then
+              cp $GITHUB_WORKSPACE/build/linux/${arch}/caddy binaries/caddy/v${{ env.tag }}/caddy-linux-${arch}
+              echo "Copied caddy-linux-${arch}"
+            fi
+          done
+          
+          # Copy release archives and checksums
+          if [ -d "$GITHUB_WORKSPACE/release" ]; then
+            cp $GITHUB_WORKSPACE/release/caddy_${{ env.tag }}_linux_*.tar.gz binaries/caddy/v${{ env.tag }}/ 2>/dev/null || true
+            cp $GITHUB_WORKSPACE/release/caddy_${{ env.tag }}_linux_*.sha256 binaries/caddy/v${{ env.tag }}/ 2>/dev/null || true
+            echo "Copied release archives"
+          fi
+          
+          # Create a README for this version
+          cat > binaries/caddy/v${{ env.tag }}/README.md << EOF
+          # Caddy v${{ env.tag }} Linux Binaries
+          
+          Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          This directory contains the compiled Caddy Linux binaries for version v${{ env.tag }}.
+          
+          ## Available binaries:
+          
+          $(ls -lh binaries/caddy/v${{ env.tag }}/ | tail -n +2)
+          
+          ## Custom plugins included:
+          - caddy-tailscale (github.com/tailscale/caddy-tailscale)
+          - powerdns (github.com/caddy-dns/powerdns)
+          - caddy-tlsconsul (github.com/pteich/caddy-tlsconsul)
+          - caddy-l4 (github.com/unixfox/caddy-l4@latest)
+          - caddy-ratelimit (github.com/mholt/caddy-ratelimit)
+          EOF
+          
+          # Add and commit
+          git add binaries/caddy/v${{ env.tag }}
+          git commit -m "Add Caddy v${{ env.tag }} Linux binaries" || echo "No changes to commit"
+          
+          # Push to dist branch
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git dist
