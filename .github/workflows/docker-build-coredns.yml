@@ -43,6 +43,7 @@ jobs:
           go get github.com/wenerme/coredns-pdsql
           go get github.com/jinzhu/gorm/dialects/postgres
           go get github.com/serverwentdown/alias
+          go get github.com/coredns/rrl
           go generate
 
       - name: Login to Quay.io
@@ -61,7 +62,9 @@ jobs:
       - name: Build coredns
         run: |
           cd coredns-git
-          make LINUX_ARCH="amd64 arm arm64" -f Makefile.release release
+          # Build only Linux binaries (skip Darwin and Windows to avoid import cycle issues)
+          make LINUX_ARCH="amd64 arm arm64" -f Makefile.release build
+          make LINUX_ARCH="amd64 arm arm64" -f Makefile.release tar
           cp -R build/linux build/docker
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-build
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-push
