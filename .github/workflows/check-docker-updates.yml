@@ -78,10 +78,6 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v6
 
-      - name: Setup GitHub CLI
-        run: |
-          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
-          
       - name: Trigger relevant workflows
         run: |
           IFS=',' read -ra UPDATES <<< "${{ needs.check-updates.outputs.updates }}"
@@ -118,6 +114,12 @@ jobs:
                 ;;
               "cert-manager-webhook-powerdns")
                 gh workflow run docker-build-cert-manager-webhook-powerdns.yml
+                ;;
+              "caddy")
+                gh workflow run docker-build-caddy.yml
+                ;;
+              "coredns")
+                gh workflow run docker-build-coredns.yml
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml
