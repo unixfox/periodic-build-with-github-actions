@@ -62,9 +62,7 @@ jobs:
       - name: Build coredns
         run: |
           cd coredns-git
-          # Build only Linux binaries (skip Darwin and Windows to avoid import cycle issues)
-          make LINUX_ARCH="amd64 arm arm64" -f Makefile.release build
-          make LINUX_ARCH="amd64 arm arm64" -f Makefile.release tar
+          make LINUX_ARCH="amd64 arm arm64" -f Makefile.release release
           cp -R build/linux build/docker
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-build
           make LINUX_ARCH="amd64 arm arm64" VERSION=${{ env.tag }} DOCKER=quay.io/unixfox -f Makefile.docker docker-push
