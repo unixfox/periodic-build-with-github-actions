@@ -1,0 +1,22 @@
+# Caddy v2.10.2 Linux Binaries
+
+Built on: 2025-12-07 21:27:48 UTC
+
+This directory contains the compiled Caddy Linux binaries for version v2.10.2.
+
+## Available binaries:
+
+-rw-r--r-- 1 runner runner   0 Dec  7 21:27 README.md
+-rwxr-xr-x 1 runner runner 59M Dec  7 21:27 caddy-linux-amd64
+-rwxr-xr-x 1 runner runner 56M Dec  7 21:27 caddy-linux-arm64
+-rw-r--r-- 1 runner runner 21M Dec  7 21:27 caddy_2.10.2_linux_amd64.tar.gz
+-rw-r--r-- 1 runner runner  98 Dec  7 21:27 caddy_2.10.2_linux_amd64.tar.gz.sha256
+-rw-r--r-- 1 runner runner 19M Dec  7 21:27 caddy_2.10.2_linux_arm64.tar.gz
+-rw-r--r-- 1 runner runner  98 Dec  7 21:27 caddy_2.10.2_linux_arm64.tar.gz.sha256
+
+## Custom plugins included:
+- caddy-tailscale (github.com/tailscale/caddy-tailscale)
+- powerdns (github.com/caddy-dns/powerdns)
+- caddy-tlsconsul (github.com/pteich/caddy-tlsconsul)
+- caddy-l4 (github.com/unixfox/caddy-l4@latest)
+- caddy-ratelimit (github.com/mholt/caddy-ratelimit)
