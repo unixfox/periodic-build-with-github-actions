@@ -86,25 +86,25 @@ jobs:
           fi
           
           # Create directory for this version
-          mkdir -p binaries/v${{ env.tag }}
+          mkdir -p binaries/coredns/v${{ env.tag }}
           
           # Copy only Linux binaries from build directory
           for arch in amd64 arm arm64; do
             if [ -f $GITHUB_WORKSPACE/coredns-git/build/linux/${arch}/coredns ]; then
-              cp $GITHUB_WORKSPACE/coredns-git/build/linux/${arch}/coredns binaries/v${{ env.tag }}/coredns-linux-${arch}
+              cp $GITHUB_WORKSPACE/coredns-git/build/linux/${arch}/coredns binaries/coredns/v${{ env.tag }}/coredns-linux-${arch}
               echo "Copied coredns-linux-${arch}"
             fi
           done
           
           # Copy only Linux release tarballs if they exist
           if [ -d "$GITHUB_WORKSPACE/coredns-git/release" ]; then
-            cp $GITHUB_WORKSPACE/coredns-git/release/coredns_${{ env.tag }}_linux_*.tgz binaries/v${{ env.tag }}/ 2>/dev/null || true
-            cp $GITHUB_WORKSPACE/coredns-git/release/coredns_${{ env.tag }}_linux_*.sha256 binaries/v${{ env.tag }}/ 2>/dev/null || true
+            cp $GITHUB_WORKSPACE/coredns-git/release/coredns_${{ env.tag }}_linux_*.tgz binaries/coredns/v${{ env.tag }}/ 2>/dev/null || true
+            cp $GITHUB_WORKSPACE/coredns-git/release/coredns_${{ env.tag }}_linux_*.sha256 binaries/coredns/v${{ env.tag }}/ 2>/dev/null || true
             echo "Copied Linux release tarballs"
           fi
           
           # Create a README for this version
-          cat > binaries/v${{ env.tag }}/README.md << EOF
+          cat > binaries/coredns/v${{ env.tag }}/README.md << EOF
           # CoreDNS v${{ env.tag }} Linux Binaries
           
           Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -113,7 +113,7 @@ jobs:
           
           ## Available binaries:
           
-          $(ls -lh binaries/v${{ env.tag }}/ | tail -n +2)
+          $(ls -lh binaries/coredns/v${{ env.tag }}/ | tail -n +2)
           
           ## Custom plugins included:
           - pdsql (github.com/wenerme/coredns-pdsql)
@@ -122,7 +122,7 @@ jobs:
           EOF
           
           # Add and commit
-          git add binaries/v${{ env.tag }}
+          git add binaries/coredns/v${{ env.tag }}
           git commit -m "Add CoreDNS v${{ env.tag }} Linux binaries" || echo "No changes to commit"
           
           # Push to dist branch
