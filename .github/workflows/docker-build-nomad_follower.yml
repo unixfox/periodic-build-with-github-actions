@@ -40,13 +40,13 @@ jobs:
         run: |
           mkdir -p build/linux/amd64
           cd /tmp/nomad_follower
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o $GITHUB_WORKSPACE/build/linux/amd64/nomad_follower ./cmd/nomad_follower
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o $GITHUB_WORKSPACE/build/linux/amd64/nomad_follower .
 
       - name: Build nomad_follower binaries for arm64
         run: |
           mkdir -p build/linux/arm64
           cd /tmp/nomad_follower
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o $GITHUB_WORKSPACE/build/linux/arm64/nomad_follower ./cmd/nomad_follower
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o $GITHUB_WORKSPACE/build/linux/arm64/nomad_follower .
 
       - name: Create release archives
         run: |
@@ -92,7 +92,7 @@ jobs:
           # Copy Linux binaries from build directory
           for arch in amd64 arm64; do
             if [ -f $GITHUB_WORKSPACE/build/linux/${arch}/nomad_follower ]; then
-              cp $GITHUB_WORKSPACE/build/linux/${arch}/nomad_follower binaries/nomad_follower/v${{ env.tag }}/nomad_follower-linux-${arch}
+              cp $GITHUB_WORKSPACE/build/linux/${arch}/nomad_follower binaries/nomad_follower/${{ env.commit }}/nomad_follower-linux-${arch}
               echo "Copied nomad_follower-linux-${arch}"
             fi
           done
