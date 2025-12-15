@@ -1,0 +1,135 @@
+name: Build nomad_follower binaries
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/docker-build-nomad_follower.yml'
+      - 'nomad_follower/**'
+
+jobs:
+
+  build:
+
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: Get latest commit hash
+        id: get-latest-commit
+        run: |
+          echo "commit=$(git ls-remote https://github.com/sofixa/nomad_follower.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+          echo "timestamp=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+        shell: bash
+
+  
+      - name: Check Out Repo
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Clone nomad_follower source
+        run: |
+          git clone https://github.com/sofixa/nomad_follower.git /tmp/nomad_follower
+          cd /tmp/nomad_follower
+          git checkout ${{ env.commit }}
+
+      - name: Build nomad_follower binaries for amd64
+        run: |
+          mkdir -p build/linux/amd64
+          cd /tmp/nomad_follower
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o $GITHUB_WORKSPACE/build/linux/amd64/nomad_follower ./cmd/nomad_follower
+
+      - name: Build nomad_follower binaries for arm64
+        run: |
+          mkdir -p build/linux/arm64
+          cd /tmp/nomad_follower
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o $GITHUB_WORKSPACE/build/linux/arm64/nomad_follower ./cmd/nomad_follower
+
+      - name: Create release archives
+        run: |
+          mkdir -p release
+
+          # Create archives for each architecture
+          for arch in amd64 arm64; do
+            if [ -f build/linux/${arch}/nomad_follower ]; then
+              # Create tar.gz archive
+              tar -czf release/nomad_follower_${{ env.commit }}_linux_${arch}.tar.gz -C build/linux/${arch} nomad_follower
+
+              # Generate SHA256 checksum
+              cd release
+              sha256sum nomad_follower_${{ env.commit }}_linux_${arch}.tar.gz > nomad_follower_${{ env.commit }}_linux_${arch}.tar.gz.sha256
+              cd ..
+
+              echo "Created archive for ${arch}"
+            fi
+          done
+
+  
+      - name: Publish binaries to dist branch
+        run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create a temporary directory for the dist branch
+          mkdir -p /tmp/nomad_follower-dist
+          cd /tmp/nomad_follower-dist
+
+          # Clone the existing dist branch (or create if it doesn't exist)
+          if git ls-remote --heads https://github.com/${{ github.repository }}.git dist | grep -q dist; then
+            git clone --branch dist --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+          else
+            git init
+            git checkout -b dist
+          fi
+
+          # Create directory for this version
+          mkdir -p binaries/nomad_follower/${{ env.commit }}
+
+          # Copy Linux binaries from build directory
+          for arch in amd64 arm64; do
+            if [ -f $GITHUB_WORKSPACE/build/linux/${arch}/nomad_follower ]; then
+              cp $GITHUB_WORKSPACE/build/linux/${arch}/nomad_follower binaries/nomad_follower/v${{ env.tag }}/nomad_follower-linux-${arch}
+              echo "Copied nomad_follower-linux-${arch}"
+            fi
+          done
+
+          # Copy release archives and checksums
+          if [ -d "$GITHUB_WORKSPACE/release" ]; then
+            cp $GITHUB_WORKSPACE/release/nomad_follower_${{ env.commit }}_linux_*.tar.gz binaries/nomad_follower/${{ env.commit }}/ 2>/dev/null || true
+            cp $GITHUB_WORKSPACE/release/nomad_follower_${{ env.commit }}_linux_*.sha256 binaries/nomad_follower/${{ env.commit }}/ 2>/dev/null || true
+            echo "Copied release archives"
+          fi
+
+          # Create a README for this version
+          cat > binaries/nomad_follower/${{ env.commit }}/README.md << EOF
+          # nomad_follower Linux Binaries
+
+          Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Commit: ${{ env.commit }}
+
+          This directory contains the compiled nomad_follower Linux binaries for commit ${{ env.commit }}.
+
+          ## Description
+          Log forwarder for aggregating allocation logs from nomad worker agents.
+
+          ## Features
+          - Follows allocations with 'nomad_follower' tag
+          - Stops following completed allocations
+          - Formats logs as JSON
+          - Adds service_name key to logs
+
+          ## Available binaries:
+
+          $(ls -lh binaries/nomad_follower/${{ env.commit }}/ | tail -n +2)
+          EOF
+
+          # Add and commit
+          git add binaries/nomad_follower/${{ env.commit }}
+          git commit -m "Add nomad_follower ${{ env.commit }} Linux binaries" || echo "No changes to commit"
+
+          # Push to dist branch
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git dist
