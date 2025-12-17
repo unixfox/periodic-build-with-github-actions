@@ -1,13 +1,316 @@
-From 465c3578f702a3f2df660fa3db40409bf75ecf27 Mon Sep 17 00:00:00 2001
-From: GitHub Copilot <copilot@github.com>
-Date: Sun, 23 Nov 2025 16:58:39 +0000
+From 6d3e332e9a8eb6c7fb3da6ae3fd8ebfab98ff82f Mon Sep 17 00:00:00 2001
+From: Test User <test@example.com>
+Date: Wed, 17 Dec 2025 15:08:30 +0000
 Subject: [PATCH] custom donation page
 
 ---
- public/md/about.md    | 32 +++++++++++++++++++++++++++++++-
- src/views/general.nim |  4 +++-
- 2 files changed, 34 insertions(+), 2 deletions(-)
+ 0001-add-x-cache-header.patch | 295 ++++++++++++++++++++++++++++++++++
+ public/md/about.md            |  32 +++-
+ src/views/general.nim         |   4 +-
+ 3 files changed, 329 insertions(+), 2 deletions(-)
+ create mode 100644 0001-add-x-cache-header.patch
 
+diff --git a/0001-add-x-cache-header.patch b/0001-add-x-cache-header.patch
+new file mode 100644
+index 0000000..135f336
+--- /dev/null
++++ b/0001-add-x-cache-header.patch
+@@ -0,0 +1,295 @@
++From 876704412adb7f6fb41ba181e900e1398f38aa76 Mon Sep 17 00:00:00 2001
++From: Test User <test@example.com>
++Date: Wed, 17 Dec 2025 15:06:54 +0000
++Subject: [PATCH] add x-cache header
++
++---
++ 0001-cdn-hmac-support.patch | 217 ++++++++++++++++++++++++++++++++++++
++ src/routes/rss.nim          |  12 +-
++ 2 files changed, 223 insertions(+), 6 deletions(-)
++ create mode 100644 0001-cdn-hmac-support.patch
++
++diff --git a/0001-cdn-hmac-support.patch b/0001-cdn-hmac-support.patch
++new file mode 100644
++index 0000000..60fe916
++--- /dev/null
+++++ b/0001-cdn-hmac-support.patch
++@@ -0,0 +1,217 @@
+++From 5c7db0b609a818955d51e7e4bd63b13138bc6ef4 Mon Sep 17 00:00:00 2001
+++From: Test User <test@example.com>
+++Date: Wed, 17 Dec 2025 15:05:14 +0000
+++Subject: [PATCH] cdn + hmac support
+++
+++---
+++ nitter.example.conf   |  1 +
+++ src/config.nim        |  1 +
+++ src/nitter.nim        |  1 +
+++ src/routes/media.nim  | 16 ++++++++++++----
+++ src/types.nim         |  1 +
+++ src/utils.nim         | 26 ++++++++++++++++++--------
+++ src/views/general.nim |  2 +-
+++ src/views/rss.nimf    | 12 ++++++------
+++ 8 files changed, 41 insertions(+), 19 deletions(-)
+++
+++diff --git a/nitter.example.conf b/nitter.example.conf
+++index 4a6a026..3d9b1bf 100644
+++--- a/nitter.example.conf
++++++ b/nitter.example.conf
+++@@ -26,6 +26,7 @@ enableRSS = true  # set this to false to disable RSS feeds
+++ enableDebug = false  # enable request logs and debug endpoints (/.sessions)
+++ proxy = ""  # http/https url, SOCKS proxies are not supported
+++ proxyAuth = ""
++++cdnUrl = "https://cdn.xcancel.com"
+++ apiProxy = "" # nitter-proxy host, e.g. localhost:7000
+++ disableTid = false # enable this if cookie-based auth is failing
+++ maxConcurrentReqs = 2 # max requests at a time per session to avoid race conditions
+++diff --git a/src/config.nim b/src/config.nim
+++index 8cb334a..43e94a4 100644
+++--- a/src/config.nim
++++++ b/src/config.nim
+++@@ -41,6 +41,7 @@ proc getConfig*(path: string): (Config, parseCfg.Config) =
+++     enableDebug: cfg.get("Config", "enableDebug", false),
+++     proxy: cfg.get("Config", "proxy", ""),
+++     proxyAuth: cfg.get("Config", "proxyAuth", ""),
++++    cdnUrl: cfg.get("Config", "cdnUrl", "https://cdn.xcancel.com"),
+++     apiProxy: cfg.get("Config", "apiProxy", ""),
+++     disableTid: cfg.get("Config", "disableTid", false),
+++     maxConcurrentReqs: cfg.get("Config", "maxConcurrentReqs", 2)
+++diff --git a/src/nitter.nim b/src/nitter.nim
+++index e2d6bec..575ece0 100644
+++--- a/src/nitter.nim
++++++ b/src/nitter.nim
+++@@ -35,6 +35,7 @@ updateDefaultPrefs(fullCfg)
+++ setCacheTimes(cfg)
+++ setHmacKey(cfg.hmacKey)
+++ setProxyEncoding(cfg.base64Media)
++++setCdnUrl(cfg.cdnUrl)
+++ setMaxHttpConns(cfg.httpMaxConns)
+++ setHttpProxy(cfg.proxy, cfg.proxyAuth)
+++ setApiProxy(cfg.apiProxy)
+++diff --git a/src/routes/media.nim b/src/routes/media.nim
+++index 186b8d8..110bf21 100644
+++--- a/src/routes/media.nim
++++++ b/src/routes/media.nim
+++@@ -91,8 +91,12 @@ proc createMediaRouter*(cfg: Config) =
+++     get "/pic/?":
+++       resp Http404
+++ 
+++-    get re"^\/pic\/orig\/(enc)?\/?(.+)":
+++-      var url = decoded(request, 1)
++++    get re"^\/pic\/orig\/(enc)?\/?(.+)\/(.+)$":
++++      var url = decoded(request, 2)
++++
++++      if getHmac(url) != request.matches[1]:
++++        resp Http403, showError("Failed to verify signature", cfg)
++++
+++       if "twimg.com" notin url:
+++         url.insert(twimg)
+++       if not url.startsWith(https):
+++@@ -105,8 +109,12 @@ proc createMediaRouter*(cfg: Config) =
+++       let code = await proxyMedia(request, url)
+++       check code
+++ 
+++-    get re"^\/pic\/(enc)?\/?(.+)":
+++-      var url = decoded(request, 1)
++++    get re"^\/pic\/(enc)?\/?(.+)\/(.+)$":
++++      var url = decoded(request, 2)
++++
++++      if getHmac(url) != request.matches[1]:
++++        resp Http403, showError("Failed to verify signature", cfg)
++++
+++       if "twimg.com" notin url:
+++         url.insert(twimg)
+++       if not url.startsWith(https):
+++diff --git a/src/types.nim b/src/types.nim
+++index 90487ab..deb79b4 100644
+++--- a/src/types.nim
++++++ b/src/types.nim
+++@@ -275,6 +275,7 @@ type
+++     enableDebug*: bool
+++     proxy*: string
+++     proxyAuth*: string
++++    cdnUrl*: string
+++     apiProxy*: string
+++     disableTid*: bool
+++     maxConcurrentReqs*: int
+++diff --git a/src/utils.nim b/src/utils.nim
+++index c96a6dd..2dd2d60 100644
+++--- a/src/utils.nim
++++++ b/src/utils.nim
+++@@ -1,10 +1,12 @@
+++ # SPDX-License-Identifier: AGPL-3.0-only
+++ import strutils, strformat, uri, tables, base64
+++ import nimcrypto
++++import std/times
+++ 
+++ var
+++   hmacKey: string
+++   base64Media = false
++++  cdnUrl: string
+++ 
+++ const
+++   https* = "https://"
+++@@ -26,28 +28,36 @@ proc setHmacKey*(key: string) =
+++ proc setProxyEncoding*(state: bool) =
+++   base64Media = state
+++ 
++++proc setCdnUrl*(url: string) =
++++  cdnUrl = url
++++
+++ proc getHmac*(data: string): string =
+++-  ($hmac(sha256, hmacKey, data))[0 .. 12]
++++  let now = now()
++++  ($hmac(sha256, hmacKey, data & intToStr(now.year + int(now.month) + now.monthDay)))[0 .. 12]
+++ 
+++ proc getVidUrl*(link: string): string =
+++   if link.len == 0: return
+++   let sig = getHmac(link)
+++-  if base64Media:
+++-    &"/video/enc/{sig}/{encode(link, safe=true)}"
+++-  else:
++++  if "m3u8" in link:
+++     &"/video/{sig}/{encodeUrl(link)}"
++++  elif base64Media:
++++    &"{cdnUrl}/video/enc/{sig}/{encode(link, safe=true)}"
++++  else:
++++    &"{cdnUrl}/video/{sig}/{encodeUrl(link)}"
+++ 
+++ proc getPicUrl*(link: string): string =
++++  let sig = getHmac(link)
+++   if base64Media:
+++-    &"/pic/enc/{encode(link, safe=true)}"
++++    &"{cdnUrl}/pic/enc/{sig}/{encode(link, safe=true)}"
+++   else:
+++-    &"/pic/{encodeUrl(link)}"
++++    &"{cdnUrl}/pic/{sig}/{encodeUrl(link)}"
+++ 
+++ proc getOrigPicUrl*(link: string): string =
++++  let sig = getHmac(link)
+++   if base64Media:
+++-    &"/pic/orig/enc/{encode(link, safe=true)}"
++++    &"{cdnUrl}/pic/orig/enc/{sig}/{encode(link, safe=true)}"
+++   else:
+++-    &"/pic/orig/{encodeUrl(link)}"
++++    &"{cdnUrl}/pic/orig/{sig}/{encodeUrl(link)}"
+++ 
+++ proc filterParams*(params: Table): seq[(string, string)] =
+++   for p in params.pairs():
+++diff --git a/src/views/general.nim b/src/views/general.nim
+++index 2525841..257ef85 100644
+++--- a/src/views/general.nim
++++++ b/src/views/general.nim
+++@@ -102,7 +102,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+++                        else: getSmallPic(url)
+++       link(rel="preload", type="image/png", href=preloadUrl, `as`="image")
+++ 
+++-      let image = getUrlPrefix(cfg) & getPicUrl(url)
++++      let image = getPicUrl(url)
+++       meta(property="og:image", content=image)
+++       meta(property="twitter:image:src", content=image)
+++ 
+++diff --git a/src/views/rss.nimf b/src/views/rss.nimf
+++index 717ad99..073df60 100644
+++--- a/src/views/rss.nimf
++++++ b/src/views/rss.nimf
+++@@ -56,22 +56,22 @@ Twitter feed for: ${desc}. Generated by ${getUrlPrefix(cfg)}
+++ <p>${text.replace("\n", "<br>\n")}</p>
+++ #if tweet.photos.len > 0:
+++ #  for photo in tweet.photos:
+++-<img src="${urlPrefix}${getPicUrl(photo)}" style="max-width:250px;" />
++++<img src="${getPicUrl(photo)}" style="max-width:250px;" />
+++ #  end for
+++ #elif tweet.video.isSome:
+++ <a href="${urlPrefix}${tweet.getLink}">
+++ <br>Video<br>
+++-  <img src="${urlPrefix}${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
++++  <img src="${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
+++ </a>
+++ #elif tweet.gif.isSome:
+++-#  let thumb = &"{urlPrefix}{getPicUrl(get(tweet.gif).thumb)}"
+++-#  let url = &"{urlPrefix}{getPicUrl(get(tweet.gif).url)}"
++++#  let thumb = &"{getPicUrl(get(tweet.gif).thumb)}"
++++#  let url = &"{getPicUrl(get(tweet.gif).url)}"
+++ <video poster="${thumb}" autoplay muted loop style="max-width:250px;">
+++   <source src="${url}" type="video/mp4"></video>
+++ #elif tweet.card.isSome:
+++ #  let card = tweet.card.get()
+++ #  if card.image.len > 0:
+++-<img src="${urlPrefix}${getPicUrl(card.image)}" style="max-width:250px;" />
++++<img src="${getPicUrl(card.image)}" style="max-width:250px;" />
+++ #  end if
+++ #end if
+++ #if tweet.quote.isSome and get(tweet.quote).available:
+++@@ -141,7 +141,7 @@ ${renderRssTweet(quoteTweet, cfg)}
+++     <image>
+++       <title>${title}</title>
+++       <link>${urlPrefix}/${profile.user.username}</link>
+++-      <url>${urlPrefix}${getPicUrl(profile.user.getUserPic(style="_400x400"))}</url>
++++      <url>${getPicUrl(profile.user.getUserPic(style="_400x400"))}</url>
+++       <width>128</width>
+++       <height>128</height>
+++     </image>
+++-- 
+++2.52.0
+++
++diff --git a/src/routes/rss.nim b/src/routes/rss.nim
++index b0e781d..6143fa3 100644
++--- a/src/routes/rss.nim
+++++ b/src/routes/rss.nim
++@@ -42,7 +42,7 @@ proc timelineRss*(req: Request; cfg: Config; query: Query): Future[Rss] {.async.
++     let rss = renderTimelineRss(profile, cfg, multi=(names.len > 1))
++     return Rss(feed: rss, cursor: profile.tweets.bottom)
++ 
++-template respRss*(rss, page) =
+++template respRss*(rss; page; cached = false ) =
++   if rss.cursor.len == 0:
++     let info = case page
++                of "User": " \"" & @"name" & "\" "
++@@ -54,7 +54,7 @@ template respRss*(rss, page) =
++     resp Http404, showError(getSuspended(@"name"), cfg)
++ 
++   let headers = {"Content-Type": "application/rss+xml; charset=utf-8",
++-                 "Min-Id": rss.cursor}
+++                 "Min-Id": rss.cursor, "X-Cache": $cached}
++   resp Http200, headers, rss.feed
++ 
++ proc createRssRouter*(cfg: Config) =
++@@ -74,7 +74,7 @@ proc createRssRouter*(cfg: Config) =
++ 
++       var rss = await getCachedRss(key)
++       if rss.cursor.len > 0:
++-        respRss(rss, "Search")
+++        respRss(rss, "Search", true)
++ 
++       let tweets = await getGraphTweetSearch(query, cursor)
++       rss.cursor = tweets.bottom
++@@ -92,7 +92,7 @@ proc createRssRouter*(cfg: Config) =
++ 
++       var rss = await getCachedRss(key)
++       if rss.cursor.len > 0:
++-        respRss(rss, "User")
+++        respRss(rss, "User", true)
++ 
++       rss = await timelineRss(request, cfg, Query(fromUser: @[name]))
++ 
++@@ -120,7 +120,7 @@ proc createRssRouter*(cfg: Config) =
++ 
++       var rss = await getCachedRss(key)
++       if rss.cursor.len > 0:
++-        respRss(rss, "User")
+++        respRss(rss, "User", true)
++ 
++       rss = await timelineRss(request, cfg, query)
++ 
++@@ -153,7 +153,7 @@ proc createRssRouter*(cfg: Config) =
++ 
++       var rss = await getCachedRss(key)
++       if rss.cursor.len > 0:
++-        respRss(rss, "List")
+++        respRss(rss, "List", true)
++ 
++       let
++         list = await getCachedList(id=id)
++-- 
++2.52.0
++
 diff --git a/public/md/about.md b/public/md/about.md
 index 3825e8f..fa4e9fa 100644
 --- a/public/md/about.md
@@ -62,7 +365,7 @@ index 3825e8f..fa4e9fa 100644
 -Feel free to join our [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 +Feel free to join Nitter [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 diff --git a/src/views/general.nim b/src/views/general.nim
-index 54e2e90..48eb08b 100644
+index 257ef85..2583260 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
@@ -77,12 +380,12 @@ index 54e2e90..48eb08b 100644
 @@ -32,7 +34,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
          if cfg.enableRss and rss.len > 0:
            icon "rss", title="RSS Feed", href=rss
-         icon "bird", title="Open in Twitter", href=canonical
+         icon "bird", title="Open in X", href=canonical
 -        a(href="https://liberapay.com/zedeus"): verbatim lp
 +        a(href="https://liberapay.com/yewtube"): verbatim lp
          icon "info", title="About", href="/about"
          icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
  
 -- 
-2.51.2
+2.52.0
 
