@@ -1,6 +1,6 @@
-From d3a64a5930bfc3fc5af84c84ae26f172b640413a Mon Sep 17 00:00:00 2001
-From: Test User <test@example.com>
-Date: Wed, 17 Dec 2025 15:18:21 +0000
+From 465c3578f702a3f2df660fa3db40409bf75ecf27 Mon Sep 17 00:00:00 2001
+From: GitHub Copilot <copilot@github.com>
+Date: Sun, 23 Nov 2025 16:58:39 +0000
 Subject: [PATCH] custom donation page
 
 ---
@@ -62,7 +62,7 @@ index 3825e8f..fa4e9fa 100644
 -Feel free to join our [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 +Feel free to join Nitter [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 diff --git a/src/views/general.nim b/src/views/general.nim
-index 257ef85..2583260 100644
+index 54e2e90..48eb08b 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
@@ -77,12 +77,12 @@ index 257ef85..2583260 100644
 @@ -32,7 +34,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
          if cfg.enableRss and rss.len > 0:
            icon "rss", title="RSS Feed", href=rss
-         icon "bird", title="Open in X", href=canonical
+         icon "bird", title="Open in Twitter", href=canonical
 -        a(href="https://liberapay.com/zedeus"): verbatim lp
 +        a(href="https://liberapay.com/yewtube"): verbatim lp
          icon "info", title="About", href="/about"
          icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
  
 -- 
-2.52.0
+2.51.2
 
