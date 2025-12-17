@@ -1,4 +1,4 @@
-From 5c7db0b609a818955d51e7e4bd63b13138bc6ef4 Mon Sep 17 00:00:00 2001
+From 18d6dc526105446371bad3ef9565f7095b3585b1 Mon Sep 17 00:00:00 2001
 From: Test User <test@example.com>
 Date: Wed, 17 Dec 2025 15:05:14 +0000
 Subject: [PATCH] cdn + hmac support
