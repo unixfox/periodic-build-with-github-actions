@@ -1,21 +1,21 @@
-From 887e45e17433dae7379eb8ffe8104936921f6759 Mon Sep 17 00:00:00 2001
-From: GitHub Copilot <copilot@github.com>
-Date: Sun, 23 Nov 2025 16:52:11 +0000
+From 477aca2f31fdec075ea2718c6a84e6ed85dc46c8 Mon Sep 17 00:00:00 2001
+From: Test User <test@example.com>
+Date: Wed, 17 Dec 2025 19:00:21 +0000
 Subject: [PATCH] cdn + hmac support
 
 ---
  nitter.example.conf   |  1 +
- src/config.nim        |  3 ++-
+ src/config.nim        |  1 +
  src/nitter.nim        |  1 +
- src/routes/media.nim  | 16 ++++++++++++----
+ src/routes/media.nim  | 14 ++++++++++----
  src/types.nim         |  1 +
  src/utils.nim         | 27 +++++++++++++++++++--------
  src/views/general.nim |  2 +-
  src/views/rss.nimf    | 12 ++++++------
- 8 files changed, 43 insertions(+), 20 deletions(-)
+ 8 files changed, 40 insertions(+), 19 deletions(-)
 
 diff --git a/nitter.example.conf b/nitter.example.conf
-index bddb9a4..dd2faef 100644
+index 4a6a026..3d9b1bf 100644
 --- a/nitter.example.conf
 +++ b/nitter.example.conf
 @@ -26,6 +26,7 @@ enableRSS = true  # set this to false to disable RSS feeds
@@ -23,25 +23,24 @@ index bddb9a4..dd2faef 100644
  proxy = ""  # http/https url, SOCKS proxies are not supported
  proxyAuth = ""
 +cdnUrl = "https://cdn.xcancel.com"
- 
- # Change default preferences here, see src/prefs_impl.nim for a complete list
- [Preferences]
+ apiProxy = "" # nitter-proxy host, e.g. localhost:7000
+ disableTid = false # enable this if cookie-based auth is failing
+ maxConcurrentReqs = 2 # max requests at a time per session to avoid race conditions
 diff --git a/src/config.nim b/src/config.nim
-index 1b05ffe..96bf23b 100644
+index 8cb334a..826e7f4 100644
 --- a/src/config.nim
 +++ b/src/config.nim
-@@ -40,7 +40,8 @@ proc getConfig*(path: string): (Config, parseCfg.Config) =
-     enableRss: cfg.get("Config", "enableRSS", true),
-     enableDebug: cfg.get("Config", "enableDebug", false),
-     proxy: cfg.get("Config", "proxy", ""),
--    proxyAuth: cfg.get("Config", "proxyAuth", "")
-+    proxyAuth: cfg.get("Config", "proxyAuth", ""),
+@@ -44,6 +44,7 @@ proc getConfig*(path: string): (Config, parseCfg.Config) =
+     apiProxy: cfg.get("Config", "apiProxy", ""),
+     disableTid: cfg.get("Config", "disableTid", false),
+-    maxConcurrentReqs: cfg.get("Config", "maxConcurrentReqs", 2)
++    maxConcurrentReqs: cfg.get("Config", "maxConcurrentReqs", 2),
 +    cdnUrl: cfg.get("Config", "cdnUrl", "https://cdn.xcancel.com")
    )
  
    return (conf, cfg)
 diff --git a/src/nitter.nim b/src/nitter.nim
-index f81dc1c..14970ab 100644
+index e2d6bec..575ece0 100644
 --- a/src/nitter.nim
 +++ b/src/nitter.nim
 @@ -35,6 +35,7 @@ updateDefaultPrefs(fullCfg)
@@ -51,12 +50,12 @@ index f81dc1c..14970ab 100644
 +setCdnUrl(cfg.cdnUrl)
  setMaxHttpConns(cfg.httpMaxConns)
  setHttpProxy(cfg.proxy, cfg.proxyAuth)
- initAboutPage(cfg.staticDir)
+ setApiProxy(cfg.apiProxy)
 diff --git a/src/routes/media.nim b/src/routes/media.nim
-index de51061..4a7ed29 100644
+index 186b8d8..40c65f3 100644
 --- a/src/routes/media.nim
 +++ b/src/routes/media.nim
-@@ -91,8 +91,12 @@ proc createMediaRouter*(cfg: Config) =
+@@ -91,8 +91,11 @@ proc createMediaRouter*(cfg: Config) =
      get "/pic/?":
        resp Http404
  
@@ -67,11 +66,10 @@ index de51061..4a7ed29 100644
 +
 +      if getHmac(url) != request.matches[1]:
 +        resp Http403, showError("Failed to verify signature", cfg)
-+
        if "twimg.com" notin url:
          url.insert(twimg)
        if not url.startsWith(https):
-@@ -105,8 +109,12 @@ proc createMediaRouter*(cfg: Config) =
+@@ -105,8 +108,11 @@ proc createMediaRouter*(cfg: Config) =
        let code = await proxyMedia(request, url)
        check code
  
@@ -82,18 +80,17 @@ index de51061..4a7ed29 100644
 +
 +      if getHmac(url) != request.matches[1]:
 +        resp Http403, showError("Failed to verify signature", cfg)
-+
        if "twimg.com" notin url:
          url.insert(twimg)
        if not url.startsWith(https):
 diff --git a/src/types.nim b/src/types.nim
-index f16fe6f..6aa4efe 100644
+index 90487ab..26c35a7 100644
 --- a/src/types.nim
 +++ b/src/types.nim
-@@ -285,6 +285,7 @@ type
-     enableDebug*: bool
-     proxy*: string
-     proxyAuth*: string
+@@ -278,6 +278,7 @@ type
+     apiProxy*: string
+     disableTid*: bool
+     maxConcurrentReqs*: int
 +    cdnUrl*: string
  
      rssCacheTime*: int
@@ -168,7 +165,7 @@ index c96a6dd..cdb6f3a 100644
  proc filterParams*(params: Table): seq[(string, string)] =
    for p in params.pairs():
 diff --git a/src/views/general.nim b/src/views/general.nim
-index 0091c74..e6ddca9 100644
+index 2525841..257ef85 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -102,7 +102,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
@@ -181,19 +178,22 @@ index 0091c74..e6ddca9 100644
        meta(property="twitter:image:src", content=image)
  
 diff --git a/src/views/rss.nimf b/src/views/rss.nimf
-index 819f99c..459900b 100644
+index 717ad99..073df60 100644
 --- a/src/views/rss.nimf
 +++ b/src/views/rss.nimf
-@@ -57,19 +57,19 @@ Twitter feed for: ${desc}. Generated by ${cfg.hostname}
- #end if
+@@ -56,22 +56,22 @@ Twitter feed for: ${desc}. Generated by ${getUrlPrefix(cfg)}
+ <p>${text.replace("\n", "<br>\n")}</p>
  #if tweet.photos.len > 0:
  #  for photo in tweet.photos:
 -<img src="${urlPrefix}${getPicUrl(photo)}" style="max-width:250px;" />
 +<img src="${getPicUrl(photo)}" style="max-width:250px;" />
  #  end for
  #elif tweet.video.isSome:
--<img src="${urlPrefix}${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
-+<img src="${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
+ <a href="${urlPrefix}${tweet.getLink}">
+ <br>Video<br>
+-  <img src="${urlPrefix}${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
++  <img src="${getPicUrl(get(tweet.video).thumb)}" style="max-width:250px;" />
+ </a>
  #elif tweet.gif.isSome:
 -#  let thumb = &"{urlPrefix}{getPicUrl(get(tweet.gif).thumb)}"
 -#  let url = &"{urlPrefix}{getPicUrl(get(tweet.gif).url)}"
@@ -208,8 +208,8 @@ index 819f99c..459900b 100644
 +<img src="${getPicUrl(card.image)}" style="max-width:250px;" />
  #  end if
  #end if
- #end proc
-@@ -120,7 +120,7 @@ Twitter feed for: ${desc}. Generated by ${cfg.hostname}
+ #if tweet.quote.isSome and get(tweet.quote).available:
+@@ -141,7 +141,7 @@ ${renderRssTweet(quoteTweet, cfg)}
      <image>
        <title>${title}</title>
        <link>${urlPrefix}/${profile.user.username}</link>
@@ -219,5 +219,5 @@ index 819f99c..459900b 100644
        <height>128</height>
      </image>
 -- 
-2.51.2
+2.52.0
 
