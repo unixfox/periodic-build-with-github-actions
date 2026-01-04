@@ -20,7 +20,7 @@ RUN npm install -g happy-coder
 # npx-based servers (cached by npm install -g)
 RUN npm install -g mappy-mcp-server @karashiiro/exchange-rate-mcp @browserbasehq/mcp-server-browserbase @openbnb/mcp-server-airbnb
 # uvx-based servers (will be installed on first use, but pre-warming here)
-RUN uv tool install osm-mcp-server mcp-server-calculator
+RUN PATH="/root/.cargo/bin:$PATH" uv tool install osm-mcp-server mcp-server-calculator
 
 # Copy entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
