@@ -21,7 +21,7 @@ if [ -f "/root/.happy/access.key" ]; then
     echo "Authentication found, starting Happy with auto-config..."
     expect -c "
     set timeout -1
-    spawn happy
+    spawn happy --yolo
     expect {
         \"Choose the text style\" {
             puts \"Auto-selecting dark mode...\"
