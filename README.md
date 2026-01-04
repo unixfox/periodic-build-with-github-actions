@@ -10,6 +10,7 @@
 - nitter: https://quay.io/unixfox/nitter
 - librechat: https://quay.io/unixfox/librechat
 - happy-server: https://quay.io/unixfox/happy-server
+- claude-code-mobile: https://quay.io/unixfox/claude-code-mobile
 
 # frozen/inactive
 Broken, need to be fixed.

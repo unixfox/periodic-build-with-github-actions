@@ -44,6 +44,7 @@ jobs:
             ["caddy"]="https://github.com/caddyserver/caddy.git refs/tags/"
             ["coredns"]="https://github.com/coredns/coredns.git refs/tags/"
             ["happy-server"]="https://github.com/slopus/happy-server.git"
+            ["happy-cli"]="https://github.com/slopus/happy-cli.git"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
@@ -128,6 +129,9 @@ jobs:
                 ;;
               "happy-server")
                 gh workflow run docker-build-happy-server.yml
+                ;;
+              "happy-cli")
+                gh workflow run docker-build-claude-code-mobile.yml
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml
