@@ -9,6 +9,7 @@
 - caddy: https://quay.io/unixfox/caddy
 - nitter: https://quay.io/unixfox/nitter
 - librechat: https://quay.io/unixfox/librechat
+- happy-server: https://quay.io/unixfox/happy-server
 
 # frozen/inactive
 Broken, need to be fixed.

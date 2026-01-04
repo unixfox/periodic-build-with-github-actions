@@ -43,6 +43,7 @@ jobs:
             ["cert-manager-webhook-powerdns"]="https://github.com/lordofsystem/cert-manager-webhook-powerdns.git"
             ["caddy"]="https://github.com/caddyserver/caddy.git refs/tags/"
             ["coredns"]="https://github.com/coredns/coredns.git refs/tags/"
+            ["happy-server"]="https://github.com/slopus/happy-server.git"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
@@ -124,6 +125,9 @@ jobs:
                 ;;
               "coredns")
                 gh workflow run docker-build-coredns.yml
+                ;;
+              "happy-server")
+                gh workflow run docker-build-happy-server.yml
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml
