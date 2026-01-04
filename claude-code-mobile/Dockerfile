@@ -7,8 +7,8 @@ RUN apk add --no-cache bash curl expect python3 py3-pip
 
 # Install uv (for uvx)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    /root/.cargo/bin/uv tool install osm-mcp-server mcp-server-calculator
-ENV PATH="/root/.cargo/bin:$PATH"
+    /root/.local/bin/uv tool install osm-mcp-server mcp-server-calculator
+ENV PATH="/root/.local/bin:$PATH"
 
 # Install claude-code
 #RUN curl -fsSL https://claude.ai/install.sh | bash
