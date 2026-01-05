@@ -22,7 +22,7 @@ RUN npm install -g happy-coder
 
 # Install MCP servers
 # npx-based servers (cached by npm install -g)
-RUN npm install -g mappy-mcp-server @karashiiro/exchange-rate-mcp @browserbasehq/mcp-server-browserbase @openbnb/mcp-server-airbnb @apify/actors-mcp-server
+RUN npm install -g mappy-mcp-server @karashiiro/exchange-rate-mcp @browserbasehq/mcp-server-browserbase @openbnb/mcp-server-airbnb @apify/actors-mcp-server synchro-bus-mcp-server
 
 # Copy entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
