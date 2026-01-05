@@ -8,7 +8,9 @@ RUN apk add --no-cache bash curl expect python3 py3-pip
 # Install uv (for uvx)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     /root/.local/bin/uv tool install osm-mcp-server && \
-    /root/.local/bin/uv tool install mcp-server-calculator
+    /root/.local/bin/uv tool install mcp-server-calculator && \
+    /root/.local/bin/uv tool install mcp-server-fetch && \
+    /root/.local/bin/uv tool install mcp-server-time
 ENV PATH="/root/.local/bin:$PATH"
 
 # Install claude-code
@@ -20,7 +22,7 @@ RUN npm install -g happy-coder
 
 # Install MCP servers
 # npx-based servers (cached by npm install -g)
-RUN npm install -g mappy-mcp-server @karashiiro/exchange-rate-mcp @browserbasehq/mcp-server-browserbase @openbnb/mcp-server-airbnb
+RUN npm install -g mappy-mcp-server @karashiiro/exchange-rate-mcp @browserbasehq/mcp-server-browserbase @openbnb/mcp-server-airbnb @apify/actors-mcp-server
 
 # Copy entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
