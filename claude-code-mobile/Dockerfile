@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /workspace
 
 # Install required packages
-RUN apk add --no-cache bash curl expect python3 py3-pip
+RUN apk add --no-cache bash curl expect python3 py3-pip jq
 
 # Install uv (for uvx)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
