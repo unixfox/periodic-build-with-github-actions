@@ -23,6 +23,11 @@ if [ -f "/root/.happy/access.key" ]; then
     set timeout -1
     spawn happy --yolo
     expect {
+        \"Bypass Permissions mode\" {
+            puts \"Accepting bypass permissions mode...\"
+            send \"2\r\"
+            exp_continue
+        }
         \"Choose the text style\" {
             puts \"Auto-selecting dark mode...\"
             send \"\r\"
