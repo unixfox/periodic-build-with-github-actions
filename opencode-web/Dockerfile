@@ -37,6 +37,9 @@ RUN npm install -g \
     @playwright/mcp \
     mappy-mcp-server
 
+# Create OpenCode directories
+RUN mkdir -p /root/.config/opencode /root/.local/share/opencode
+
 # Copy entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
