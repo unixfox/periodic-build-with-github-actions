@@ -17,7 +17,7 @@ jobs:
       - name: Get latest tag
         id: get-latest-tag
         run: |
-          echo "tag=$(git ls-remote --refs --tags https://github.com/anomalyco/opencode.git | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1)" >> $GITHUB_ENV
+          echo "tag=$(git ls-remote --refs --tags https://github.com/anomalyco/opencode.git | grep -E '^refs/tags/v[0-9]' | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1)" >> $GITHUB_ENV
         shell: bash
 
       - name: Set up QEMU
