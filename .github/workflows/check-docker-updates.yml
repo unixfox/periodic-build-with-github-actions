@@ -33,7 +33,7 @@ jobs:
           declare -A repos=(
             ["wireproxy"]="https://github.com/whyvl/wireproxy.git"
             ["nginx-ssl-ja3"]="https://github.com/fooinha/nginx-ssl-ja3.git"
-            ["ingress-nginx"]="https://github.com/kubernetes/ingress-nginx.git refs/tags/controller"
+            #["ingress-nginx"]="https://github.com/kubernetes/ingress-nginx.git refs/tags/controller"
             ["samba"]="https://github.com/samba-team/samba.git refs/tags/"
             ["stolon"]="https://github.com/docker-library/postgres.git"
             ["nitter"]="https://github.com/zedeus/nitter.git"
@@ -91,57 +91,57 @@ jobs:
           for repo in "${UPDATES[@]}"; do
             case $repo in
               "wireproxy")
-                gh workflow run docker-build-wireproxy-debian.yml
+                gh workflow run docker-build-wireproxy-debian.yml || echo "Failed to trigger wireproxy workflow (may be disabled)"
                 ;;
               "nginx-ssl-ja3")
-                gh workflow run docker-build-openresty-ssl-ja3.yml
+                gh workflow run docker-build-openresty-ssl-ja3.yml || echo "Failed to trigger nginx-ssl-ja3 workflow (may be disabled)"
                 ;;
               "ingress-nginx")
-                gh workflow run docker-build-ingress-nginx.yml
-                gh workflow run docker-build-ingress-nginx-controller-dynamic-modules.yml
-                gh workflow run docker-build-ingress-nginx-custom.yml
+                gh workflow run docker-build-ingress-nginx.yml || echo "Failed to trigger ingress-nginx workflow (may be disabled)"
+                gh workflow run docker-build-ingress-nginx-controller-dynamic-modules.yml || echo "Failed to trigger ingress-nginx-controller-dynamic-modules workflow (may be disabled)"
+                gh workflow run docker-build-ingress-nginx-custom.yml || echo "Failed to trigger ingress-nginx-custom workflow (may be disabled)"
                 ;;
               "samba")
-                gh workflow run docker-build-samba.yml
+                gh workflow run docker-build-samba.yml || echo "Failed to trigger samba workflow (may be disabled)"
                 ;;
               "stolon")
-                gh workflow run docker-build-stolon.yml
+                gh workflow run docker-build-stolon.yml || echo "Failed to trigger stolon workflow (may be disabled)"
                 ;;
               "nitter")
-                gh workflow run docker-build-nitter-patched.yml
+                gh workflow run docker-build-nitter-patched.yml || echo "Failed to trigger nitter workflow (may be disabled)"
                 ;;
               "tor")
-                gh workflow run docker-build-tor-single-hop.yml
+                gh workflow run docker-build-tor-single-hop.yml || echo "Failed to trigger tor workflow (may be disabled)"
                 ;;
               "stash")
-                gh workflow run docker-build-stash.yml
+                gh workflow run docker-build-stash.yml || echo "Failed to trigger stash workflow (may be disabled)"
                 ;;
               "logrotate")
-                gh workflow run docker-build-logrotate.yml
+                gh workflow run docker-build-logrotate.yml || echo "Failed to trigger logrotate workflow (may be disabled)"
                 ;;
               "cert-manager-webhook-powerdns")
-                gh workflow run docker-build-cert-manager-webhook-powerdns.yml
+                gh workflow run docker-build-cert-manager-webhook-powerdns.yml || echo "Failed to trigger cert-manager-webhook-powerdns workflow (may be disabled)"
                 ;;
               "caddy")
-                gh workflow run docker-build-caddy.yml
+                gh workflow run docker-build-caddy.yml || echo "Failed to trigger caddy workflow (may be disabled)"
                 ;;
               "coredns")
-                gh workflow run docker-build-coredns.yml
+                gh workflow run docker-build-coredns.yml || echo "Failed to trigger coredns workflow (may be disabled)"
                 ;;
               "happy-server")
-                gh workflow run docker-build-happy-server.yml
+                gh workflow run docker-build-happy-server.yml || echo "Failed to trigger happy-server workflow (may be disabled)"
                 ;;
               "happy-cli")
-                gh workflow run docker-build-claude-code-mobile.yml
+                gh workflow run docker-build-claude-code-mobile.yml || echo "Failed to trigger happy-cli workflow (may be disabled)"
                 ;;
               "opencode")
-                gh workflow run docker-build-opencode-web.yml
+                gh workflow run docker-build-opencode-web.yml || echo "Failed to trigger opencode workflow (may be disabled)"
                 ;;
               #"gpt4free")
-              #  gh workflow run docker-build-gpt4free.yml
+              #  gh workflow run docker-build-gpt4free.yml || echo "Failed to trigger gpt4free workflow (may be disabled)"
               #  ;;
               #"nginx-ssl-fingerprint")
-              #  gh workflow run docker-build-nginx-ssl-fingerprint.yml
+              #  gh workflow run docker-build-nginx-ssl-fingerprint.yml || echo "Failed to trigger nginx-ssl-fingerprint workflow (may be disabled)"
               #  ;;
             esac
           done
