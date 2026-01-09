@@ -1,9 +1,18 @@
-FROM node:20-alpine
+FROM node:20
 
 WORKDIR /workspace
 
 # Install required packages
-RUN apk add --no-cache bash curl expect python3 py3-pip jq
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    curl \
+    expect \
+    python3 \
+    python3-pip \
+    jq \
+    ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install uv (for uvx)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
