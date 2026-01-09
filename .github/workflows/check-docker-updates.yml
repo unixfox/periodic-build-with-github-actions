@@ -55,7 +55,7 @@ jobs:
           
           for repo in "${!repos[@]}"; do
             if [[ "${repos[$repo]}" == *"refs/tags/"* ]]; then
-              latest=$(git ls-remote --refs --tags ${repos[$repo]%% *} | awk -F/ '/refs\/tags\/[0-9]/ {print $3}' | sort -V | tail -1)
+              latest=$(git ls-remote --refs --tags ${repos[$repo]%% *} | awk -F/ '/refs\/tags\/v[0-9]/ {print $3}' | sort -V | tail -1)
             else
               latest=$(git ls-remote ${repos[$repo]} | head -n1)
             fi
