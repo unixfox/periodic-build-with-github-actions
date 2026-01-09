@@ -15,7 +15,7 @@ ENV PATH="/root/.local/bin:$PATH"
 
 # Install opencode
 ARG OPENCODE_VERSION=latest
-RUN npm install -g @anomalyco/opencode@${OPENCODE_VERSION}
+RUN npm install -g opencode-ai@${OPENCODE_VERSION}
 
 # Install MCP servers
 # npx-based servers (cached by npm install -g)
