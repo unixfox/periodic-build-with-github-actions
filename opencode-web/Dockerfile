@@ -19,7 +19,14 @@ RUN npm install -g @anomalyco/opencode@${OPENCODE_VERSION}
 
 # Install MCP servers
 # npx-based servers (cached by npm install -g)
-RUN npm install -g @karashiiro/exchange-rate-mcp @browserbasehq/mcp-server-browserbase @perplexity-ai/mcp-server @openbnb/mcp-server-airbnb synchro-bus-mcp-server @playwright/mcp mappy-mcp-server
+RUN npm install -g \
+    @karashiiro/exchange-rate-mcp \
+    @browserbasehq/mcp-server-browserbase \
+    @perplexity-ai/mcp-server \
+    @openbnb/mcp-server-airbnb \
+    synchro-bus-mcp-server \
+    @playwright/mcp \
+    mappy-mcp-server
 
 # Copy entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
