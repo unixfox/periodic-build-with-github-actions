@@ -14,6 +14,12 @@ jobs:
     runs-on: 'ubuntu-latest'
 
     steps:
+      - name: Get latest tag
+        id: get-latest-tag
+        run: |
+          echo "tag=$(git ls-remote --refs --tags https://github.com/anomalyco/opencode.git | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1)" >> $GITHUB_ENV
+        shell: bash
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
@@ -46,4 +52,5 @@ jobs:
           file: ./opencode-web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: quay.io/unixfox/opencode-web:latest, quay.io/unixfox/opencode-web:build-${{ env.timestamp }}
+          build-args: OPENCODE_VERSION=${{ env.tag }}
+          tags: quay.io/unixfox/opencode-web:latest, quay.io/unixfox/opencode-web:${{ env.tag }}, quay.io/unixfox/opencode-web:build-${{ env.timestamp }}

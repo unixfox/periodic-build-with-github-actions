@@ -45,6 +45,7 @@ jobs:
             ["coredns"]="https://github.com/coredns/coredns.git refs/tags/"
             ["happy-server"]="https://github.com/slopus/happy-server.git"
             ["happy-cli"]="https://github.com/slopus/happy-cli.git"
+            ["opencode"]="https://github.com/anomalyco/opencode.git refs/tags/"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
@@ -132,6 +133,9 @@ jobs:
                 ;;
               "happy-cli")
                 gh workflow run docker-build-claude-code-mobile.yml
+                ;;
+              "opencode")
+                gh workflow run docker-build-opencode-web.yml
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml
