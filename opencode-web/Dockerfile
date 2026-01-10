@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     jq \
+    git \
     ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -19,7 +20,8 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     /root/.local/bin/uv tool install osm-mcp-server && \
     /root/.local/bin/uv tool install mcp-server-calculator && \
     /root/.local/bin/uv tool install mcp-server-fetch && \
-    /root/.local/bin/uv tool install mcp-server-time
+    /root/.local/bin/uv tool install mcp-server-time && \
+    /root/.local/bin/uv tool install git+https://github.com/unixfox/mcp-sncf.git@copilot/transform-project-for-uvx
 ENV PATH="/root/.local/bin:$PATH"
 
 # Install opencode
