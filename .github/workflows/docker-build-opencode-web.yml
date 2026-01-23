@@ -53,5 +53,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           #build-args: OPENCODE_VERSION=${{ env.tag }}
-          build-args: OPENCODE_VERSION="v1.1.31"
+          build-args: OPENCODE_VERSION=v1.1.31
           tags: quay.io/unixfox/opencode-web:latest, quay.io/unixfox/opencode-web:${{ env.tag }}, quay.io/unixfox/opencode-web:build-${{ env.timestamp }}
