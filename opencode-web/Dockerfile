@@ -20,11 +20,11 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     /root/.local/bin/uv tool install osm-mcp-server && \
     /root/.local/bin/uv tool install mcp-server-calculator && \
     /root/.local/bin/uv tool install mcp-server-fetch && \
-    /root/.local/bin/uv tool install mcp-server-time && \
-    /root/.local/bin/uv tool install git+https://github.com/unixfox/mcp-sncf.git@copilot/transform-project-for-uvx
+    /root/.local/bin/uv tool install mcp-server-time
 
 # Clone mcp-server-public-transport
 RUN git clone https://github.com/mirodn/mcp-server-public-transport.git /opt/mcp-server-public-transport
+RUN git clone https://github.com/belgrano9/sncf_mcp_server /opt/sncf_mcp_server
 ENV PATH="/root/.local/bin:$PATH"
 
 # Install opencode
