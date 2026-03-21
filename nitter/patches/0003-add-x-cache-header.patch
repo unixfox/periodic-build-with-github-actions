@@ -1,6 +1,6 @@
-From 8a1db423f8621cf38c3945f7446f0b8f280e9c7b Mon Sep 17 00:00:00 2001
-From: Test User <test@example.com>
-Date: Wed, 17 Dec 2025 19:11:05 +0000
+From 919c01b102a60501e0e211de13547cbf380abc9b Mon Sep 17 00:00:00 2001
+From: Emilien <4016501+unixfox@users.noreply.github.com>
+Date: Sat, 21 Mar 2026 12:36:50 +0100
 Subject: [PATCH] add x-cache header
 
 ---
@@ -8,15 +8,15 @@ Subject: [PATCH] add x-cache header
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/src/routes/rss.nim b/src/routes/rss.nim
-index b0e781d..6143fa3 100644
+index 444dc70..8edd231 100644
 --- a/src/routes/rss.nim
 +++ b/src/routes/rss.nim
-@@ -42,7 +42,7 @@ proc timelineRss*(req: Request; cfg: Config; query: Query): Future[Rss] {.async.
-     let rss = renderTimelineRss(profile, cfg, multi=(names.len > 1))
+@@ -42,7 +42,7 @@ proc timelineRss*(req: Request; cfg: Config; query: Query; prefs: Prefs): Future
+     let rss = renderTimelineRss(profile, cfg, prefs, multi=(names.len > 1))
      return Rss(feed: rss, cursor: profile.tweets.bottom)
  
 -template respRss*(rss, page) =
-+template respRss*(rss; page; cached = false ) =
++template respRss*(rss; page; cached = false) =
    if rss.cursor.len == 0:
      let info = case page
                 of "User": " \"" & @"name" & "\" "
@@ -29,7 +29,7 @@ index b0e781d..6143fa3 100644
    resp Http200, headers, rss.feed
  
  proc createRssRouter*(cfg: Config) =
-@@ -74,7 +74,7 @@ proc createRssRouter*(cfg: Config) =
+@@ -77,7 +77,7 @@ proc createRssRouter*(cfg: Config) =
  
        var rss = await getCachedRss(key)
        if rss.cursor.len > 0:
@@ -38,25 +38,25 @@ index b0e781d..6143fa3 100644
  
        let tweets = await getGraphTweetSearch(query, cursor)
        rss.cursor = tweets.bottom
-@@ -92,7 +92,7 @@ proc createRssRouter*(cfg: Config) =
+@@ -97,7 +97,7 @@ proc createRssRouter*(cfg: Config) =
  
        var rss = await getCachedRss(key)
        if rss.cursor.len > 0:
 -        respRss(rss, "User")
 +        respRss(rss, "User", true)
  
-       rss = await timelineRss(request, cfg, Query(fromUser: @[name]))
+       rss = await timelineRss(request, cfg, Query(fromUser: @[name]), prefs)
  
-@@ -120,7 +120,7 @@ proc createRssRouter*(cfg: Config) =
+@@ -132,7 +132,7 @@ proc createRssRouter*(cfg: Config) =
  
        var rss = await getCachedRss(key)
        if rss.cursor.len > 0:
 -        respRss(rss, "User")
 +        respRss(rss, "User", true)
  
-       rss = await timelineRss(request, cfg, query)
+       rss = await timelineRss(request, cfg, query, prefs)
  
-@@ -153,7 +153,7 @@ proc createRssRouter*(cfg: Config) =
+@@ -168,7 +168,7 @@ proc createRssRouter*(cfg: Config) =
  
        var rss = await getCachedRss(key)
        if rss.cursor.len > 0:
@@ -66,5 +66,5 @@ index b0e781d..6143fa3 100644
        let
          list = await getCachedList(id=id)
 -- 
-2.52.0
+2.53.0
 
