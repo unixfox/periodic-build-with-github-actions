@@ -1,15 +1,15 @@
-From 536b0848ef42e88822c038a8d4d44652c359f473 Mon Sep 17 00:00:00 2001
-From: Test User <test@example.com>
-Date: Wed, 17 Dec 2025 19:13:00 +0000
-Subject: [PATCH] custom donation page
+From a1037ff328e481d21cc50e720d5afc6126183d6d Mon Sep 17 00:00:00 2001
+From: Your Name <you@example.com>
+Date: Sat, 21 Mar 2026 08:33:56 +0000
+Subject: [PATCH 4/4] custom donation page
 
 ---
- public/md/about.md    | 32 +++++++++++++++++++++++++++++++-
+ public/md/about.md    | 33 ++++++++++++++++++++++++++++++++-
  src/views/general.nim |  4 +++-
- 2 files changed, 34 insertions(+), 2 deletions(-)
+ 2 files changed, 35 insertions(+), 2 deletions(-)
 
 diff --git a/public/md/about.md b/public/md/about.md
-index 3825e8f..fa4e9fa 100644
+index 3825e8f..6631018 100644
 --- a/public/md/about.md
 +++ b/public/md/about.md
 @@ -1,5 +1,7 @@
@@ -56,14 +56,14 @@ index 3825e8f..fa4e9fa 100644
  Liberapay: https://liberapay.com/zedeus \
  Patreon: https://patreon.com/nitter \
  BTC: bc1qpqpzjkcpgluhzf7x9yqe7jfe8gpfm5v08mdr55 \
-@@ -53,4 +83,4 @@ ZEC: u1vndfqtzyy6qkzhkapxelel7ams38wmfeccu3fdpy2wkuc4erxyjm8ncjhnyg747x6t0kf0faq
+@@ -53,4 +84,4 @@ ZEC: u1vndfqtzyy6qkzhkapxelel7ams38wmfeccu3fdpy2wkuc4erxyjm8ncjhnyg747x6t0kf0faq
  
  ## Contact
  
 -Feel free to join our [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 +Feel free to join Nitter [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 diff --git a/src/views/general.nim b/src/views/general.nim
-index b2b1f46..fb00156 100644
+index feaa3b0..4544783 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
@@ -76,7 +76,7 @@ index b2b1f46..fb00156 100644
        a(href="/"): img(class="site-logo", src="/logo.png", alt="Logo")
  
 @@ -32,7 +34,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
-         if cfg.enableRss and rss.len > 0:
+         if rss.len > 0:
            icon "rss", title="RSS Feed", href=rss
          icon "bird", title="Open in X", href=canonical
 -        a(href="https://liberapay.com/zedeus"): verbatim lp
@@ -85,5 +85,5 @@ index b2b1f46..fb00156 100644
          icon "cog", title="Preferences", href=("/settings?referer=" & encodeUrl(path))
  
 -- 
-2.52.0
+2.53.0
 
