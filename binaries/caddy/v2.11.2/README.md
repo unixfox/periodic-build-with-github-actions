@@ -1,18 +1,18 @@
 # Caddy v2.11.2 Linux Binaries
 
-Built on: 2026-04-01 12:13:57 UTC
+Built on: 2026-04-01 12:15:17 UTC
 
 This directory contains the compiled Caddy Linux binaries for version v2.11.2.
 
 ## Available binaries:
 
--rw-r--r-- 1 runner runner   0 Apr  1 12:13 README.md
--rwxr-xr-x 1 runner runner 63M Apr  1 12:13 caddy-linux-amd64
--rwxr-xr-x 1 runner runner 58M Apr  1 12:13 caddy-linux-arm64
--rw-r--r-- 1 runner runner 22M Apr  1 12:13 caddy_2.11.2_linux_amd64.tar.gz
--rw-r--r-- 1 runner runner  98 Apr  1 12:13 caddy_2.11.2_linux_amd64.tar.gz.sha256
--rw-r--r-- 1 runner runner 20M Apr  1 12:13 caddy_2.11.2_linux_arm64.tar.gz
--rw-r--r-- 1 runner runner  98 Apr  1 12:13 caddy_2.11.2_linux_arm64.tar.gz.sha256
+-rw-r--r-- 1 runner runner   0 Apr  1 12:15 README.md
+-rwxr-xr-x 1 runner runner 63M Apr  1 12:15 caddy-linux-amd64
+-rwxr-xr-x 1 runner runner 58M Apr  1 12:15 caddy-linux-arm64
+-rw-r--r-- 1 runner runner 22M Apr  1 12:15 caddy_2.11.2_linux_amd64.tar.gz
+-rw-r--r-- 1 runner runner  98 Apr  1 12:15 caddy_2.11.2_linux_amd64.tar.gz.sha256
+-rw-r--r-- 1 runner runner 20M Apr  1 12:15 caddy_2.11.2_linux_arm64.tar.gz
+-rw-r--r-- 1 runner runner  98 Apr  1 12:15 caddy_2.11.2_linux_arm64.tar.gz.sha256
 
 ## Custom plugins included:
 - caddy-tailscale (github.com/tailscale/caddy-tailscale)
