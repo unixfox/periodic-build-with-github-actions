@@ -43,7 +43,7 @@ jobs:
           sed -i 's|COPY --from=ghcr.io/astral-sh/uv:0.6.13 /uv /uvx /bin/|COPY --from=ghcr.io/astral-sh/uv:0.9.5-python3.12-alpine /usr/local/bin/uv /usr/local/bin/uvx /bin/|' librechat-git/Dockerfile
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: all
 
