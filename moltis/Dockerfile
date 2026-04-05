@@ -9,16 +9,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     jq \
     git \
-    nano \
-    ca-certificates
+    ca-certificates \
+    libsndfile1
 
 # Install uv (for uvx)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     /root/.local/bin/uv tool install osm-mcp-server
 
+# Install piper-tts
+RUN pip3 install piper-tts
+
 # Clone mcp-server-public-transport
 RUN git clone https://github.com/mirodn/mcp-server-public-transport.git /opt/mcp-server-public-transport
 RUN git clone https://github.com/belgrano9/sncf_mcp_server /opt/sncf_mcp_server
+
+# Setup Piper models
+RUN mkdir -p /tts-models && \
+    curl -L https://github.com/rhasspy/piper-samples/raw/master/en_US/lessac/medium/en_US-lessac-medium.onnx -o /tts-models/en_US-lessac-medium.onnx && \
+    curl -L https://github.com/rhasspy/piper-samples/raw/master/en_US/lessac/medium/en_US-lessac-medium.onnx.json -o /tts-models/en_US-lessac-medium.onnx.json
+
 ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /home/moltis
