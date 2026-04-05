@@ -11,6 +11,7 @@
 - librechat: https://quay.io/unixfox/librechat
 - happy-server: https://quay.io/unixfox/happy-server
 - claude-code-mobile: https://quay.io/unixfox/claude-code-mobile
+- moltis: https://quay.io/unixfox/moltis
 
 # frozen/inactive
 Broken, need to be fixed.
