@@ -20,6 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     /root/.local/bin/uv tool install osm-mcp-server
 
+# Install gemini cli and claude code
+RUN npm install -g @google/gemini-cli
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
 # Install piper-tts
 RUN pip3 install --break-system-packages piper-tts
 
