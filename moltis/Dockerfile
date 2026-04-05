@@ -17,7 +17,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     /root/.local/bin/uv tool install osm-mcp-server
 
 # Install piper-tts
-RUN pip3 install piper-tts
+RUN pip3 install --break-system-packages piper-tts
 
 # Clone mcp-server-public-transport
 RUN git clone https://github.com/mirodn/mcp-server-public-transport.git /opt/mcp-server-public-transport
