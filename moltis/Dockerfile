@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     jq \
     git \
+    nano \
     ca-certificates
 
 # Install uv (for uvx)
