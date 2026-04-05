@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     nano \
     wget \
+    unzip \
     ca-certificates \
     libsndfile1
 
