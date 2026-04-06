@@ -47,6 +47,8 @@ ARG RESTY_CONFIG_OPTIONS="\
     --add-module=/tmp/njs/nginx \
     --add-module=/tmp/nginx-ssl-ja3 \
     --add-module=/nginx-ssl-fingerprint \
+    --add-module=/tmp/ngx_dynamic_upstream \
+    --add-module=/tmp/ngx_dynamic_upstream_lua \
     --with-http_auth_request_module \
     --with-http_dav_module \
     --with-http_flv_module \
@@ -78,7 +80,6 @@ ARG RESTY_CONFIG_OPTIONS="\
 ARG RESTY_CONFIG_OPTIONS_MORE=""
 ARG RESTY_LUAJIT_OPTIONS="--with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT'"
 ARG RESTY_PCRE_OPTIONS="--with-pcre-jit"
-
 ARG RESTY_ADD_PACKAGE_BUILDDEPS="perl"
 ARG RESTY_ADD_PACKAGE_RUNDEPS=""
 ARG RESTY_EVAL_PRE_CONFIGURE=""
@@ -180,6 +181,8 @@ RUN apk add --no-cache --virtual .build-deps \
     && git clone https://github.com/bellard/quickjs \
     && cd quickjs && git checkout 6e2e68fd0896957f92eb6c242a2e048c1ef3cae0 && CFLAGS='-fPIC' make libquickjs.a && cd .. \
     && git clone https://github.com/fooinha/nginx-ssl-ja3.git \
+    && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream.git \
+    && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream_lua.git \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
     && cd /tmp/openresty-${RESTY_VERSION} \
@@ -189,6 +192,8 @@ RUN apk add --no-cache --virtual .build-deps \
     && cat /nginx-ssl-fingerprint/patches/nginx-1.27.patch | patch -p1 \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} ${RESTY_LUAJIT_OPTIONS} ${RESTY_PCRE_OPTIONS} \
+    && STREAM_LUA_SRC=$(find /tmp/openresty-${RESTY_VERSION}/bundle -maxdepth 1 -name 'ngx_stream_lua-*' -type d | head -1)/src \
+    && sed -i "s|-I objs|-I ${STREAM_LUA_SRC} -I objs|" build/nginx-*/objs/Makefile \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && cd /tmp \
@@ -200,6 +205,11 @@ RUN apk add --no-cache --virtual .build-deps \
     && /usr/local/openresty/bin/opm get openresty/lua-resty-string \
     && /usr/local/openresty/bin/opm get bungle/lua-resty-session \
     && /usr/local/openresty/bin/opm get fffonion/lua-resty-acme \
+    && /usr/local/openresty/bin/opm get ledgetech/lua-resty-http \
+    && git clone --depth 1 https://github.com/unixfox/openresty-lua-docker-dynamic-upstream.git /tmp/dynamic-upstream \
+    && mkdir -p /etc/nginx \
+    && cp -r /tmp/dynamic-upstream/gateway/lua /etc/nginx/lua \
+    && rm -rf /tmp/dynamic-upstream \
     && apk del .build-deps \
     && mkdir -p /var/run/openresty \
     && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
