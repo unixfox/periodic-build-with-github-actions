@@ -61,4 +61,4 @@ jobs:
           push: true
           build-args: |
             RESTY_J=${{ env.NUMBER_OF_CORES }}
-          tags: quay.io/unixfox/openresty-ssl-ja3:openssl3w-nginx1271-latest, quay.io/unixfox/openresty-ssl-ja3:openssl3w-nginx1271-${{ env.timestamp }}
+          tags: quay.io/unixfox/openresty-ssl-ja3:openssl3.5.5-nginx1.27.2-latest, quay.io/unixfox/openresty-ssl-ja3:openssl3.5.5-nginx1.27.2-${{ env.timestamp }}
