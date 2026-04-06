@@ -180,10 +180,11 @@ RUN apk add --no-cache --virtual .build-deps \
     && mkdir build_repos && cd build_repos \
     && git clone -b 0.9.6 https://github.com/nginx/njs \
     && git clone https://github.com/bellard/quickjs \
-    && cd quickjs && git checkout d7ae12ae71dfd6ab2997527d295014a8996fa0f9 && CFLAGS='-fPIC' make libquickjs.a && cd .. \
+    && cd quickjs && git checkout d7ae12ae71dfd6ab2997527d295014a8996fa0f9 && CFLAGS='-fPIC' make -j${RESTY_J} libquickjs.a && cd .. \
     && git clone https://github.com/fooinha/nginx-ssl-ja3.git \
     && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream.git \
     && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream_lua.git \
+    && cd /tmp \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
     && cd /tmp/openresty-${RESTY_VERSION} \
