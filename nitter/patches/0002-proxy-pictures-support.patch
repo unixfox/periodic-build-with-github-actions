@@ -1,4 +1,4 @@
-From 53669fbfa3522d0286391e4ad1c2559d2f10b3ec Mon Sep 17 00:00:00 2001
+From edbc3f2f24725d22ca9ba5a3c7b8c72dc4d52cd5 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:12 +0100
 Subject: [PATCH 2/4] proxy pictures support
@@ -11,7 +11,10 @@ Subject: [PATCH 2/4] proxy pictures support
  src/routes/list.nim           |  2 +-
  src/routes/router_utils.nim   |  2 +-
  src/routes/status.nim         |  2 +-
+ src/routes/timeline.nim       |  2 +-
  src/utils.nim                 | 38 ++++++++++++++++++++++++++---------
+ src/views/about_account.nim   |  4 ++--
+ src/views/broadcast.nim       |  4 ++--
  src/views/general.nim         | 11 ++++++----
  src/views/list.nim            |  6 +++---
  src/views/profile.nim         | 16 +++++++--------
@@ -19,7 +22,7 @@ Subject: [PATCH 2/4] proxy pictures support
  src/views/rss.nimf            | 12 +++++------
  src/views/timeline.nim        |  2 +-
  src/views/tweet.nim           | 26 ++++++++++++------------
- 15 files changed, 97 insertions(+), 55 deletions(-)
+ 18 files changed, 102 insertions(+), 60 deletions(-)
  create mode 100644 public/js/proxyneededcheck.js
 
 diff --git a/nitter.example.conf b/nitter.example.conf
@@ -122,6 +125,19 @@ index f7fb1bb..1d512dd 100644
        elif conv.tweet.card.isSome():
          let card = conv.tweet.card.get()
          if card.image.len > 0:
+diff --git a/src/routes/timeline.nim b/src/routes/timeline.nim
+index 0eb48e2..64a2a4c 100644
+--- a/src/routes/timeline.nim
++++ b/src/routes/timeline.nim
+@@ -131,7 +131,7 @@ proc createTimelineRouter*(cfg: Config) =
+         resp showError(getSuspended(name), cfg)
+       if info.username.len == 0:
+         resp Http404, showError("User \"" & name & "\" not found", cfg)
+-      let aboutHtml = renderAboutAccount(info)
++      let aboutHtml = renderAboutAccount(info, prefs.proxyPics)
+       resp renderMain(aboutHtml, request, cfg, prefs,
+                       "About @" & info.username)
+ 
 diff --git a/src/utils.nim b/src/utils.nim
 index 8eab1b7..dee7648 100644
 --- a/src/utils.nim
@@ -174,6 +190,50 @@ index 8eab1b7..dee7648 100644
  
  proc filterParams*(params: Table): seq[(string, string)] =
    for p in params.pairs():
+diff --git a/src/views/about_account.nim b/src/views/about_account.nim
+index aedd444..c4fe4c0 100644
+--- a/src/views/about_account.nim
++++ b/src/views/about_account.nim
+@@ -5,7 +5,7 @@ import karax/[karaxdsl, vdom]
+ import renderutils
+ import ".."/[types, formatters]
+ 
+-proc renderAboutAccount*(info: AccountInfo): VNode =
++proc renderAboutAccount*(info: AccountInfo; proxyPics: bool): VNode =
+   let user = User(
+     username: info.username,
+     fullname: info.fullname,
+@@ -16,7 +16,7 @@ proc renderAboutAccount*(info: AccountInfo): VNode =
+   buildHtml(tdiv(class="about-account")):
+     tdiv(class="about-account-header"):
+       a(class="about-account-avatar", href=(&"/{info.username}")):
+-        genImg(getUserPic(info.userPic, "_200x200"))
++        genImg(getUserPic(info.userPic, "_200x200"), proxyPics)
+       tdiv(class="about-account-name"):
+         linkUser(user, class="profile-card-fullname")
+         verifiedIcon(user)
+diff --git a/src/views/broadcast.nim b/src/views/broadcast.nim
+index bfcb9ba..4f752a5 100644
+--- a/src/views/broadcast.nim
++++ b/src/views/broadcast.nim
+@@ -8,7 +8,7 @@ import ".."/[types, utils, formatters]
+ proc renderBroadcast*(bc: Broadcast; prefs: Prefs; path: string): VNode =
+   let
+     isLive = bc.state == "RUNNING"
+-    thumb = getPicUrl(bc.thumb)
++    thumb = getPicUrl(bc.thumb, prefs.proxyPics)
+     source = if prefs.proxyVideos and bc.m3u8Url.startsWith("http"):
+                getVidUrl(bc.m3u8Url) else: bc.m3u8Url
+     stateText =
+@@ -59,7 +59,7 @@ proc renderBroadcast*(bc: Broadcast; prefs: Prefs; path: string): VNode =
+ 
+         tdiv(class="broadcast-user-row"):
+           a(class="broadcast-user", href=("/" & bc.user.username)):
+-            genImg(getUserPic(bc.user.userPic, "_bigger"))
++            genImg(getUserPic(bc.user.userPic, "_bigger"), prefs.proxyPics)
+             tdiv:
+               tdiv:
+                 strong: text bc.user.fullname
 diff --git a/src/views/general.nim b/src/views/general.nim
 index 7f619be..be07b1a 100644
 --- a/src/views/general.nim
