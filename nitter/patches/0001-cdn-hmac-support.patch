@@ -1,7 +1,7 @@
-From 78bdc76050e88a3d54f93f1018f7acd1b2abe323 Mon Sep 17 00:00:00 2001
+From 58bdb49eb1440f5c212175fb80a47aabbd6a37a5 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:33:15 +0100
-Subject: [PATCH] cdn + hmac support
+Subject: [PATCH 1/4] cdn + hmac support
 
 ---
  nitter.example.conf   |  1 +
@@ -41,7 +41,7 @@ index 800224f..13813e6 100644
  
    return (conf, cfg)
 diff --git a/src/nitter.nim b/src/nitter.nim
-index ba72818..bdde55c 100644
+index 685b608..70371c1 100644
 --- a/src/nitter.nim
 +++ b/src/nitter.nim
 @@ -35,6 +35,7 @@ updateDefaultPrefs(fullCfg)
@@ -53,10 +53,10 @@ index ba72818..bdde55c 100644
  setHttpProxy(cfg.proxy, cfg.proxyAuth)
  setApiProxy(cfg.apiProxy)
 diff --git a/src/routes/media.nim b/src/routes/media.nim
-index 92eee5f..264d495 100644
+index df30d5f..c41334d 100644
 --- a/src/routes/media.nim
 +++ b/src/routes/media.nim
-@@ -91,8 +91,11 @@ proc createMediaRouter*(cfg: Config) =
+@@ -97,8 +97,11 @@ proc createMediaRouter*(cfg: Config) =
      get "/pic/?":
        resp Http404
  
@@ -68,9 +68,9 @@ index 92eee5f..264d495 100644
 +      if getHmac(url) != request.matches[1]:
 +        resp Http403, showError("Failed to verify signature", cfg)
        cond "/amplify_video/" notin url
- 
-       if "twimg.com" notin url:
-@@ -107,8 +110,11 @@ proc createMediaRouter*(cfg: Config) =
+       normalizeImgUrl(url)
+       url.add("?name=orig")
+@@ -109,8 +112,11 @@ proc createMediaRouter*(cfg: Config) =
        let code = await proxyMedia(request, url)
        check code
  
@@ -82,13 +82,13 @@ index 92eee5f..264d495 100644
 +      if getHmac(url) != request.matches[1]:
 +        resp Http403, showError("Failed to verify signature", cfg)
        cond "/amplify_video/" notin url
+       normalizeImgUrl(url)
  
-       if "twimg.com" notin url:
 diff --git a/src/types.nim b/src/types.nim
-index 7f98b9d..00e9f6a 100644
+index c755589..6c52fac 100644
 --- a/src/types.nim
 +++ b/src/types.nim
-@@ -312,6 +312,7 @@ type
+@@ -345,6 +345,7 @@ type
      maxConcurrentReqs*: int
      maxRetries*: int
      retryDelayMs*: int
@@ -97,7 +97,7 @@ index 7f98b9d..00e9f6a 100644
      rssCacheTime*: int
      listCacheTime*: int
 diff --git a/src/utils.nim b/src/utils.nim
-index 6bd977e..959b6bd 100644
+index 391e2a3..8eab1b7 100644
 --- a/src/utils.nim
 +++ b/src/utils.nim
 @@ -1,10 +1,12 @@
@@ -113,8 +113,8 @@ index 6bd977e..959b6bd 100644
  
  const
    https* = "https://"
-@@ -20,34 +22,43 @@ const
-     "x.com"
+@@ -22,34 +24,43 @@ const
+     "video.pscp.tv"
    ]
  
 +let now = now()
@@ -166,10 +166,10 @@ index 6bd977e..959b6bd 100644
  proc filterParams*(params: Table): seq[(string, string)] =
    for p in params.pairs():
 diff --git a/src/views/general.nim b/src/views/general.nim
-index d7af7e8..d1d4df2 100644
+index f753610..7f619be 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
-@@ -100,7 +100,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+@@ -101,7 +101,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
                         else: getSmallPic(url)
        link(rel="preload", type="image/png", href=preloadUrl, `as`="image")
  

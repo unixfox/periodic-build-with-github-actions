@@ -1,7 +1,7 @@
-From 378ca8cb655032f2521887438fbefda5131dda0d Mon Sep 17 00:00:00 2001
+From 53669fbfa3522d0286391e4ad1c2559d2f10b3ec Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:12 +0100
-Subject: [PATCH] proxy pictures support
+Subject: [PATCH 2/4] proxy pictures support
 
 ---
  nitter.example.conf           |  1 +
@@ -57,10 +57,10 @@ index 0000000..8cc5010
 +    img.src = 'https://pbs.twimg.com/favicon.ico';
 +}
 diff --git a/src/parser.nim b/src/parser.nim
-index d22e6d1..9713da2 100644
+index c34ffa9..072db68 100644
 --- a/src/parser.nim
 +++ b/src/parser.nim
-@@ -310,7 +310,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
+@@ -396,7 +396,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
  
    if kind in {promoImageConvo, promoImageApp, imageDirectMessage} and
       result.url.len == 0 or result.url.startsWith("card://"):
@@ -97,15 +97,15 @@ index b4ab091..999ca35 100644
  
    resp renderMain(html, request, cfg, prefs, titleText=title, rss=rss, banner=list.banner)
 diff --git a/src/routes/router_utils.nim b/src/routes/router_utils.nim
-index 379280c..33bc5d9 100644
+index 8a26193..c6d9e86 100644
 --- a/src/routes/router_utils.nim
 +++ b/src/routes/router_utils.nim
-@@ -9,7 +9,7 @@ export utils, prefs, types, uri
- template savePref*(pref, value: string; req: Request; expire=false) =
+@@ -10,7 +10,7 @@ template savePref*(pref, value: string; req: Request; expire=false) =
    if not expire or pref in cookies(req):
+     let sameSite = if cfg.useHttps: None else: Lax
      setCookie(pref, value, daysForward(when expire: -10 else: 360),
--              httpOnly=true, secure=cfg.useHttps, sameSite=None, path="/")
-+              httpOnly=false, secure=cfg.useHttps, sameSite=None, path="/")
+-              httpOnly=true, secure=cfg.useHttps, sameSite=sameSite, path="/")
++              httpOnly=false, secure=cfg.useHttps, sameSite=sameSite, path="/")
  
  template requestPrefs*(): untyped {.dirty.} =
    getPrefs(cookies(request), params(request))
@@ -123,10 +123,10 @@ index f7fb1bb..1d512dd 100644
          let card = conv.tweet.card.get()
          if card.image.len > 0:
 diff --git a/src/utils.nim b/src/utils.nim
-index 959b6bd..b674e5c 100644
+index 8eab1b7..dee7648 100644
 --- a/src/utils.nim
 +++ b/src/utils.nim
-@@ -46,19 +46,37 @@ proc getVidUrl*(link: string): string =
+@@ -48,19 +48,37 @@ proc getVidUrl*(link: string): string =
    else:
      &"{cdnUrl}/video/{sig}/{encodeUrl(link)}"
  
@@ -175,7 +175,7 @@ index 959b6bd..b674e5c 100644
  proc filterParams*(params: Table): seq[(string, string)] =
    for p in params.pairs():
 diff --git a/src/views/general.nim b/src/views/general.nim
-index d1d4df2..a8913f3 100644
+index 7f619be..be07b1a 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -70,6 +70,9 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
@@ -188,7 +188,7 @@ index d1d4df2..a8913f3 100644
      if prefs.hlsPlayback:
        script(src="/js/hls.min.js", `defer`="")
        script(src="/js/hlsPlayback.js", `defer`="")
-@@ -92,15 +95,15 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+@@ -93,15 +96,15 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
      meta(property="og:locale", content="en_US")
  
      if banner.len > 0 and not banner.startsWith('#'):
@@ -229,10 +229,10 @@ index e5639d1..bffbea2 100644
      tdiv(class="timeline-header"):
        text &"\"{list.name}\" by @{list.username}"
 diff --git a/src/views/profile.nim b/src/views/profile.nim
-index 83d300a..42eb185 100644
+index 5b751d6..9fa9a89 100644
 --- a/src/views/profile.nim
 +++ b/src/views/profile.nim
-@@ -16,13 +16,13 @@ proc renderUserCard*(user: User; prefs: Prefs): VNode =
+@@ -16,13 +16,13 @@ proc renderUserCard*(user: User; prefs: Prefs; info: AccountInfo): VNode =
    buildHtml(tdiv(class="profile-card")):
      tdiv(class="profile-card-info"):
        let
@@ -248,7 +248,7 @@ index 83d300a..42eb185 100644
  
        tdiv(class="profile-card-tabs-name"):
          linkUser(user, class="profile-card-fullname")
-@@ -64,7 +64,7 @@ proc renderUserCard*(user: User; prefs: Prefs): VNode =
+@@ -69,7 +69,7 @@ proc renderUserCard*(user: User; prefs: Prefs; info: AccountInfo): VNode =
            renderStat(user.followers, "followers")
            renderStat(user.likes, "likes")
  
@@ -257,7 +257,7 @@ index 83d300a..42eb185 100644
    let count = insertSep($profile.user.media, ',')
    buildHtml(tdiv(class="photo-rail-card")):
      tdiv(class="photo-rail-header"):
-@@ -83,16 +83,16 @@ proc renderPhotoRail(profile: Profile): VNode =
+@@ -88,16 +88,16 @@ proc renderPhotoRail(profile: Profile): VNode =
            if "format" in photo.url or "placeholder" in photo.url: ""
            else: ":thumb"
          a(href=(&"/{profile.user.username}/status/{photo.tweetId}#m")):
@@ -277,7 +277,7 @@ index 83d300a..42eb185 100644
  
  proc renderProtected(username: string): VNode =
    buildHtml(tdiv(class="timeline-container")):
-@@ -110,14 +110,14 @@ proc renderProfile*(profile: var Profile; prefs: Prefs; path: string): VNode =
+@@ -115,14 +115,14 @@ proc renderProfile*(profile: var Profile; prefs: Prefs; path: string): VNode =
    buildHtml(tdiv(class=("profile-tabs" & viewClass))):
      if not isGalleryView and not prefs.hideBanner:
        tdiv(class="profile-banner"):
@@ -287,7 +287,7 @@ index 83d300a..42eb185 100644
      if not isGalleryView:
        let sticky = if prefs.stickyProfile: " sticky" else: ""
        tdiv(class=("profile-tab" & sticky)):
-         renderUserCard(profile.user, prefs)
+         renderUserCard(profile.user, prefs, profile.accountInfo)
          if profile.photoRail.len > 0:
 -          renderPhotoRail(profile)
 +          renderPhotoRail(profile, prefs.proxyPics)
@@ -390,7 +390,7 @@ index b911765..b6009a7 100644
          tdiv(class="tweet-name-row"):
            tdiv(class="fullname-and-username"):
 diff --git a/src/views/tweet.nim b/src/views/tweet.nim
-index ba8e9f1..3860396 100644
+index 5546eb4..07ec730 100644
 --- a/src/views/tweet.nim
 +++ b/src/views/tweet.nim
 @@ -10,7 +10,7 @@ import general
@@ -439,7 +439,7 @@ index ba8e9f1..3860396 100644
  
    buildHtml(tdiv(class="attachment")):
      if not videoData.available:
-@@ -121,7 +121,7 @@ proc renderVideo*(video: Video; prefs: Prefs; path: string; bigThumb=false): VNo
+@@ -122,7 +122,7 @@ proc renderVideo*(video: Video; prefs: Prefs; path: string; bigThumb=false): VNo
              p(class="card-description"): text video.description
  
  proc renderGifAttachment(gif: Gif; prefs: Prefs): VNode =
@@ -448,7 +448,7 @@ index ba8e9f1..3860396 100644
  
    buildHtml(tdiv(class="attachment")):
      if not prefs.mp4Playback:
-@@ -129,10 +129,10 @@ proc renderGifAttachment(gif: Gif; prefs: Prefs): VNode =
+@@ -130,10 +130,10 @@ proc renderGifAttachment(gif: Gif; prefs: Prefs): VNode =
        renderVideoDisabled(mp4)
      elif prefs.autoplayGifs:
        video(class="gif", poster=thumb, autoplay="", muted="", loop=""):
@@ -461,7 +461,7 @@ index ba8e9f1..3860396 100644
      if gif.altText.len > 0:
        renderAltText(gif.altText)
  
-@@ -164,7 +164,7 @@ proc renderMedia(media: seq[Media]; prefs: Prefs; path: string; bigThumb=false):
+@@ -165,7 +165,7 @@ proc renderMedia(media: seq[Media]; prefs: Prefs; path: string; bigThumb=false):
          for mediaItem in mediaGroup:
            case mediaItem.kind
            of photoMedia:
@@ -470,7 +470,7 @@ index ba8e9f1..3860396 100644
            of videoMedia:
              renderVideoAttachment(mediaItem.video, prefs, path, bigThumb)
            of gifMedia:
-@@ -185,10 +185,10 @@ proc renderPoll(poll: Poll): VNode =
+@@ -186,10 +186,10 @@ proc renderPoll(poll: Poll): VNode =
      span(class="poll-info"):
        text &"{insertSep($poll.votes, ',')} votes • {poll.status}"
  
@@ -483,7 +483,7 @@ index ba8e9f1..3860396 100644
        if card.kind == player:
          tdiv(class="card-overlay"):
            tdiv(class="overlay-circle"):
-@@ -216,7 +216,7 @@ proc renderCard(card: Card; prefs: Prefs; path: string): VNode =
+@@ -217,7 +217,7 @@ proc renderCard(card: Card; prefs: Prefs; path: string): VNode =
      else:
        a(class="card-container", href=url):
          if card.image.len > 0:

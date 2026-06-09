@@ -1,7 +1,7 @@
-From 9fa809acc6b5a2a7eab5507704b01c691dc0fc2a Mon Sep 17 00:00:00 2001
+From 2dad8f8e894662462aeacc0fbdf4ea865dbfeb32 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:37:27 +0100
-Subject: [PATCH] custom donation page
+Subject: [PATCH 4/4] custom donation page
 
 ---
  public/md/about.md    | 33 ++++++++++++++++++++++++++++++++-
@@ -63,7 +63,7 @@ index 3825e8f..6631018 100644
 -Feel free to join our [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 +Feel free to join Nitter [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 diff --git a/src/views/general.nim b/src/views/general.nim
-index a8913f3..709243e 100644
+index be07b1a..d570677 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
