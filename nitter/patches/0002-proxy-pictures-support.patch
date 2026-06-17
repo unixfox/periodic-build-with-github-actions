@@ -1,7 +1,7 @@
-From edbc3f2f24725d22ca9ba5a3c7b8c72dc4d52cd5 Mon Sep 17 00:00:00 2001
+From 40297a3fdb96fad8e16ac158450968827710a279 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:12 +0100
-Subject: [PATCH 2/4] proxy pictures support
+Subject: [PATCH] proxy pictures support
 
 ---
  nitter.example.conf           |  1 +
@@ -14,6 +14,7 @@ Subject: [PATCH 2/4] proxy pictures support
  src/routes/timeline.nim       |  2 +-
  src/utils.nim                 | 38 ++++++++++++++++++++++++++---------
  src/views/about_account.nim   |  4 ++--
+ src/views/article.nim         | 10 ++++-----
  src/views/broadcast.nim       |  4 ++--
  src/views/general.nim         | 11 ++++++----
  src/views/list.nim            |  6 +++---
@@ -21,8 +22,8 @@ Subject: [PATCH 2/4] proxy pictures support
  src/views/renderutils.nim     | 12 +++++------
  src/views/rss.nimf            | 12 +++++------
  src/views/timeline.nim        |  2 +-
- src/views/tweet.nim           | 26 ++++++++++++------------
- 18 files changed, 102 insertions(+), 60 deletions(-)
+ src/views/tweet.nim           | 28 +++++++++++++-------------
+ 19 files changed, 108 insertions(+), 66 deletions(-)
  create mode 100644 public/js/proxyneededcheck.js
 
 diff --git a/nitter.example.conf b/nitter.example.conf
@@ -60,10 +61,10 @@ index 0000000..8cc5010
 +    img.src = 'https://pbs.twimg.com/favicon.ico';
 +}
 diff --git a/src/parser.nim b/src/parser.nim
-index c34ffa9..072db68 100644
+index d7b3f8d..0acd171 100644
 --- a/src/parser.nim
 +++ b/src/parser.nim
-@@ -396,7 +396,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
+@@ -379,7 +379,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
  
    if kind in {promoImageConvo, promoImageApp, imageDirectMessage} and
       result.url.len == 0 or result.url.startsWith("card://"):
@@ -212,6 +213,40 @@ index aedd444..c4fe4c0 100644
        tdiv(class="about-account-name"):
          linkUser(user, class="profile-card-fullname")
          verifiedIcon(user)
+diff --git a/src/views/article.nim b/src/views/article.nim
+index 1ba9c8b..a0502bd 100644
+--- a/src/views/article.nim
++++ b/src/views/article.nim
+@@ -31,8 +31,8 @@ proc renderAtomicParagraph(paragraph: ArticleParagraph; article: Article;
+         of "ApiVideo":
+           video(src=getVidUrl(media.url), controls="")
+         else:
+-          a(href=getOrigPicUrl(media.url), target="_blank"):
+-            img(src=getSmallPic(media.url), alt="", loading="lazy")
++          a(href=getOrigPicUrl(media.url, prefs.proxyPics), target="_blank"):
++            img(src=getSmallPic(media.url, prefs.proxyPics), alt="", loading="lazy")
+   of "TWEET":
+     let tweet = tweets.getOrDefault(
+       try: parseBiggestInt(entity.tweetId)
+@@ -196,7 +196,7 @@ proc renderArticle*(article: Article; tweets: Table[int64, Tweet];
+     tdiv(class="article-author"):
+       tdiv(class="article-author-row"):
+         a(class="article-avatar", href=("/" & author.username)):
+-          genImg(author.getUserPic("_bigger"), class=prefs.getAvatarClass)
++          genImg(author.getUserPic("_bigger"), prefs.proxyPics, class=prefs.getAvatarClass)
+         tdiv(class="article-author-info"):
+           tdiv(class="article-author-name"):
+             linkUser(author, class="fullname")
+@@ -240,7 +240,7 @@ proc renderArticle*(article: Article; tweets: Table[int64, Tweet];
+ 
+   buildHtml(tdiv(class="article-page")):
+     if article.coverImage.len > 0:
+-      a(href=getOrigPicUrl(article.coverImage), target="_blank"):
+-        img(class="article-cover", src=getSmallPic(article.coverImage), alt="")
++      a(href=getOrigPicUrl(article.coverImage, prefs.proxyPics), target="_blank"):
++        img(class="article-cover", src=getSmallPic(article.coverImage, prefs.proxyPics), alt="")
+     main
+     renderToTop()
 diff --git a/src/views/broadcast.nim b/src/views/broadcast.nim
 index bfcb9ba..4f752a5 100644
 --- a/src/views/broadcast.nim
@@ -235,7 +270,7 @@ index bfcb9ba..4f752a5 100644
                tdiv:
                  strong: text bc.user.fullname
 diff --git a/src/views/general.nim b/src/views/general.nim
-index 7f619be..be07b1a 100644
+index f1a4a13..71fcd9b 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -70,6 +70,9 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
@@ -450,19 +485,28 @@ index b911765..b6009a7 100644
          tdiv(class="tweet-name-row"):
            tdiv(class="fullname-and-username"):
 diff --git a/src/views/tweet.nim b/src/views/tweet.nim
-index 5546eb4..07ec730 100644
+index 9bf6c9b..e43bab0 100644
 --- a/src/views/tweet.nim
 +++ b/src/views/tweet.nim
 @@ -10,7 +10,7 @@ import general
  const doctype = "<!DOCTYPE html>\n"
  
- proc renderMiniAvatar(user: User; prefs: Prefs): VNode =
+ proc renderMiniAvatar*(user: User; prefs: Prefs): VNode =
 -  genImg(user.getUserPic("_mini"), class=(prefs.getAvatarClass & " mini"))
 +  genImg(user.getUserPic("_mini"), prefs.proxyPics, class=(prefs.getAvatarClass & " mini"))
  
- proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VNode =
-   buildHtml(tdiv):
-@@ -26,7 +26,7 @@ proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VN
+ proc renderArticleCard(preview: ArticlePreview; prefs: Prefs): VNode =
+   let url = "/i/article/" & $preview.tweetId
+@@ -19,7 +19,7 @@ proc renderArticleCard(preview: ArticlePreview; prefs: Prefs): VNode =
+       if preview.coverImage.len > 0:
+         tdiv(class="card-image-container"):
+           tdiv(class="card-image"):
+-            genImg(preview.coverImage)
++            genImg(preview.coverImage, prefs.proxyPics)
+           span(class="article-card-badge"): text "Article"
+       tdiv(class="card-content-container"):
+         tdiv(class="card-content"):
+@@ -41,7 +41,7 @@ proc renderHeader(tweet: Tweet; retweet: string; pinned: bool; prefs: Prefs): VN
          var size = "_bigger"
          if not prefs.autoplayGifs and tweet.user.userPic.endsWith("gif"):
            size = "_400x400"
@@ -471,7 +515,7 @@ index 5546eb4..07ec730 100644
  
        tdiv(class="tweet-name-row"):
          tdiv(class="fullname-and-username"):
-@@ -42,15 +42,15 @@ proc renderAltText(altText: string): VNode =
+@@ -57,15 +57,15 @@ proc renderAltText(altText: string): VNode =
    buildHtml(p(class="alt-text")):
      text "ALT  " & altText
  
@@ -490,7 +534,7 @@ index 5546eb4..07ec730 100644
      if photo.altText.len > 0:
        renderAltText(photo.altText)
  
-@@ -82,7 +82,7 @@ proc renderVideoAttachment(videoData: Video; prefs: Prefs; path=""; bigThumb=fal
+@@ -97,7 +97,7 @@ proc renderVideoAttachment(videoData: Video; prefs: Prefs; path=""; bigThumb=fal
    let
      playbackType = if not prefs.proxyVideos and videoData.hasMp4Url: mp4
                     else: videoData.playbackType
@@ -499,7 +543,7 @@ index 5546eb4..07ec730 100644
  
    buildHtml(tdiv(class="attachment")):
      if not videoData.available:
-@@ -122,7 +122,7 @@ proc renderVideo*(video: Video; prefs: Prefs; path: string; bigThumb=false): VNo
+@@ -137,7 +137,7 @@ proc renderVideo*(video: Video; prefs: Prefs; path: string; bigThumb=false): VNo
              p(class="card-description"): text video.description
  
  proc renderGifAttachment(gif: Gif; prefs: Prefs): VNode =
@@ -508,7 +552,7 @@ index 5546eb4..07ec730 100644
  
    buildHtml(tdiv(class="attachment")):
      if not prefs.mp4Playback:
-@@ -130,10 +130,10 @@ proc renderGifAttachment(gif: Gif; prefs: Prefs): VNode =
+@@ -145,10 +145,10 @@ proc renderGifAttachment(gif: Gif; prefs: Prefs): VNode =
        renderVideoDisabled(mp4)
      elif prefs.autoplayGifs:
        video(class="gif", poster=thumb, autoplay="", muted="", loop=""):
@@ -521,7 +565,7 @@ index 5546eb4..07ec730 100644
      if gif.altText.len > 0:
        renderAltText(gif.altText)
  
-@@ -165,7 +165,7 @@ proc renderMedia(media: seq[Media]; prefs: Prefs; path: string; bigThumb=false):
+@@ -180,7 +180,7 @@ proc renderMedia(media: seq[Media]; prefs: Prefs; path: string; bigThumb=false):
          for mediaItem in mediaGroup:
            case mediaItem.kind
            of photoMedia:
@@ -530,7 +574,7 @@ index 5546eb4..07ec730 100644
            of videoMedia:
              renderVideoAttachment(mediaItem.video, prefs, path, bigThumb)
            of gifMedia:
-@@ -186,10 +186,10 @@ proc renderPoll(poll: Poll): VNode =
+@@ -201,10 +201,10 @@ proc renderPoll(poll: Poll): VNode =
      span(class="poll-info"):
        text &"{insertSep($poll.votes, ',')} votes • {poll.status}"
  
@@ -543,7 +587,7 @@ index 5546eb4..07ec730 100644
        if card.kind == player:
          tdiv(class="card-overlay"):
            tdiv(class="overlay-circle"):
-@@ -217,7 +217,7 @@ proc renderCard(card: Card; prefs: Prefs; path: string): VNode =
+@@ -232,7 +232,7 @@ proc renderCard(card: Card; prefs: Prefs; path: string): VNode =
      else:
        a(class="card-container", href=url):
          if card.image.len > 0:
@@ -553,5 +597,5 @@ index 5546eb4..07ec730 100644
            renderCardContent(card)
  
 -- 
-2.53.0
+2.54.0
 
