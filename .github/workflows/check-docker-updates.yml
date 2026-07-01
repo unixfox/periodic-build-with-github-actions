@@ -17,7 +17,7 @@ jobs:
     
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Cache versions state
         uses: actions/cache@v5
@@ -84,7 +84,7 @@ jobs:
     
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Trigger relevant workflows
         run: |

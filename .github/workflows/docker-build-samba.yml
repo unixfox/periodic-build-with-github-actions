@@ -26,10 +26,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
           
       - name: Check Out Repo dperson/samba
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: "dperson/samba"
           ref: 'master'
