@@ -1,4 +1,4 @@
-From 5bf8f1a47711b992297fe03c5bb9df1515a71084 Mon Sep 17 00:00:00 2001
+From dcee1f3a0ed0d0a4f245bd86719f304bb94b019a Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:50 +0100
 Subject: [PATCH 3/4] add x-cache header
@@ -66,5 +66,5 @@ index 444dc70..8edd231 100644
        let
          list = await getCachedList(id=id)
 -- 
-2.53.0
+2.54.0
 
