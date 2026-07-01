@@ -26,10 +26,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
           
       - name: Check Out Repo blacklabelops/logrotate
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: "blacklabelops/logrotate"
           ref: 'master'

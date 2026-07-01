@@ -26,10 +26,10 @@ jobs:
           platforms: all
 
       - name: Check Out Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Check Out Repo slopus/happy-server
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: "slopus/happy-server"
           ref: '${{ env.commit }}'
