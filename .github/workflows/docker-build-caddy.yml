@@ -31,11 +31,6 @@ jobs:
           fi
         shell: bash
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: all
-
       - name: Check Out Repo
         uses: actions/checkout@v7
 
@@ -47,6 +42,17 @@ jobs:
       - name: Install xcaddy
         run: |
           go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+      - name: Cache Go modules and build cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-caddy-go-${{ hashFiles('caddy/xcaddy-build.sh') }}-${{ env.tag }}
+          restore-keys: |
+            ${{ runner.os }}-caddy-go-${{ hashFiles('caddy/xcaddy-build.sh') }}-
+            ${{ runner.os }}-caddy-go-
 
       - name: Build Caddy binaries for amd64
         run: |

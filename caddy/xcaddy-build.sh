@@ -10,7 +10,7 @@ set -eu
 exec xcaddy build "$@" \
   --with github.com/caddy-dns/powerdns \
   --with github.com/pteich/caddy-tlsconsul \
-  --with github.com/mholt/caddy-l4=github.com/tannevaled/caddy-l4@feat/dynamic-srv-upstreams \
+  --with github.com/mholt/caddy-l4=github.com/tannevaled/caddy-l4@e33d1352f5683938de0feb57af18ee2157ea16cd \
   --with github.com/lixmal/caddy-netbird=github.com/unixfox/caddy-netbird@add-dns-labels-option \
   --with github.com/mholt/caddy-ratelimit \
   --replace github.com/cloudflare/circl=codeberg.org/cunicu/circl@v0.0.0-20230801113412-fec58fc7b5f6 \
