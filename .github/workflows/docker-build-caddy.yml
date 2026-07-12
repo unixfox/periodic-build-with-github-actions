@@ -40,23 +40,13 @@ jobs:
       - name: Build Caddy binaries for amd64
         run: |
           mkdir -p build/linux/amd64
-          GOOS=linux GOARCH=amd64 xcaddy build v${{ env.tag }} \
-            --with github.com/tailscale/caddy-tailscale \
-            --with github.com/caddy-dns/powerdns \
-            --with github.com/pteich/caddy-tlsconsul \
-            --with github.com/mholt/caddy-l4=github.com/unixfox/caddy-l4@latest \
-            --with github.com/mholt/caddy-ratelimit \
+          GOOS=linux GOARCH=amd64 ./caddy/xcaddy-build.sh v${{ env.tag }} \
             --output build/linux/amd64/caddy
 
       - name: Build Caddy binaries for arm64
         run: |
           mkdir -p build/linux/arm64
-          GOOS=linux GOARCH=arm64 xcaddy build v${{ env.tag }} \
-            --with github.com/tailscale/caddy-tailscale \
-            --with github.com/caddy-dns/powerdns \
-            --with github.com/pteich/caddy-tlsconsul \
-            --with github.com/mholt/caddy-l4=github.com/unixfox/caddy-l4@latest \
-            --with github.com/mholt/caddy-ratelimit \
+          GOOS=linux GOARCH=arm64 ./caddy/xcaddy-build.sh v${{ env.tag }} \
             --output build/linux/arm64/caddy
 
       - name: Create release archives
@@ -153,10 +143,10 @@ jobs:
           $(ls -lh binaries/caddy/v${{ env.tag }}/ | tail -n +2)
           
           ## Custom plugins included:
-          - caddy-tailscale (github.com/tailscale/caddy-tailscale)
           - powerdns (github.com/caddy-dns/powerdns)
           - caddy-tlsconsul (github.com/pteich/caddy-tlsconsul)
           - caddy-l4 (github.com/unixfox/caddy-l4@latest)
+          - caddy-netbird (github.com/unixfox/caddy-netbird@add-dns-labels-option)
           - caddy-ratelimit (github.com/mholt/caddy-ratelimit)
           EOF
           
