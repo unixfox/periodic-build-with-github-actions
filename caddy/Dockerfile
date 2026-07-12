@@ -6,7 +6,8 @@ RUN xcaddy build \
     --with github.com/caddy-dns/powerdns \
     --with github.com/pteich/caddy-tlsconsul \
     --with github.com/mholt/caddy-l4 \
-    --with github.com/unixfox/caddy-netbird \
+    --with github.com/lixmal/caddy-netbird \
+    --replace github.com/lixmal/caddy-netbird=github.com/unixfox/caddy-netbird@add-dns-labels-option \
     --replace github.com/cloudflare/circl=codeberg.org/cunicu/circl@v0.0.0-20230801113412-fec58fc7b5f6 \
     --replace github.com/dexidp/dex=github.com/netbirdio/dex@v0.244.1-0.20260512110716-8d70ad8647c1 \
     --replace github.com/dexidp/dex/api/v2=github.com/netbirdio/dex/api/v2@v2.0.0-20260512110716-8d70ad8647c1 \
