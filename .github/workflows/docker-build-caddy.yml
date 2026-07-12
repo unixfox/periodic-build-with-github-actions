@@ -2,6 +2,11 @@ name: Docker and non docker build caddy image
 
 on:
   workflow_dispatch:
+    inputs:
+      caddy_version:
+        description: 'Caddy version to build, without the leading "v" (e.g. 2.10.2). Leave empty to use the latest release.'
+        required: false
+        default: ''
   push:
     paths:
       - '.github/workflows/docker-build-caddy.yml'
@@ -16,8 +21,14 @@ jobs:
     steps:
       - name: Get latest tag
         id: get-latest-tag
+        env:
+          CADDY_VERSION_OVERRIDE: ${{ github.event.inputs.caddy_version }}
         run: |
-          echo "tag=$(git ls-remote --refs --tags https://github.com/caddyserver/caddy.git| grep -v beta | cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1|cut -d "v" -f2)" >> $GITHUB_ENV
+          if [ -n "$CADDY_VERSION_OVERRIDE" ]; then
+            echo "tag=$CADDY_VERSION_OVERRIDE" >> $GITHUB_ENV
+          else
+            echo "tag=$(git ls-remote --refs --tags https://github.com/caddyserver/caddy.git| grep -v beta | cut --delimiter='/' --fields=3|sort --version-sort|tail --lines=1|cut -d "v" -f2)" >> $GITHUB_ENV
+          fi
         shell: bash
 
       - name: Set up QEMU
@@ -85,13 +96,10 @@ jobs:
         id: docker_build_new
         uses: docker/build-push-action@v7
         with:
-          context: ./caddy
+          context: .
           file: ./caddy/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          #tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:2.10.2
-          #build-args: CADDY_VERSION=2.10.2
-          build-args: CADDY_VERSION=${{ env.tag }}
           tags: quay.io/unixfox/caddy:latest, quay.io/unixfox/caddy:${{ env.tag }}
 
       - name: Publish binaries to dist branch

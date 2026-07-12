@@ -1,10 +1,8 @@
-ARG CADDY_VERSION=2.10.2
+FROM caddy:latest
 
-FROM caddy:$CADDY_VERSION-builder AS builder
-
-COPY xcaddy-build.sh /usr/local/bin/xcaddy-build.sh
-RUN sh /usr/local/bin/xcaddy-build.sh
-
-FROM caddy:$CADDY_VERSION
-
-COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+# Reuse the caddy binary already built earlier in the workflow
+# (.github/workflows/docker-build-caddy.yml) instead of rebuilding it with
+# xcaddy. TARGETARCH is set automatically by buildx for each target platform
+# and matches the build/linux/<arch> layout produced by the build steps.
+ARG TARGETARCH
+COPY build/linux/$TARGETARCH/caddy /usr/bin/caddy
