@@ -12,6 +12,7 @@
 - happy-server: https://quay.io/unixfox/happy-server
 - claude-code-mobile: https://quay.io/unixfox/claude-code-mobile
 - moltis: https://quay.io/unixfox/moltis
+- chainguard-ingress-nginx-controller: https://quay.io/unixfox/chainguard-ingress-nginx-controller
 
 # frozen/inactive
 Broken, need to be fixed.

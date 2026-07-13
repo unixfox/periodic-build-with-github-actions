@@ -47,6 +47,7 @@ jobs:
             ["happy-cli"]="https://github.com/slopus/happy-cli.git"
             ["opencode"]="https://github.com/anomalyco/opencode.git refs/tags/"
             ["moltis"]="https://github.com/moltis-org/moltis.git refs/tags/"
+            ["chainguard-ingress-nginx-controller"]="https://github.com/chainguard-forks/ingress-nginx.git"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
@@ -140,6 +141,9 @@ jobs:
                 ;;
               "moltis")
                 gh workflow run docker-build-moltis.yml || echo "Failed to trigger moltis workflow (may be disabled)"
+                ;;
+              "chainguard-ingress-nginx-controller")
+                gh workflow run docker-build-chainguard-ingress-nginx-controller.yml || echo "Failed to trigger chainguard-ingress-nginx-controller workflow (may be disabled)"
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml || echo "Failed to trigger gpt4free workflow (may be disabled)"

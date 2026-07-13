@@ -1,0 +1,98 @@
+name: Docker build chainguard ingress-nginx controller image
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/docker-build-chainguard-ingress-nginx-controller.yml'
+      - 'chainguard-ingress-nginx-controller/**'
+
+jobs:
+
+  checks:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+      env-tag: ${{ env.tag }}
+    steps:
+      - name: Get latest tag
+        id: get-latest-tag
+        run: |
+          echo "tag=$(git ls-remote --refs --tags https://github.com/chainguard-forks/ingress-nginx.git | awk -F/ '/refs\/tags\/controller-v[0-9]/ {print $3}' | grep -v -- '-beta' | sort -V | tail -1)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Prime cache marker
+        run: |
+          mkdir -p chainguard-ingress-nginx-controller
+          echo "${{ env.tag }}" > chainguard-ingress-nginx-controller/.built
+
+      - uses: actions/cache@v6
+        id: cache
+        with:
+          path: chainguard-ingress-nginx-controller/.built
+          key: ${{ runner.os }}-chainguard-ingress-nginx-controller-${{ env.tag }}
+
+  build:
+
+    needs: checks
+    runs-on: ubuntu-latest
+    if: needs.checks.outputs.cache-hit != 'true'
+    steps:
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: all
+
+      - name: Check Out Repo chainguard-forks/ingress-nginx
+        uses: actions/checkout@v7
+        with:
+          repository: "chainguard-forks/ingress-nginx"
+          ref: '${{ needs.checks.outputs.env-tag }}'
+          path: 'ingress-nginx-git'
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          version: latest
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Set version, base image and build timestamp
+        run: |
+          echo "version=${TAG#controller-}" >> $GITHUB_ENV
+          echo "base_image=$(cat ingress-nginx-git/NGINX_BASE)" >> $GITHUB_ENV
+          echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
+        env:
+          TAG: ${{ needs.checks.outputs.env-tag }}
+
+      - name: Build controller binaries (amd64 + arm64)
+        run: |
+          cd ingress-nginx-git
+          make build ARCH=amd64
+          make build ARCH=arm64
+
+      - name: Build and push multi-arch controller image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./ingress-nginx-git/rootfs
+          file: ./ingress-nginx-git/rootfs/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          pull: true
+          no-cache: true
+          build-args: |
+            BASE_IMAGE=${{ env.base_image }}
+            VERSION=${{ env.version }}
+            COMMIT_SHA=git-${{ github.sha }}
+            BUILD_ID=UNSET
+          tags: |
+            quay.io/unixfox/chainguard-ingress-nginx-controller:latest
+            quay.io/unixfox/chainguard-ingress-nginx-controller:${{ env.version }}
+            quay.io/unixfox/chainguard-ingress-nginx-controller:${{ env.version }}-build-${{ env.timestamp }}
