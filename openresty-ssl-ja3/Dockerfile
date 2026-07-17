@@ -2,7 +2,7 @@
 # https://github.com/openresty/docker-openresty
 
 ARG RESTY_IMAGE_BASE="alpine"
-ARG RESTY_IMAGE_TAG="3.22.3"
+ARG RESTY_IMAGE_TAG="3.23.5"
 
 FROM ${RESTY_IMAGE_BASE}:${RESTY_IMAGE_TAG}
 
@@ -10,11 +10,14 @@ LABEL maintainer="Evan Wies <evan@neomantra.net>"
 
 # Docker Build Arguments
 ARG RESTY_IMAGE_BASE="alpine"
-ARG RESTY_IMAGE_TAG="3.22.3"
+ARG RESTY_IMAGE_TAG="3.23.5"
 ARG RESTY_VERSION="1.31.1.1"
 
 # https://github.com/openresty/openresty-packaging/blob/master/alpine/openresty-openssl3/APKBUILD
-# OpenSSL 3.5.6 = matches phuslu/nginx-ssl-fingerprint's openssl-3.5.6.patch exactly.
+# NOTE: upstream docker-openresty is on OpenSSL 3.5.7, but we pin 3.5.6 to match
+# phuslu/nginx-ssl-fingerprint's openssl-3.5.6.patch exactly (correctness of the JA
+# fingerprints depends on it). The phuslu patch also applies cleanly to 3.5.7, so bump
+# in lockstep once phuslu publishes an openssl-3.5.7.patch.
 # The OpenResty sess_set_get_cb_yield patch only ships up to 3.5.5, but it applies
 # cleanly to 3.5.6, so RESTY_OPENSSL_PATCH_VERSION stays at 3.5.5 for that patch.
 ARG RESTY_OPENSSL_VERSION="3.5.6"
@@ -85,7 +88,10 @@ ARG RESTY_ADD_PACKAGE_BUILDDEPS="perl"
 ARG RESTY_ADD_PACKAGE_RUNDEPS=""
 ARG RESTY_EVAL_PRE_CONFIGURE=""
 ARG RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE=""
+ARG RESTY_EVAL_PRE_MAKE=""
 ARG RESTY_EVAL_POST_MAKE=""
+
+ARG RESTY_STRIP_BINARIES=""
 
 # These are not intended to be user-specified
 ARG _RESTY_CONFIG_DEPS="--with-pcre \
@@ -110,7 +116,9 @@ LABEL resty_add_package_builddeps="${RESTY_ADD_PACKAGE_BUILDDEPS}"
 LABEL resty_add_package_rundeps="${RESTY_ADD_PACKAGE_RUNDEPS}"
 LABEL resty_eval_pre_configure="${RESTY_EVAL_PRE_CONFIGURE}"
 LABEL resty_eval_post_download_pre_configure="${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}"
+LABEL resty_eval_pre_make="${RESTY_EVAL_PRE_MAKE}"
 LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
+LABEL resty_strip_binaries="${RESTY_STRIP_BINARIES}"
 LABEL resty_luajit_options="${RESTY_LUAJIT_OPTIONS}"
 LABEL resty_pcre_options="${RESTY_PCRE_OPTIONS}"
 
@@ -124,6 +132,7 @@ LABEL resty_pcre_options="${RESTY_PCRE_OPTIONS}"
 # to util/libssl.num (next free ordinal) right after applying the phuslu OpenSSL patch below.
 RUN apk add --no-cache --virtual .build-deps \
         build-base \
+        binutils \
         coreutils \
         curl \
         gd-dev \
@@ -205,6 +214,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} ${RESTY_LUAJIT_OPTIONS} ${RESTY_PCRE_OPTIONS} \
     && STREAM_LUA_SRC=$(find /tmp/openresty-${RESTY_VERSION}/bundle -maxdepth 1 -name 'ngx_stream_lua-*' -type d | head -1)/src \
     && sed -i "s|-I objs|-I ${STREAM_LUA_SRC} -I objs|" build/nginx-*/objs/Makefile \
+    && if [ -n "${RESTY_EVAL_PRE_MAKE}" ]; then eval $(echo ${RESTY_EVAL_PRE_MAKE}); fi \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && cd /tmp \
@@ -222,6 +232,16 @@ RUN apk add --no-cache --virtual .build-deps \
     && mkdir -p /etc/nginx \
     && cp -r /tmp/dynamic-upstream/gateway/lua /etc/nginx/lua \
     && rm -rf /tmp/dynamic-upstream \
+    && if [ -n "${RESTY_STRIP_BINARIES}" ]; then \
+        echo 'stripping OpenResty binaries' \
+        && rm -Rf /usr/local/openresty/openssl3/bin/c_rehash /usr/local/openresty/openssl3/lib/*.a /usr/local/openresty/openssl3/include \
+        && find /usr/local/openresty/openssl3 -type f -perm -u+x -exec strip --strip-unneeded '{}' \; \
+        && rm -Rf /usr/local/openresty/pcre2/bin /usr/local/openresty/pcre2/share \
+        && find /usr/local/openresty/pcre2 -type f -perm -u+x -exec strip --strip-unneeded '{}' \; \
+        && rm -Rf /usr/local/openresty/luajit/lib/*.a /usr/local/openresty/luajit/share/man \
+        && find /usr/local/openresty/luajit -type f -perm -u+x -exec strip --strip-unneeded '{}' \; \
+        && find /usr/local/openresty/nginx -type f -perm -u+x -exec strip --strip-unneeded '{}' \; ; \
+    fi \
     && apk del .build-deps \
     && mkdir -p /var/run/openresty \
     && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
