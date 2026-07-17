@@ -11,10 +11,13 @@ LABEL maintainer="Evan Wies <evan@neomantra.net>"
 # Docker Build Arguments
 ARG RESTY_IMAGE_BASE="alpine"
 ARG RESTY_IMAGE_TAG="3.22.3"
-ARG RESTY_VERSION="1.27.1.2"
+ARG RESTY_VERSION="1.31.1.1"
 
 # https://github.com/openresty/openresty-packaging/blob/master/alpine/openresty-openssl3/APKBUILD
-ARG RESTY_OPENSSL_VERSION="3.5.5"
+# OpenSSL 3.5.6 = matches phuslu/nginx-ssl-fingerprint's openssl-3.5.6.patch exactly.
+# The OpenResty sess_set_get_cb_yield patch only ships up to 3.5.5, but it applies
+# cleanly to 3.5.6, so RESTY_OPENSSL_PATCH_VERSION stays at 3.5.5 for that patch.
+ARG RESTY_OPENSSL_VERSION="3.5.6"
 ARG RESTY_OPENSSL_PATCH_VERSION="3.5.5"
 ARG RESTY_OPENSSL_URL_BASE="https://github.com/openssl/openssl/releases/download/openssl-${RESTY_OPENSSL_VERSION}"
 # LEGACY:  "https://www.openssl.org/source/old/1.1.1"
@@ -35,7 +38,6 @@ ARG RESTY_J="1"
 
 # https://github.com/openresty/openresty-packaging/blob/master/alpine/openresty/APKBUILD
 ARG RESTY_CONFIG_OPTIONS="\
-    --with-cc-opt='-DJA3_SORT_EXT' \
     --with-compat \
     --without-http_rds_json_module \
     --without-http_rds_csv_module \
@@ -45,8 +47,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --without-mail_smtp_module \
     --with-http_addition_module \
     --add-module=/tmp/build_repos/njs/nginx \
-    --add-module=/tmp/build_repos/nginx-ssl-ja3 \
-    --add-module=/nginx-ssl-fingerprint \
+    --add-module=/tmp/build_repos/nginx-ssl-fingerprint \
     --add-module=/tmp/build_repos/ngx_dynamic_upstream \
     --add-module=/tmp/build_repos/ngx_dynamic_upstream_lua \
     --with-http_auth_request_module \
@@ -113,8 +114,6 @@ LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 LABEL resty_luajit_options="${RESTY_LUAJIT_OPTIONS}"
 LABEL resty_pcre_options="${RESTY_PCRE_OPTIONS}"
 
-ADD periodic-build/openresty-ssl-ja3/http2/ /nginx-ssl-fingerprint
-#ADD config nginx.conf /nginx-ssl-fingerprint/
 
 RUN apk add --no-cache --virtual .build-deps \
         build-base \
@@ -146,7 +145,9 @@ RUN apk add --no-cache --virtual .build-deps \
     && cd openssl-${RESTY_OPENSSL_VERSION} \
     && if [ $(echo ${RESTY_OPENSSL_VERSION} | cut -c 1-2) = "3." ] ; then \
         echo "patching OpenSSL ${RESTY_OPENSSL_PATCH_VERSION} for OpenResty" \
-        && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-${RESTY_OPENSSL_PATCH_VERSION}-sess_set_get_cb_yield.patch | patch -p1 ; \
+        && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-${RESTY_OPENSSL_PATCH_VERSION}-sess_set_get_cb_yield.patch | patch -p1 \
+        && echo "patching OpenSSL for phuslu/nginx-ssl-fingerprint (clienthello ja data)" \
+        && curl -s https://raw.githubusercontent.com/phuslu/nginx-ssl-fingerprint/v1.0.5/patches/openssl-${RESTY_OPENSSL_VERSION}.patch | patch -p1 ; \
     fi \
     && if [ $(echo ${RESTY_OPENSSL_VERSION} | cut -c 1-5) = "1.1.1" ] ; then \
         echo 'patching OpenSSL 1.1.1 for OpenResty' \
@@ -181,7 +182,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && git clone -b 0.9.6 https://github.com/nginx/njs \
     && git clone https://github.com/bellard/quickjs \
     && cd quickjs && git checkout d7ae12ae71dfd6ab2997527d295014a8996fa0f9 && CFLAGS='-fPIC' make -j${RESTY_J} libquickjs.a && cd .. \
-    && git clone https://github.com/fooinha/nginx-ssl-ja3.git \
+    && git clone -b v1.0.5 --depth 1 https://github.com/phuslu/nginx-ssl-fingerprint.git \
     && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream.git \
     && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream_lua.git \
     && cd /tmp \
@@ -189,9 +190,8 @@ RUN apk add --no-cache --virtual .build-deps \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && if [ -n "${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}); fi \
-    && cd bundle/nginx-1.27.1 \
-    && curl -s https://raw.githubusercontent.com/fooinha/nginx-ssl-ja3/master/patches/nginx.1.27.2.ssl.extensions.patch | patch -p1 \
-    && cat /nginx-ssl-fingerprint/patches/nginx-1.27.patch | patch -p1 \
+    && cd bundle/nginx-1.31.1 \
+    && patch -p1 < /tmp/build_repos/nginx-ssl-fingerprint/patches/release-1.30.0.patch \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} ${RESTY_LUAJIT_OPTIONS} ${RESTY_PCRE_OPTIONS} \
     && STREAM_LUA_SRC=$(find /tmp/openresty-${RESTY_VERSION}/bundle -maxdepth 1 -name 'ngx_stream_lua-*' -type d | head -1)/src \
