@@ -114,7 +114,14 @@ LABEL resty_eval_post_make="${RESTY_EVAL_POST_MAKE}"
 LABEL resty_luajit_options="${RESTY_LUAJIT_OPTIONS}"
 LABEL resty_pcre_options="${RESTY_PCRE_OPTIONS}"
 
-
+# NOTE: phuslu/nginx-ssl-fingerprint's OpenSSL patch adds SSL_client_hello_get_ja_data()
+# to ssl/ssl_lib.c and declares it in include/openssl/ssl.h.in, but it does NOT register
+# the symbol in util/libssl.num. That is fine for phuslu's own build model (--with-openssl,
+# static link into nginx), but this image builds OpenSSL as a SHARED library (docker-openresty
+# style: `./config shared ... && make install_sw`, nginx links -lssl). A shared libssl only
+# exports symbols listed in util/libssl.num, so without registering it the nginx link fails
+# with "undefined reference to SSL_client_hello_get_ja_data". We therefore append the symbol
+# to util/libssl.num (next free ordinal) right after applying the phuslu OpenSSL patch below.
 RUN apk add --no-cache --virtual .build-deps \
         build-base \
         coreutils \
@@ -147,7 +154,9 @@ RUN apk add --no-cache --virtual .build-deps \
         echo "patching OpenSSL ${RESTY_OPENSSL_PATCH_VERSION} for OpenResty" \
         && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-${RESTY_OPENSSL_PATCH_VERSION}-sess_set_get_cb_yield.patch | patch -p1 \
         && echo "patching OpenSSL for phuslu/nginx-ssl-fingerprint (clienthello ja data)" \
-        && curl -s https://raw.githubusercontent.com/phuslu/nginx-ssl-fingerprint/v1.0.5/patches/openssl-${RESTY_OPENSSL_VERSION}.patch | patch -p1 ; \
+        && curl -s https://raw.githubusercontent.com/phuslu/nginx-ssl-fingerprint/v1.0.5/patches/openssl-${RESTY_OPENSSL_VERSION}.patch | patch -p1 \
+        && echo "exporting SSL_client_hello_get_ja_data from shared libssl (phuslu patch omits util/libssl.num, needed for docker-openresty shared-openssl build)" \
+        && printf 'SSL_client_hello_get_ja_data            %s\t3_0_0\tEXIST::FUNCTION:\n' "$(awk '$2 ~ /^[0-9]+$/ && $2+0>m {m=$2} END{print m+1}' util/libssl.num)" >> util/libssl.num ; \
     fi \
     && if [ $(echo ${RESTY_OPENSSL_VERSION} | cut -c 1-5) = "1.1.1" ] ; then \
         echo 'patching OpenSSL 1.1.1 for OpenResty' \
