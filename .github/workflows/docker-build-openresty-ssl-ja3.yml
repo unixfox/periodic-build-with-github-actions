@@ -9,10 +9,22 @@ on:
 
 env:
   IMAGE_NAME: quay.io/unixfox/openresty-ssl-ja3
+  TAG_PREFIX: openssl3.5.6-nginx1.31.1
 
 jobs:
 
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      timestamp: ${{ steps.ts.outputs.timestamp }}
+    steps:
+      - name: Set up build timestamp
+        id: ts
+        run: echo "timestamp=$(date +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
   build:
+
+    needs: prepare
 
     strategy:
       fail-fast: false
@@ -20,17 +32,14 @@ jobs:
         include:
           - platform: linux/amd64
             runs-on: ubuntu-24.04
+            suffix: "-amd64"
           - platform: linux/arm64
             runs-on: ubuntu-24.04-arm
+            suffix: "-arm64"
 
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-      - name: Prepare platform pair
-        run: |
-          platform=${{ matrix.platform }}
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
-
       - name: Set number of cores
         run: |
           echo "NUMBER_OF_CORES=$(nproc)" >> $GITHUB_ENV
@@ -59,45 +68,28 @@ jobs:
         with:
           version: latest
 
-      - name: Build and push docker image by digest
-        id: build
+      - name: Build and push docker image
         uses: docker/build-push-action@v7
         with:
           context: ./
           file: ./periodic-build/openresty-ssl-ja3/Dockerfile
           platforms: ${{ matrix.platform }}
+          push: true
           build-args: |
             RESTY_J=${{ env.NUMBER_OF_CORES }}
-          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
-
-      - name: Export digest
-        run: |
-          mkdir -p ${{ runner.temp }}/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "${{ runner.temp }}/digests/${digest#sha256:}"
-
-      - name: Upload digest
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests-${{ env.PLATFORM_PAIR }}
-          path: ${{ runner.temp }}/digests/*
-          if-no-files-found: error
-          retention-days: 1
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-latest${{ matrix.suffix }}
+            ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-${{ needs.prepare.outputs.timestamp }}${{ matrix.suffix }}
 
   merge:
 
-    runs-on: ubuntu-24.04
     needs:
+      - prepare
       - build
 
-    steps:
-      - name: Download digests
-        uses: actions/download-artifact@v4
-        with:
-          path: ${{ runner.temp }}/digests
-          pattern: digests-*
-          merge-multiple: true
+    runs-on: ubuntu-24.04
 
+    steps:
       - name: Login to Quay.io
         uses: docker/login-action@v4
         with:
@@ -105,22 +97,13 @@ jobs:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+      - name: Create and push multi-arch manifest
+        uses: int128/docker-manifest-create-action@v2
         with:
-          version: latest
-
-      - name: Set up build timestamp
-        run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
-
-      - name: Create manifest list and push
-        working-directory: ${{ runner.temp }}/digests
-        run: |
-          docker buildx imagetools create \
-            -t ${{ env.IMAGE_NAME }}:openssl3.5.6-nginx1.31.1-latest \
-            -t ${{ env.IMAGE_NAME }}:openssl3.5.6-nginx1.31.1-${{ env.timestamp }} \
-            $(printf '${{ env.IMAGE_NAME }}@sha256:%s ' *)
-
-      - name: Inspect image
-        run: |
-          docker buildx imagetools inspect ${{ env.IMAGE_NAME }}:openssl3.5.6-nginx1.31.1-latest
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-latest
+            ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-${{ needs.prepare.outputs.timestamp }}
+          suffixes: |
+            -amd64
+            -arm64
