@@ -104,6 +104,6 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-latest
             ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-${{ needs.prepare.outputs.timestamp }}
-          suffixes: |
-            -amd64
-            -arm64
+          sources: |
+            ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-${{ needs.prepare.outputs.timestamp }}-amd64
+            ${{ env.IMAGE_NAME }}:${{ env.TAG_PREFIX }}-${{ needs.prepare.outputs.timestamp }}-arm64
