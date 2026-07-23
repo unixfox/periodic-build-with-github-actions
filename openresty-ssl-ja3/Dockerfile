@@ -227,6 +227,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && /usr/local/openresty/bin/opm get openresty/lua-resty-string \
     && /usr/local/openresty/bin/opm get bungle/lua-resty-session \
     && /usr/local/openresty/bin/opm get fffonion/lua-resty-acme \
+    && /usr/local/openresty/bin/opm get fffonion/lua-resty-openssl \
     && /usr/local/openresty/bin/opm get ledgetech/lua-resty-http \
     && git clone --depth 1 https://github.com/unixfox/openresty-lua-docker-dynamic-upstream.git /tmp/dynamic-upstream \
     && mkdir -p /etc/nginx \
