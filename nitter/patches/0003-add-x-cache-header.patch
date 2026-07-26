@@ -1,4 +1,4 @@
-From dcee1f3a0ed0d0a4f245bd86719f304bb94b019a Mon Sep 17 00:00:00 2001
+From 91d1527d1864a5038137a69dd83b83a35e1c3552 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:50 +0100
 Subject: [PATCH 3/4] add x-cache header
@@ -8,7 +8,7 @@ Subject: [PATCH 3/4] add x-cache header
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/src/routes/rss.nim b/src/routes/rss.nim
-index 444dc70..8edd231 100644
+index f56a2cb..29c5d28 100644
 --- a/src/routes/rss.nim
 +++ b/src/routes/rss.nim
 @@ -42,7 +42,7 @@ proc timelineRss*(req: Request; cfg: Config; query: Query; prefs: Prefs): Future

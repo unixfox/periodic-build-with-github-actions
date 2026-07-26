@@ -26,7 +26,7 @@ Adds a user preference to toggle picture proxying, allowing images to be served 
 - Adds `public/js/proxyneededcheck.js`: a client-side script that auto-detects if `pbs.twimg.com` is blocked by trying to load its favicon. If blocked, it sets `proxyPics=on` and `proxyVideos=on` cookies and reloads.
 - Changes cookie `httpOnly` from `true` to `false` so the JS detection script can read preference cookies.
 - RSS feeds always use `proxyPics=false` (direct Twitter URLs).
-- Threads `proxyPics` parameter through all view rendering functions (`genImg`, `getSmallPic`, `renderAlbum`, `renderCardImage`, `renderBanner`, `renderPhotoRail`, `renderList`, etc.).
+- Threads `proxyPics` parameter through all view rendering functions (`genImg`, `getSmallPic`, `renderAlbum`, `renderCardImage`, `renderBanner`, `renderPhotoRail`, `renderList`, `renderListCard`, etc.).
 
 ## 0003 - Add X-Cache Header
 

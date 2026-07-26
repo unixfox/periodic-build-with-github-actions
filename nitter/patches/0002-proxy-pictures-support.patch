@@ -1,4 +1,4 @@
-From 7fe5fafe364d3a2b9199be62a7360662a6caf332 Mon Sep 17 00:00:00 2001
+From 01835debe04d14a993b00622267cf2769504e468 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:12 +0100
 Subject: [PATCH 2/4] proxy pictures support
@@ -24,9 +24,9 @@ Subject: [PATCH 2/4] proxy pictures support
  src/views/renderutils.nim     | 12 ++++++------
  src/views/rss.nimf            | 14 ++++++-------
  src/views/space.nim           |  8 ++++----
- src/views/timeline.nim        |  2 +-
+ src/views/timeline.nim        | 16 +++++++--------
  src/views/tweet.nim           | 28 +++++++++++++-------------
- 22 files changed, 120 insertions(+), 79 deletions(-)
+ 22 files changed, 127 insertions(+), 86 deletions(-)
  create mode 100644 public/js/proxyneededcheck.js
 
 diff --git a/nitter.example.conf b/nitter.example.conf
@@ -64,10 +64,10 @@ index 0000000..8cc5010
 +    img.src = 'https://pbs.twimg.com/favicon.ico';
 +}
 diff --git a/src/parser.nim b/src/parser.nim
-index 04a7d33..cc9c57f 100644
+index 0b3352c..4f96689 100644
 --- a/src/parser.nim
 +++ b/src/parser.nim
-@@ -460,7 +460,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
+@@ -476,7 +476,7 @@ proc parseCard(js: JsonNode; urls: JsonNode): Card =
  
    if kind in {promoImageConvo, promoImageApp, imageDirectMessage} and
       result.url.len == 0 or result.url.startsWith("card://"):
@@ -77,10 +77,10 @@ index 04a7d33..cc9c57f 100644
  proc parseTweet(js: JsonNode; jsCard: JsonNode = newJNull();
                  replyId: int64 = 0): Tweet =
 diff --git a/src/prefs_impl.nim b/src/prefs_impl.nim
-index 699ec4c..0d95fe9 100644
+index 8519bd5..fe86d36 100644
 --- a/src/prefs_impl.nim
 +++ b/src/prefs_impl.nim
-@@ -94,6 +94,9 @@ genPrefs:
+@@ -97,6 +97,9 @@ genPrefs:
      proxyVideos(checkbox, true):
        "Proxy video streaming through the server (might be slow)"
  
@@ -139,10 +139,10 @@ index 8a26193..c6d9e86 100644
  template requestPrefs*(): untyped {.dirty.} =
    getPrefs(cookies(request), params(request))
 diff --git a/src/routes/status.nim b/src/routes/status.nim
-index f7fb1bb..1d512dd 100644
+index 870b6d7..01107b2 100644
 --- a/src/routes/status.nim
 +++ b/src/routes/status.nim
-@@ -56,7 +56,7 @@ proc createStatusRouter*(cfg: Config) =
+@@ -58,7 +58,7 @@ proc createStatusRouter*(cfg: Config) =
          video = getVideoEmbed(cfg, conv.tweet.id)
        elif firstMediaKind == gifMedia:
          images = @[conv.tweet.media[0].getThumb]
@@ -152,7 +152,7 @@ index f7fb1bb..1d512dd 100644
          let card = conv.tweet.card.get()
          if card.image.len > 0:
 diff --git a/src/routes/timeline.nim b/src/routes/timeline.nim
-index 6e8969e..e4591d1 100644
+index 35ef1aa..18f8211 100644
 --- a/src/routes/timeline.nim
 +++ b/src/routes/timeline.nim
 @@ -131,7 +131,7 @@ proc createTimelineRouter*(cfg: Config) =
@@ -334,7 +334,7 @@ index 52f9041..831ab58 100644
      tdiv(class="community-header"):
        h1(class="community-name"):
 diff --git a/src/views/general.nim b/src/views/general.nim
-index 31ec329..37ffa66 100644
+index 7301efc..9ece298 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
 @@ -70,6 +70,9 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
@@ -389,7 +389,7 @@ index e5639d1..bffbea2 100644
      tdiv(class="timeline-header"):
        text &"\"{list.name}\" by @{list.username}"
 diff --git a/src/views/profile.nim b/src/views/profile.nim
-index de09368..101a41f 100644
+index c9012ed..812d99e 100644
 --- a/src/views/profile.nim
 +++ b/src/views/profile.nim
 @@ -23,13 +23,13 @@ proc renderUserCard*(user: User; prefs: Prefs; info: AccountInfo): VNode =
@@ -583,7 +583,7 @@ index a5cac7b..6aa77f4 100644
 -              renderParticipant(speaker, "")
 +              renderParticipant(speaker, "", prefs)
 diff --git a/src/views/timeline.nim b/src/views/timeline.nim
-index 9456bf9..1edb260 100644
+index 2890dd1..be70155 100644
 --- a/src/views/timeline.nim
 +++ b/src/views/timeline.nim
 @@ -87,7 +87,7 @@ proc renderUser(user: User; prefs: Prefs): VNode =
@@ -595,6 +595,52 @@ index 9456bf9..1edb260 100644
  
          tdiv(class="tweet-name-row"):
            tdiv(class="fullname-and-username"):
+@@ -140,13 +140,13 @@ proc renderMentionedText(s: string): VNode =
+       else:
+         text words[i]
+ 
+-proc renderListCard(r: ListSearchResult): VNode =
++proc renderListCard(r: ListSearchResult; proxyPics: bool): VNode =
+   let listUrl = "/i/lists/" & r.list.id
+   buildHtml(tdiv(class="timeline-item list-result")):
+     a(class="tweet-link", href=listUrl)
+     a(class="list-result-banner", href=listUrl):
+       if r.list.banner.len > 0:
+-        genImg(r.list.banner)
++        genImg(r.list.banner, proxyPics)
+     tdiv(class="list-result-body"):
+       tdiv(class="list-result-title fullname-and-username"):
+         a(class="list-name fullname", href=listUrl): text r.list.name
+@@ -159,16 +159,16 @@ proc renderListCard(r: ListSearchResult): VNode =
+           for i in 0 ..< r.facepiles.len:
+             if i == 0 and mentioned.len > 0:
+               a(class="facepile-link", href=("/" & mentioned)):
+-                genImg(r.facepiles[i], class="list-facepile")
++                genImg(r.facepiles[i], proxyPics, class="list-facepile")
+             else:
+-              genImg(r.facepiles[i], class="list-facepile")
++              genImg(r.facepiles[i], proxyPics, class="list-facepile")
+           renderMentionedText(r.followersContext)
+         else:
+           if r.owner.username.len > 0:
+             a(class="facepile-link", href=("/" & r.owner.username)):
+-              genImg(r.owner.getUserPic("_mini"), class="list-facepile")
++              genImg(r.owner.getUserPic("_mini"), proxyPics, class="list-facepile")
+           else:
+-            genImg(r.owner.getUserPic("_mini"), class="list-facepile")
++            genImg(r.owner.getUserPic("_mini"), proxyPics, class="list-facepile")
+           linkUser(r.owner, class="fullname")
+           linkUser(r.owner, class="username")
+       if r.list.description.len > 0:
+@@ -183,7 +183,7 @@ proc renderTimelineLists*(results: Result[ListSearchResult]; prefs: Prefs;
+ 
+     if results.content.len > 0:
+       for list in results.content:
+-        renderListCard(list)
++        renderListCard(list, prefs.proxyPics)
+       if results.bottom.len > 0:
+         renderMore(results.query, results.bottom)
+       renderToTop()
 diff --git a/src/views/tweet.nim b/src/views/tweet.nim
 index b66269a..1e64f75 100644
 --- a/src/views/tweet.nim
