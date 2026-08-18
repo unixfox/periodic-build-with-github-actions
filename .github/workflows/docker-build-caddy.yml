@@ -159,8 +159,8 @@ jobs:
           ## Custom plugins included:
           - powerdns (github.com/caddy-dns/powerdns)
           - caddy-tlsconsul (github.com/pteich/caddy-tlsconsul)
-          - caddy-l4 (github.com/unixfox/caddy-l4@latest)
-          - caddy-netbird (github.com/unixfox/caddy-netbird@add-dns-labels-option)
+          - caddy-l4 (github.com/tannevaled/caddy-l4@e33d1352f5683938de0feb57af18ee2157ea16cd)
+          - caddy-netbird (github.com/lixmal/caddy-netbird@v0.2.21)
           - caddy-ratelimit (github.com/mholt/caddy-ratelimit)
           EOF
           
