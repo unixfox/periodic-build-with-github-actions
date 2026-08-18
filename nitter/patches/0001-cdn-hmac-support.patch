@@ -1,4 +1,4 @@
-From 9629bc22a6d0593886c53149d0c447dcb480e153 Mon Sep 17 00:00:00 2001
+From 527b305ebb82d74cee92f3b10f16ca98e93df45b Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:33:15 +0100
 Subject: [PATCH 1/4] cdn + hmac support

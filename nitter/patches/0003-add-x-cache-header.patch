@@ -1,4 +1,4 @@
-From 02d88f284cdcc53378386212f4f58b74504aafc8 Mon Sep 17 00:00:00 2001
+From 510e95c64c4203a57267baed5f598e3a4574572f Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:50 +0100
 Subject: [PATCH 3/4] add x-cache header

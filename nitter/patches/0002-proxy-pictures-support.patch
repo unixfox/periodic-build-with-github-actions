@@ -1,4 +1,4 @@
-From eb3767fb4b5bc2677ad76c710138bd9fe777cb39 Mon Sep 17 00:00:00 2001
+From 6bc21484c88866a075bbd7fa49d0e148d4125e12 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:12 +0100
 Subject: [PATCH 2/4] proxy pictures support
@@ -9,6 +9,7 @@ Subject: [PATCH 2/4] proxy pictures support
  src/parser.nim                |  2 +-
  src/prefs_impl.nim            |  3 +++
  src/routes/community.nim      |  4 ++--
+ src/routes/embed.nim          |  2 +-
  src/routes/list.nim           |  2 +-
  src/routes/router_utils.nim   |  2 +-
  src/routes/status.nim         |  2 +-
@@ -26,7 +27,7 @@ Subject: [PATCH 2/4] proxy pictures support
  src/views/space.nim           |  8 ++++----
  src/views/timeline.nim        | 16 +++++++--------
  src/views/tweet.nim           | 28 +++++++++++++-------------
- 22 files changed, 127 insertions(+), 86 deletions(-)
+ 23 files changed, 128 insertions(+), 87 deletions(-)
  create mode 100644 public/js/proxyneededcheck.js
 
 diff --git a/nitter.example.conf b/nitter.example.conf
@@ -112,6 +113,19 @@ index b850b6b..9d1ca30 100644
  
      get "/i/communities/@id/members":
        cond '.' notin @"id"
+diff --git a/src/routes/embed.nim b/src/routes/embed.nim
+index 24bba2d..d695837 100644
+--- a/src/routes/embed.nim
++++ b/src/routes/embed.nim
+@@ -132,7 +132,7 @@ proc createEmbedRouter*(cfg: Config) =
+       }
+ 
+       if tweet.media.len > 0:
+-        let thumbUrl = getUrlPrefix(cfg) & getPicUrl(tweet.media[0].getThumb)
++        let thumbUrl = getUrlPrefix(cfg) & getPicUrl(tweet.media[0].getThumb, true)
+         response["thumbnail_url"] = %thumbUrl
+         response["thumbnail_width"] = %maxwidth
+         response["thumbnail_height"] = %maxwidth
 diff --git a/src/routes/list.nim b/src/routes/list.nim
 index b4ab091..999ca35 100644
 --- a/src/routes/list.nim
