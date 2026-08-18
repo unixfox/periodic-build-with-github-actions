@@ -1,4 +1,4 @@
-From 39b95a93ff940e4d4c3e1aab8a99b5d4ea36c816 Mon Sep 17 00:00:00 2001
+From 9629bc22a6d0593886c53149d0c447dcb480e153 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:33:15 +0100
 Subject: [PATCH 1/4] cdn + hmac support
@@ -41,7 +41,7 @@ index 800224f..13813e6 100644
  
    return (conf, cfg)
 diff --git a/src/nitter.nim b/src/nitter.nim
-index dc38161..e14fd0e 100644
+index a76dda6..af88acd 100644
 --- a/src/nitter.nim
 +++ b/src/nitter.nim
 @@ -39,6 +39,7 @@ if cfg.hmacKey.len == 0 or cfg.hmacKey == "secretkey":
@@ -168,10 +168,10 @@ index 95b46de..34e35db 100644
  proc filterParams*(params: Table): seq[(string, string)] =
    for p in params.pairs():
 diff --git a/src/views/general.nim b/src/views/general.nim
-index f223251..7301efc 100644
+index d979898..0077dff 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
-@@ -102,7 +102,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
+@@ -106,7 +106,7 @@ proc renderHead*(prefs: Prefs; cfg: Config; req: Request; titleText=""; desc="";
                         else: getSmallPic(url)
        link(rel="preload", type="image/png", href=preloadUrl, `as`="image")
  
@@ -234,5 +234,5 @@ index 9c703d5..0cbeccf 100644
        <height>128</height>
      </image>
 -- 
-2.54.0
+2.55.0
 
