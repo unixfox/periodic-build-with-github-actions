@@ -30,7 +30,7 @@ jobs:
           if [ -n "$ALLOY_VERSION_OVERRIDE" ]; then
             echo "tag=$ALLOY_VERSION_OVERRIDE" >> $GITHUB_ENV
           else
-            echo "tag=$(git ls-remote --refs --tags https://github.com/grafana/alloy.git | grep -v beta | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1 | cut -d "v" -f2)" >> $GITHUB_ENV
+            echo "tag=$(git ls-remote --refs --tags https://github.com/grafana/alloy.git | grep -v -E 'beta|rc|alpha' | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1 | cut -d "v" -f2)" >> $GITHUB_ENV
           fi
         shell: bash
 

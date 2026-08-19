@@ -62,6 +62,11 @@ jobs:
             else
               latest=$(git ls-remote ${repos[$repo]} | head -n1)
             fi
+
+            if [[ "$repo" == "alloy" ]]; then
+              # Only track stable releases, skip pre-release tags (rc/beta/alpha)
+              latest=$(git ls-remote --refs --tags https://github.com/grafana/alloy.git | awk -F/ '/refs\/tags\/v[0-9]+\.[0-9]/ {print $3}' | grep -v -E 'rc|beta|alpha' | sort -V | tail -1)
+            fi
             
             if [ -f ".github/versions/${repo}" ]; then
               previous=$(cat ".github/versions/${repo}")
