@@ -61,9 +61,14 @@ jobs:
           mkdir -p build/linux/armv7
           GOOS=linux GOARCH=arm GOARM=7 ./alloy/build.sh ${{ env.tag }} build/linux/armv7/alloy
 
+      - name: Compress binary and generate checksum
+        run: |
+          xz -6 -T0 build/linux/armv7/alloy
+          sha256sum build/linux/armv7/alloy.xz > build/linux/armv7/alloy.xz.sha256
+
       - name: Verify binary
         run: |
-          file build/linux/armv7/alloy
+          file build/linux/armv7/alloy.xz
 
       - name: Publish binaries to dist branch
         run: |
@@ -82,9 +87,10 @@ jobs:
 
           mkdir -p binaries/alloy/v${{ env.tag }}
 
-          if [ -f $GITHUB_WORKSPACE/build/linux/armv7/alloy ]; then
-            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy binaries/alloy/v${{ env.tag }}/alloy-linux-armv7
-            echo "Copied alloy-linux-armv7"
+          if [ -f $GITHUB_WORKSPACE/build/linux/armv7/alloy.xz ]; then
+            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy.xz binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.xz
+            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy.xz.sha256 binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.xz.sha256
+            echo "Copied alloy-linux-armv7.xz"
           fi
 
           cat > binaries/alloy/v${{ env.tag }}/README.md << EOF
@@ -92,11 +98,24 @@ jobs:
 
           Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
-          Built from source with CGO_ENABLED=0, GOOS=linux, GOARCH=arm GOARM=7 for the armv7 build (ARMv7 is not officially supported by Grafana).
+          Built from source with CGO_ENABLED=0, GOOS=linux, GOARCH=arm GOARM=7 (ARMv7 is not officially supported by Grafana).
 
           ## Available binaries:
 
           $(ls -lh binaries/alloy/v${{ env.tag }}/ | tail -n +2)
+
+          ## Installation on an ARMv7 (armhf) device:
+
+          \`\`\`
+          cd /tmp
+          curl -LO https://raw.githubusercontent.com/${{ github.repository }}/dist/binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.xz
+          echo "VERIFY CHECKSUM BELOW (compare to alloy-linux-armv7.xz.sha256):"
+          sha256sum alloy-linux-armv7.xz
+          xz -d alloy-linux-armv7.xz
+          chmod +x alloy-linux-armv7
+          sudo install -m 0755 alloy-linux-armv7 /usr/local/bin/alloy
+          alloy --version
+          \`\`\`
           EOF
 
           git add binaries/alloy/v${{ env.tag }}
