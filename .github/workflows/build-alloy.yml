@@ -1,0 +1,105 @@
+name: Build Grafana Alloy binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      alloy_version:
+        description: 'Alloy version to build, without the leading "v" (e.g. 1.18.1). Leave empty to use the latest release.'
+        required: false
+        default: ''
+  push:
+    paths:
+      - '.github/workflows/build-alloy.yml'
+      - 'alloy/**'
+
+permissions:
+  contents: write
+
+jobs:
+
+  build:
+
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: Get latest tag
+        id: get-latest-tag
+        env:
+          ALLOY_VERSION_OVERRIDE: ${{ github.event.inputs.alloy_version }}
+        run: |
+          if [ -n "$ALLOY_VERSION_OVERRIDE" ]; then
+            echo "tag=$ALLOY_VERSION_OVERRIDE" >> $GITHUB_ENV
+          else
+            echo "tag=$(git ls-remote --refs --tags https://github.com/grafana/alloy.git | grep -v beta | cut --delimiter='/' --fields=3 | sort --version-sort | tail --lines=1 | cut -d "v" -f2)" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Check Out Repo
+        uses: actions/checkout@v7
+
+      - name: Check Out Alloy source
+        run: |
+          git clone --depth 1 --branch "v${{ env.tag }}" https://github.com/grafana/alloy.git /tmp/alloy-src
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: /tmp/alloy-src/collector/go.mod
+
+      - name: Cache Go modules and build cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-alloy-go-${{ env.tag }}
+          restore-keys: |
+            ${{ runner.os }}-alloy-go-
+
+      - name: Build Alloy for armv7 (armhf)
+        run: |
+          mkdir -p build/linux/armv7
+          GOOS=linux GOARCH=arm GOARM=7 ./alloy/build.sh ${{ env.tag }} build/linux/armv7/alloy
+
+      - name: Verify binary
+        run: |
+          file build/linux/armv7/alloy
+
+      - name: Publish binaries to dist branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p /tmp/alloy-dist
+          cd /tmp/alloy-dist
+
+          if git ls-remote --heads https://github.com/${{ github.repository }}.git dist | grep -q dist; then
+            git clone --branch dist --depth 1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+          else
+            git init
+            git checkout -b dist
+          fi
+
+          mkdir -p binaries/alloy/v${{ env.tag }}
+
+          if [ -f $GITHUB_WORKSPACE/build/linux/armv7/alloy ]; then
+            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy binaries/alloy/v${{ env.tag }}/alloy-linux-armv7
+            echo "Copied alloy-linux-armv7"
+          fi
+
+          cat > binaries/alloy/v${{ env.tag }}/README.md << EOF
+          # Grafana Alloy v${{ env.tag }} Linux Binaries
+
+          Built on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          Built from source with CGO_ENABLED=0, GOOS=linux, GOARCH=arm GOARM=7 for the armv7 build (ARMv7 is not officially supported by Grafana).
+
+          ## Available binaries:
+
+          $(ls -lh binaries/alloy/v${{ env.tag }}/ | tail -n +2)
+          EOF
+
+          git add binaries/alloy/v${{ env.tag }}
+          git commit -m "Add Alloy v${{ env.tag }} Linux binaries" || echo "No changes to commit"
+
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git dist
