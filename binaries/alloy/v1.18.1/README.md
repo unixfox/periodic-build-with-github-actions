@@ -1,14 +1,14 @@
 # Grafana Alloy v1.18.1 Linux Binaries
 
-Built on: 2026-08-19 12:02:15 UTC
+Built on: 2026-08-19 12:21:16 UTC
 
 Built from source with CGO_ENABLED=0, GOOS=linux, GOARCH=arm GOARM=7 (ARMv7 is not officially supported by Grafana).
 
 ## Available binaries:
 
--rw-r--r-- 1 runner runner   0 Aug 19 12:02 README.md
--rwxr-xr-x 1 runner runner 57M Aug 19 12:02 alloy-linux-armv7.xz
--rw-r--r-- 1 runner runner  93 Aug 19 12:02 alloy-linux-armv7.xz.sha256
+-rw-r--r-- 1 runner runner   0 Aug 19 12:21 README.md
+-rwxr-xr-x 1 runner runner 57M Aug 19 12:21 alloy-linux-armv7.xz
+-rw-r--r-- 1 runner runner  93 Aug 19 12:21 alloy-linux-armv7.xz.sha256
 
 ## Installation on an ARMv7 (armhf) device:
 
