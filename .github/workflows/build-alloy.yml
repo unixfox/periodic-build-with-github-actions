@@ -61,14 +61,14 @@ jobs:
           mkdir -p build/linux/armv7
           GOOS=linux GOARCH=arm GOARM=7 ./alloy/build.sh ${{ env.tag }} build/linux/armv7/alloy
 
-      - name: Create release archive and checksum
+      - name: Compress binary and generate checksum
         run: |
-          GZIP=-9 tar -czf build/linux/armv7/alloy-linux-armv7.tar.gz -C build/linux/armv7 alloy
-          sha256sum build/linux/armv7/alloy-linux-armv7.tar.gz > build/linux/armv7/alloy-linux-armv7.tar.gz.sha256
+          xz -6 -T0 build/linux/armv7/alloy
+          sha256sum build/linux/armv7/alloy.xz > build/linux/armv7/alloy.xz.sha256
 
-      - name: Verify archive
+      - name: Verify binary
         run: |
-          file build/linux/armv7/alloy-linux-armv7.tar.gz
+          file build/linux/armv7/alloy.xz
 
       - name: Publish binaries to dist branch
         run: |
@@ -87,10 +87,10 @@ jobs:
 
           mkdir -p binaries/alloy/v${{ env.tag }}
 
-          if [ -f $GITHUB_WORKSPACE/build/linux/armv7/alloy-linux-armv7.tar.gz ]; then
-            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy-linux-armv7.tar.gz binaries/alloy/v${{ env.tag }}/
-            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy-linux-armv7.tar.gz.sha256 binaries/alloy/v${{ env.tag }}/
-            echo "Copied alloy-linux-armv7.tar.gz"
+          if [ -f $GITHUB_WORKSPACE/build/linux/armv7/alloy.xz ]; then
+            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy.xz binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.xz
+            cp $GITHUB_WORKSPACE/build/linux/armv7/alloy.xz.sha256 binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.xz.sha256
+            echo "Copied alloy-linux-armv7.xz"
           fi
 
           cat > binaries/alloy/v${{ env.tag }}/README.md << EOF
@@ -108,11 +108,12 @@ jobs:
 
           \`\`\`
           cd /tmp
-          curl -LO https://raw.githubusercontent.com/${{ github.repository }}/dist/binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.tar.gz
-          echo "VERIFY CHECKSUM BELOW (compare to alloy-linux-armv7.tar.gz.sha256):"
-          sha256sum alloy-linux-armv7.tar.gz
-          tar -xzf alloy-linux-armv7.tar.gz
-          sudo install -m 0755 alloy /usr/local/bin/alloy
+          curl -LO https://raw.githubusercontent.com/${{ github.repository }}/dist/binaries/alloy/v${{ env.tag }}/alloy-linux-armv7.xz
+          echo "VERIFY CHECKSUM BELOW (compare to alloy-linux-armv7.xz.sha256):"
+          sha256sum alloy-linux-armv7.xz
+          xz -d alloy-linux-armv7.xz
+          chmod +x alloy-linux-armv7
+          sudo install -m 0755 alloy-linux-armv7 /usr/local/bin/alloy
           alloy --version
           \`\`\`
           EOF
