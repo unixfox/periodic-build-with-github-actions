@@ -49,6 +49,7 @@ jobs:
             ["moltis"]="https://github.com/moltis-org/moltis.git refs/tags/"
             ["alloy"]="https://github.com/grafana/alloy.git refs/tags/"
             ["chainguard-ingress-nginx-controller"]="https://github.com/chainguard-forks/ingress-nginx.git"
+            ["lobehub-gateway"]="https://github.com/lobehub/lobehub-gateway.git"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
@@ -153,6 +154,9 @@ jobs:
                 ;;
               "alloy")
                 gh workflow run build-alloy.yml || echo "Failed to trigger alloy workflow (may be disabled)"
+                ;;
+              "lobehub-gateway")
+                gh workflow run docker-build-lobehub-gateway.yml || echo "Failed to trigger lobehub-gateway workflow (may be disabled)"
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml || echo "Failed to trigger gpt4free workflow (may be disabled)"

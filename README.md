@@ -13,6 +13,7 @@
 - claude-code-mobile: https://quay.io/unixfox/claude-code-mobile
 - moltis: https://quay.io/unixfox/moltis
 - chainguard-ingress-nginx-controller: https://quay.io/unixfox/chainguard-ingress-nginx-controller
+- lobehub-gateway: https://quay.io/unixfox/lobehub-gateway
 
 # frozen/inactive
 Broken, need to be fixed.

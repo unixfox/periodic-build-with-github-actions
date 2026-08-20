@@ -1,0 +1,62 @@
+name: Docker build lobehub-gateway image
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/docker-build-lobehub-gateway.yml'
+      - 'lobehub-gateway/**'
+
+jobs:
+
+  build:
+
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: Get latest commit hash
+        id: get-latest-commit
+        run: |
+          echo "commit=$(git ls-remote https://github.com/lobehub/lobehub-gateway.git | head -n1 | awk '{print $1;}')" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: all
+
+      - name: Check Out Repo
+        uses: actions/checkout@v7
+
+      - name: Check Out Repo lobehub/lobehub-gateway
+        uses: actions/checkout@v7
+        with:
+          repository: "lobehub/lobehub-gateway"
+          ref: '${{ env.commit }}'
+          path: 'lobehub-gateway-git'
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          version: latest
+
+      - name: Set up build timestamp
+        run: echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Build and push docker image
+        id: docker_build_new
+        uses: docker/build-push-action@v7
+        with:
+          context: ./lobehub-gateway-git
+          file: ./lobehub-gateway-git/docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: quay.io/unixfox/lobehub-gateway:latest, quay.io/unixfox/lobehub-gateway:build-${{ env.timestamp }}
