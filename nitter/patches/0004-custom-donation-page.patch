@@ -1,15 +1,15 @@
-From 14b4c06e38a139ed726d15561d6a9f72041bf740 Mon Sep 17 00:00:00 2001
+From 648447d0d559b1d0d87ecbedc41f244b4adc93bf Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:37:27 +0100
 Subject: [PATCH 4/4] custom donation page
 
 ---
  public/md/about.md    | 37 ++++++++++++++++++++++++++++++++++++-
- src/views/general.nim |  5 ++++-
- 2 files changed, 40 insertions(+), 2 deletions(-)
+ src/views/general.nim |  4 +++-
+ 2 files changed, 39 insertions(+), 2 deletions(-)
 
 diff --git a/public/md/about.md b/public/md/about.md
-index 3825e8f..6631018 100644
+index 3825e8f..7d4424d 100644
 --- a/public/md/about.md
 +++ b/public/md/about.md
 @@ -1,5 +1,7 @@
@@ -20,7 +20,9 @@ index 3825e8f..6631018 100644
  Nitter is a free and open source alternative Twitter front-end focused on
  privacy and performance. The source is available on GitHub at
  <https://github.com/zedeus/nitter>
-@@ -43,6 +45,39 @@ Twitter account.
+@@ -41,8 +43,41 @@ In the future a simple account system will be added that lets you follow Twitter
+ users, allowing you to have a clean chronological timeline without needing a
+ Twitter account.
  
 +## Legal
 +
@@ -60,27 +62,26 @@ index 3825e8f..6631018 100644
  Liberapay: https://liberapay.com/zedeus \
  Patreon: https://patreon.com/nitter \
  BTC: bc1qpqpzjkcpgluhzf7x9yqe7jfe8gpfm5v08mdr55 \
-@@ -53,4 +84,4 @@ ZEC: u1vndfqtzyy6qkzhkapxelel7ams38wmfeccu3fdpy2wkuc4erxyjm8ncjhnyg747x6t0kf0faq
+@@ -53,4 +88,4 @@ ZEC: u1vndfqtzyy6qkzhkapxelel7ams38wmfeccu3fdpy2wkuc4erxyjm8ncjhnyg747x6t0kf0faq
  
  ## Contact
  
 -Feel free to join our [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 +Feel free to join Nitter [Matrix channel](https://matrix.to/#/#nitter:matrix.org).
 diff --git a/src/views/general.nim b/src/views/general.nim
-index e900ea1..16bfc75 100644
+index e900ea1..6422695 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
-@@ -24,6 +24,9 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
+@@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
      tdiv(class="inner-nav"):
        tdiv(class="nav-item"):
          a(class="site-name", href="/"): text cfg.title
-+        a(href="/about"): text "(donate)"
-+        a(href="/cdclegal"): text "About CDC Request"
++        a(href="/about"): text "(Donate and legal/DMCA contact)"
 +
  
        a(href="/"): img(class="site-logo", src="/logo.png", alt="Logo")
  
-@@ -32,7 +34,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
+@@ -32,7 +35,7 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
          if rss.len > 0:
            icon "rss", title="RSS Feed", href=rss
          icon "bird", title="Open in X", href=canonical
