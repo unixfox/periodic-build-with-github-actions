@@ -5,8 +5,8 @@ Subject: [PATCH 4/4] custom donation page
 
 ---
  public/md/about.md    | 37 ++++++++++++++++++++++++++++++++++++-
- src/views/general.nim |  4 +++-
- 2 files changed, 39 insertions(+), 2 deletions(-)
+ src/views/general.nim |  5 ++++-
+ 2 files changed, 40 insertions(+), 2 deletions(-)
 
 diff --git a/public/md/about.md b/public/md/about.md
 index 3825e8f..6631018 100644
@@ -70,11 +70,12 @@ diff --git a/src/views/general.nim b/src/views/general.nim
 index e900ea1..16bfc75 100644
 --- a/src/views/general.nim
 +++ b/src/views/general.nim
-@@ -24,6 +24,8 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
+@@ -24,6 +24,9 @@ proc renderNavbar(cfg: Config; req: Request; rss, canonical: string): VNode =
      tdiv(class="inner-nav"):
        tdiv(class="nav-item"):
          a(class="site-name", href="/"): text cfg.title
 +        a(href="/about"): text "(donate)"
++        a(href="/cdclegal"): text "About CDC Request"
 +
  
        a(href="/"): img(class="site-logo", src="/logo.png", alt="Logo")
