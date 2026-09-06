@@ -1,4 +1,4 @@
-From 510e95c64c4203a57267baed5f598e3a4574572f Mon Sep 17 00:00:00 2001
+From e152da6feea4ed9c48fbb6b4f89c7c8275c2b651 Mon Sep 17 00:00:00 2001
 From: Emilien <4016501+unixfox@users.noreply.github.com>
 Date: Sat, 21 Mar 2026 12:36:50 +0100
 Subject: [PATCH 3/4] add x-cache header
@@ -8,7 +8,7 @@ Subject: [PATCH 3/4] add x-cache header
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/src/routes/rss.nim b/src/routes/rss.nim
-index f56a2cb..29c5d28 100644
+index 038096c..e583956 100644
 --- a/src/routes/rss.nim
 +++ b/src/routes/rss.nim
 @@ -42,7 +42,7 @@ proc timelineRss*(req: Request; cfg: Config; query: Query; prefs: Prefs): Future
@@ -47,7 +47,7 @@ index f56a2cb..29c5d28 100644
  
        rss = await timelineRss(request, cfg, Query(fromUser: @[name]), prefs)
  
-@@ -132,7 +132,7 @@ proc createRssRouter*(cfg: Config) =
+@@ -124,7 +124,7 @@ proc createRssRouter*(cfg: Config) =
  
        var rss = await getCachedRss(key)
        if rss.cursor.len > 0:
@@ -56,7 +56,7 @@ index f56a2cb..29c5d28 100644
  
        rss = await timelineRss(request, cfg, query, prefs)
  
-@@ -168,7 +168,7 @@ proc createRssRouter*(cfg: Config) =
+@@ -160,7 +160,7 @@ proc createRssRouter*(cfg: Config) =
  
        var rss = await getCachedRss(key)
        if rss.cursor.len > 0:
