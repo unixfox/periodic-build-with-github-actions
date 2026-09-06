@@ -76,7 +76,7 @@ index e900ea1..6422695 100644
      tdiv(class="inner-nav"):
        tdiv(class="nav-item"):
          a(class="site-name", href="/"): text cfg.title
-+        a(href="/about"): text "(Donate and legal/DMCA contact)"
++        a(href="/about"): text "(Donate-Legal contact)"
 +
  
        a(href="/"): img(class="site-logo", src="/logo.png", alt="Logo")
