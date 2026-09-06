@@ -4,9 +4,9 @@ Date: Sat, 21 Mar 2026 12:37:27 +0100
 Subject: [PATCH 4/4] custom donation page
 
 ---
- public/md/about.md    | 33 ++++++++++++++++++++++++++++++++-
+ public/md/about.md    | 37 ++++++++++++++++++++++++++++++++++++-
  src/views/general.nim |  4 +++-
- 2 files changed, 35 insertions(+), 2 deletions(-)
+ 2 files changed, 39 insertions(+), 2 deletions(-)
 
 diff --git a/public/md/about.md b/public/md/about.md
 index 3825e8f..6631018 100644
@@ -20,8 +20,12 @@ index 3825e8f..6631018 100644
  Nitter is a free and open source alternative Twitter front-end focused on
  privacy and performance. The source is available on GitHub at
  <https://github.com/zedeus/nitter>
-@@ -43,6 +45,35 @@ Twitter account.
+@@ -43,6 +45,39 @@ Twitter account.
  
++## Legal
++
++For legal inquiries and DMCA requests, contact legal@poast.org
++
  ## Donating
  
 +You can either donate to XCancel or the Nitter project.
