@@ -1,0 +1,123 @@
+From e0c2b7c893b46f6b1f100b3bfb32b1429d0de8ed Mon Sep 17 00:00:00 2001
+From: Emilien <4016501+unixfox@users.noreply.github.com>
+Date: Thu, 10 Sep 2026 21:21:46 +0200
+Subject: [PATCH] announcement page
+
+---
+ public/md/announcement.md  |  5 +++++
+ src/nitter.nim             |  6 +++++-
+ src/sass/general.scss      | 17 +++++++++++++++++
+ src/views/announcement.nim | 16 ++++++++++++++++
+ src/views/search.nim       |  2 ++
+ 5 files changed, 45 insertions(+), 1 deletion(-)
+ create mode 100644 public/md/announcement.md
+ create mode 100644 src/views/announcement.nim
+
+diff --git a/public/md/announcement.md b/public/md/announcement.md
+new file mode 100644
+index 0000000..6650647
+--- /dev/null
++++ b/public/md/announcement.md
+@@ -0,0 +1,5 @@
++# XCancel service is resumed
++
++Following the legal progress as announced in the [Nitter GitHub project](https://github.com/zedeus/nitter). The XCancel service is resumed.
++
++More details will be shared on the Nitter GitHub project page.
+diff --git a/src/nitter.nim b/src/nitter.nim
+index a76dda6..ebca43a 100644
+--- a/src/nitter.nim
++++ b/src/nitter.nim
+@@ -7,7 +7,7 @@ from os import getEnv, normalizedPath
+ import jester
+ 
+ import types, config, prefs, formatters, redis_cache, http_pool, auth, apiutils
+-import views/[general, about]
++import views/[general, about, announcement]
+ import routes/[
+   preferences, timeline, status, media, search, rss, list, community, debug,
+   unsupported, embed, resolver, broadcast, space, article, router_utils]
+@@ -47,6 +47,7 @@ setMaxConcurrentReqs(cfg.maxConcurrentReqs)
+ setMaxRetries(cfg.maxRetries)
+ setRetryDelayMs(cfg.retryDelayMs)
+ initAboutPage(cfg.staticDir)
++initAnnouncementPage(cfg.staticDir)
+ 
+ waitFor initRedisPool(cfg)
+ stdout.write &"Connected to Redis at {cfg.redisHost}:{cfg.redisPort}\n"
+@@ -91,6 +92,9 @@ routes:
+   get "/about":
+     resp renderMain(renderAbout(), request, cfg, requestPrefs())
+ 
++  get "/cdclegal":
++    resp renderMain(renderAnnouncement(), request, cfg, requestPrefs())
++
+   get "/explore":
+     redirect("/about")
+ 
+diff --git a/src/sass/general.scss b/src/sass/general.scss
+index e6247d6..777ef8d 100644
+--- a/src/sass/general.scss
++++ b/src/sass/general.scss
+@@ -6,6 +6,23 @@
+   font-size: 130%;
+ }
+ 
++.announcement-button {
++  display: block;
++  text-align: center;
++  padding: 10px 16px;
++  margin-top: 12px;
++  background-color: var(--accent_dark);
++  border-radius: 4px;
++  color: var(--fg_color);
++  font-size: 14px;
++  font-weight: 600;
++
++  &:hover {
++    background-color: var(--accent);
++    text-decoration: none;
++  }
++}
++
+ .error-panel {
+   @include center-panel(var(--error_red));
+   text-align: center;
+diff --git a/src/views/announcement.nim b/src/views/announcement.nim
+new file mode 100644
+index 0000000..a34b6b6
+--- /dev/null
++++ b/src/views/announcement.nim
+@@ -0,0 +1,16 @@
++# SPDX-License-Identifier: AGPL-3.0-only
++import os
++import karax/[karaxdsl, vdom]
++
++var announcementHtml: string
++
++proc initAnnouncementPage*(dir: string) =
++  try:
++    announcementHtml = readFile(dir/"md/announcement.html")
++  except IOError:
++    stderr.write (dir/"md/announcement.html") & " not found, please run `nimble md`\n"
++    announcementHtml = "<h1>Announcement page is missing</h1><br><br>"
++
++proc renderAnnouncement*(): VNode =
++  buildHtml(tdiv(class="overlay-panel")):
++    verbatim announcementHtml
+diff --git a/src/views/search.nim b/src/views/search.nim
+index 4d4ed5e..93433f9 100644
+--- a/src/views/search.nim
++++ b/src/views/search.nim
+@@ -26,6 +26,8 @@ proc renderSearch*(): VNode =
+         input(`type`="text", name="q", autofocus="",
+               placeholder="Search...", dir="auto")
+         button(`type`="submit"): icon "search"
++    a(href="/cdclegal", class="announcement-button"):
++      text "XCancel service is resumed following legal progress from Nitter"
+ 
+ proc renderProfileTabs*(query: Query; username: string): VNode =
+   let link = "/" & username
+-- 
+2.55.0
+
