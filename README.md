@@ -14,6 +14,7 @@
 - moltis: https://quay.io/unixfox/moltis
 - chainguard-ingress-nginx-controller: https://quay.io/unixfox/chainguard-ingress-nginx-controller
 - lobehub-gateway: https://quay.io/unixfox/lobehub-gateway
+- lobehub (patched: server-side tools for native mobile apps): https://quay.io/unixfox/lobehub
 
 # frozen/inactive
 Broken, need to be fixed.

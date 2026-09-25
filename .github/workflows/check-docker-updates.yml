@@ -50,6 +50,7 @@ jobs:
             ["alloy"]="https://github.com/grafana/alloy.git refs/tags/"
             ["chainguard-ingress-nginx-controller"]="https://github.com/chainguard-forks/ingress-nginx.git"
             ["lobehub-gateway"]="https://github.com/lobehub/lobehub-gateway.git"
+            ["lobehub"]="https://github.com/lobehub/lobehub.git refs/tags/"
             #["gpt4free"]="https://github.com/xtekky/gpt4free.git"
             #["nginx-ssl-fingerprint"]="https://github.com/phuslu/nginx-ssl-fingerprint.git"
           )
@@ -62,6 +63,11 @@ jobs:
               latest=$(git ls-remote --refs --tags ${repos[$repo]%% *} | awk -F/ '/refs\/tags\/v[0-9]+\.[0-9]/ {print $3}' | sort -V | tail -1)
             else
               latest=$(git ls-remote ${repos[$repo]} | head -n1)
+            fi
+
+            if [[ "$repo" == "lobehub" ]]; then
+              # Only track stable releases, skip vX.Y.Z-canary.N prerelease tags
+              latest=$(git ls-remote --refs --tags https://github.com/lobehub/lobehub.git | awk -F/ '/refs\/tags\/v[0-9]+\.[0-9]/ {print $3}' | grep -v -E 'canary|rc|beta|alpha' | sort -V | tail -1)
             fi
 
             if [[ "$repo" == "alloy" ]]; then
@@ -157,6 +163,9 @@ jobs:
                 ;;
               "lobehub-gateway")
                 gh workflow run docker-build-lobehub-gateway.yml || echo "Failed to trigger lobehub-gateway workflow (may be disabled)"
+                ;;
+              "lobehub")
+                gh workflow run docker-build-lobehub.yml || echo "Failed to trigger lobehub workflow (may be disabled)"
                 ;;
               #"gpt4free")
               #  gh workflow run docker-build-gpt4free.yml || echo "Failed to trigger gpt4free workflow (may be disabled)"

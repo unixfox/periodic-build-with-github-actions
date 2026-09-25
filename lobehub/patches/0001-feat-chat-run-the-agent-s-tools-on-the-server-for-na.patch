@@ -1,0 +1,1851 @@
+From cd6295011200de10d66fd4f9cc9e23f95e94e423 Mon Sep 17 00:00:00 2001
+From: Emilien <4016501+unixfox@users.noreply.github.com>
+Date: Fri, 25 Sep 2026 14:32:49 +0200
+Subject: [PATCH] =?UTF-8?q?=E2=9C=A8=20feat(chat):=20run=20the=20agent's?=
+ =?UTF-8?q?=20tools=20on=20the=20server=20for=20native=20mobile=20clients?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The native LobeHub apps stream `/webapi/chat` without tool definitions and
+have no tool loop, so agents with MCP connectors silently lose their tools
+on mobile (#19017).
+
+For a native mobile conversation turn (app user agent + `Conversation`
+trace naming the agent and topic), the chat endpoint now resolves the
+agent's enabled, server-executable tools through the existing discovery
+pipeline, runs the model → tool → model loop on the server and streams a
+plain completion back. Tool calls never reach the client, approval-gated
+calls are refused instead of auto-approved, and the client keeps owning
+message persistence. Every other request is unchanged.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+---
+ .../__tests__/chatCompletionToolSet.test.ts   | 105 ++++++
+ .../aiAgent/pipeline/chatCompletionToolSet.ts | 132 +++++++
+ .../nativeMobileChat/__tests__/index.test.ts  | 197 +++++++++++
+ .../nativeMobileChat/__tests__/target.test.ts |  91 +++++
+ .../__tests__/toolCallPolicy.test.ts          |  83 +++++
+ .../__tests__/toolLoop.test.ts                | 273 +++++++++++++++
+ .../src/services/nativeMobileChat/index.ts    | 259 ++++++++++++++
+ .../src/services/nativeMobileChat/target.ts   |  42 +++
+ .../nativeMobileChat/toolCallPolicy.ts        |  75 ++++
+ .../src/services/nativeMobileChat/toolLoop.ts | 329 ++++++++++++++++++
+ .../webapi/chat/[provider]/route.test.ts      |  85 ++++-
+ .../(backend)/webapi/chat/[provider]/route.ts |  20 +-
+ 12 files changed, 1688 insertions(+), 3 deletions(-)
+ create mode 100644 apps/server/src/services/aiAgent/pipeline/__tests__/chatCompletionToolSet.test.ts
+ create mode 100644 apps/server/src/services/aiAgent/pipeline/chatCompletionToolSet.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/__tests__/index.test.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/__tests__/target.test.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/__tests__/toolCallPolicy.test.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/__tests__/toolLoop.test.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/index.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/target.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/toolCallPolicy.ts
+ create mode 100644 apps/server/src/services/nativeMobileChat/toolLoop.ts
+
+diff --git a/apps/server/src/services/aiAgent/pipeline/__tests__/chatCompletionToolSet.test.ts b/apps/server/src/services/aiAgent/pipeline/__tests__/chatCompletionToolSet.test.ts
+new file mode 100644
+index 0000000000..9721fcf170
+--- /dev/null
++++ b/apps/server/src/services/aiAgent/pipeline/__tests__/chatCompletionToolSet.test.ts
+@@ -0,0 +1,105 @@
++// @vitest-environment node
++import { ToolNameResolver } from '@lobechat/context-engine';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++
++import { resolveChatCompletionToolSet } from '../chatCompletionToolSet';
++import { discoverTools } from '../toolDiscovery';
++
++vi.mock('../toolDiscovery', () => ({ discoverTools: vi.fn() }));
++
++const resolver = new ToolNameResolver();
++
++const manifest = (identifier: string, type?: string) => ({
++  api: [{ description: '', name: 'call', parameters: { type: 'object' } }],
++  identifier,
++  meta: { title: identifier },
++  ...(type && { type }),
++});
++
++const tool = (identifier: string, type?: string) => ({
++  function: { name: resolver.generate(identifier, 'call', type), parameters: { type: 'object' } },
++  type: 'function' as const,
++});
++
++const deps = {
++  resolveAgentConfig: vi.fn(async () => ({
++    agentConfig: { id: 'agt_1', plugins: ['meteoblue'] } as any,
++    disabledPluginIds: ['disabled-mcp'],
++  })),
++} as any;
++
++const input = {
++  agentId: 'agt_1',
++  model: 'deepseek/deepseek-v4.1-flash',
++  prompt: 'Weather in Paris?',
++  provider: 'commandcode',
++  topicId: 'tpc_1',
++};
++
++afterEach(() => {
++  vi.clearAllMocks();
++});
++
++describe('resolveChatCompletionToolSet', () => {
++  it('offers only enabled tools a bare request can execute', async () => {
++    vi.mocked(discoverTools).mockResolvedValue({
++      toolExecutorMap: { 'stdio-mcp': 'client' },
++      toolManifestMap: {
++        'composio-gmail': manifest('composio-gmail'),
++        'discoverable-mcp': manifest('discoverable-mcp', 'mcp'),
++        'legacy-plugin': manifest('legacy-plugin', 'default'),
++        'lobe-web-browsing': manifest('lobe-web-browsing', 'builtin'),
++        'meteoblue': manifest('meteoblue', 'mcp'),
++        'skill-github': manifest('skill-github'),
++        'stdio-mcp': manifest('stdio-mcp', 'mcp'),
++      },
++      toolSourceMap: { 'composio-gmail': 'composio', 'skill-github': 'lobehubSkill' },
++      tools: [
++        tool('composio-gmail'),
++        tool('legacy-plugin'),
++        tool('lobe-web-browsing'),
++        tool('meteoblue', 'mcp'),
++        tool('skill-github'),
++        tool('stdio-mcp', 'mcp'),
++      ],
++    } as any);
++
++    const toolSet = await resolveChatCompletionToolSet(deps, input);
++
++    expect(toolSet.tools.map((item) => item.function.name)).toEqual([
++      tool('composio-gmail').function.name,
++      tool('meteoblue', 'mcp').function.name,
++      tool('skill-github').function.name,
++    ]);
++    // Only offered tools resolve: the activator-discoverable MCP stays out.
++    expect(Object.keys(toolSet.manifestMap).sort()).toEqual([
++      'composio-gmail',
++      'meteoblue',
++      'skill-github',
++    ]);
++  });
++
++  it('runs discovery for the requested model without device tools', async () => {
++    vi.mocked(discoverTools).mockResolvedValue({
++      toolExecutorMap: {},
++      toolManifestMap: {},
++      toolSourceMap: {},
++      tools: undefined,
++    } as any);
++
++    const toolSet = await resolveChatCompletionToolSet(deps, input);
++
++    expect(toolSet.tools).toEqual([]);
++    expect(deps.resolveAgentConfig).toHaveBeenCalledWith('agt_1', {
++      model: input.model,
++      provider: input.provider,
++    });
++    const [, ctx, discoveryInput] = vi.mocked(discoverTools).mock.calls[0];
++    expect(ctx).toMatchObject({ canUseDevice: false, model: input.model, topicId: 'tpc_1' });
++    expect(discoveryInput).toMatchObject({
++      disableLocalSystem: true,
++      disabledPluginIds: ['disabled-mcp'],
++      isFixedDeviceTarget: false,
++    });
++  });
++});
+diff --git a/apps/server/src/services/aiAgent/pipeline/chatCompletionToolSet.ts b/apps/server/src/services/aiAgent/pipeline/chatCompletionToolSet.ts
+new file mode 100644
+index 0000000000..0b796a77b6
+--- /dev/null
++++ b/apps/server/src/services/aiAgent/pipeline/chatCompletionToolSet.ts
+@@ -0,0 +1,132 @@
++import { isBuiltinToolIdentifier } from '@lobechat/builtin-tools';
++import type { LobeToolManifest, ToolSource } from '@lobechat/context-engine';
++import { ToolNameResolver } from '@lobechat/context-engine';
++import type { ChatCompletionTool } from '@lobechat/types';
++
++import type { AgentConfigWithId } from '@/server/services/agent';
++
++import { createRunFacts } from '../runFacts';
++import { discoverTools, type ToolDiscoveryDeps } from './toolDiscovery';
++
++export interface ChatCompletionToolSetDeps extends ToolDiscoveryDeps {
++  resolveAgentConfig: (
++    agentId: string,
++    overrides: { model: string; provider: string },
++  ) => Promise<{ agentConfig: AgentConfigWithId; disabledPluginIds: string[] }>;
++}
++
++export interface ChatCompletionToolSetInput {
++  agentId: string;
++  model: string;
++  /** Latest user turn; discovery reads it for turn-scoped tools. */
++  prompt: string;
++  provider: string;
++  signal?: AbortSignal;
++  topicId: string;
++}
++
++export interface ChatCompletionToolSet {
++  /** Manifests of the offered tools only, keyed by identifier. */
++  manifestMap: Record<string, LobeToolManifest>;
++  sourceMap: Record<string, ToolSource>;
++  tools: ChatCompletionTool[];
++}
++
++/**
++ * Sources whose tools `ToolExecutionService` can run from a bare request: MCP
++ * servers go through the MCP service (or the existing device tunnel for stdio
++ * and private-network servers), LobeHub Skills through the Market and Composio
++ * through its own service.
++ */
++const isRequestExecutable = (
++  identifier: string,
++  manifest: LobeToolManifest | undefined,
++  source: ToolSource | undefined,
++) => {
++  if (!manifest || isBuiltinToolIdentifier(identifier)) return false;
++  if (source === 'lobehubSkill' || source === 'composio') return true;
++  return manifest.type === 'mcp';
++};
++
++/**
++ * The agent's enabled tools that a server-side completion loop can execute on
++ * behalf of a client that has no tool loop of its own.
++ *
++ * Runs the same discovery the server agent runtime uses — installed plugins,
++ * connectors with their permission patches, LobeHub Skills, Composio, disabled
++ * entries and the model's function-calling ability — then keeps only what can
++ * execute without an agent operation. Builtin tools are left out: many of them
++ * depend on operation state (sub-agents, activation, device sessions, message
++ * persistence) that a plain completion request does not have. Device tools
++ * stay off as well (`canUseDevice: false`).
++ */
++export const resolveChatCompletionToolSet = async (
++  deps: ChatCompletionToolSetDeps,
++  input: ChatCompletionToolSetInput,
++): Promise<ChatCompletionToolSet> => {
++  const { agentId, model, prompt, provider, signal, topicId } = input;
++
++  const { agentConfig, disabledPluginIds } = await deps.resolveAgentConfig(agentId, {
++    model,
++    provider,
++  });
++
++  const discovery = await discoverTools(
++    deps,
++    {
++      agentConfig,
++      // Only the fixed-device failure path writes to it, and this call never
++      // pins a device.
++      assistantMessageId: '',
++      canUseDevice: false,
++      deviceAccessReason: 'first-party',
++      model,
++      persistAgentId: agentConfig.id,
++      prompt,
++      provider,
++      resolvedAgentId: agentConfig.id,
++      runFacts: createRunFacts({ db: deps.db, userId: deps.userId, workspaceId: deps.workspaceId }),
++      topicId,
++    },
++    {
++      disableLocalSystem: true,
++      disableSelfFeedbackIntentTool: true,
++      disabledPluginIds,
++      globalMemoryEnabled: false,
++      hasMentionedAgents: false,
++      isFixedDeviceTarget: false,
++      loadHistoryMessages: async () => [],
++      throwIfExecutionAborted: async (stage) => {
++        if (signal?.aborted) throw new Error(`Tool discovery aborted during ${stage}`);
++      },
++    },
++  );
++
++  // Offered tool name → identifier, for the executable identifiers only.
++  const resolver = new ToolNameResolver();
++  const identifierByToolName = new Map<string, string>();
++  for (const [identifier, manifest] of Object.entries(discovery.toolManifestMap) as [
++    string,
++    LobeToolManifest,
++  ][]) {
++    if (discovery.toolExecutorMap[identifier] === 'client') continue;
++    if (!isRequestExecutable(identifier, manifest, discovery.toolSourceMap[identifier])) continue;
++
++    for (const api of manifest.api ?? []) {
++      identifierByToolName.set(resolver.generate(identifier, api.name, manifest.type), identifier);
++    }
++  }
++
++  // `discovery.tools` is what the engine enabled; the manifest map also holds
++  // tools the activator could discover later, which this loop never offers.
++  const tools = ((discovery.tools ?? []) as ChatCompletionTool[]).filter((tool) =>
++    identifierByToolName.has(tool.function.name),
++  );
++  const manifestMap: Record<string, LobeToolManifest> = {};
++  for (const tool of tools) {
++    const identifier = identifierByToolName.get(tool.function.name)!;
++    manifestMap[identifier] = discovery.toolManifestMap[identifier];
++  }
++
++  return { manifestMap, sourceMap: discovery.toolSourceMap, tools };
++};
+diff --git a/apps/server/src/services/nativeMobileChat/__tests__/index.test.ts b/apps/server/src/services/nativeMobileChat/__tests__/index.test.ts
+new file mode 100644
+index 0000000000..2d089a3338
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/__tests__/index.test.ts
+@@ -0,0 +1,197 @@
++// @vitest-environment node
++import type { ChatMethodOptions } from '@lobechat/model-runtime';
++import type { ChatStreamPayload, MessageToolCall } from '@lobechat/types';
++import { TraceNameMap } from '@lobechat/types';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++import { resolveChatCompletionToolSet } from '@/server/services/aiAgent/pipeline/chatCompletionToolSet';
++import { ToolExecutionService } from '@/server/services/toolExecution';
++
++import { chatWithNativeMobileTools } from '../index';
++import { APPROVAL_UNAVAILABLE_RESULT } from '../toolCallPolicy';
++
++const topicState = vi.hoisted(() => ({ topic: undefined as unknown }));
++const settingsState = vi.hoisted(() => ({ settings: undefined as unknown }));
++
++vi.mock('@/database/models/topic', () => ({
++  TopicModel: vi.fn(function () {
++    return { findById: async () => topicState.topic };
++  }),
++}));
++vi.mock('@/database/models/user', () => ({
++  UserModel: vi.fn(function () {
++    return { getUserSettings: async () => settingsState.settings };
++  }),
++}));
++vi.mock('@/server/services/agentDocuments', () => ({ AgentDocumentsService: vi.fn() }));
++vi.mock('@/server/services/aiAgent/pipeline/chatCompletionToolSet', () => ({
++  resolveChatCompletionToolSet: vi.fn(),
++}));
++
++const toolName = 'meteoblue____getWeather____mcp';
++const meteoblueManifest = {
++  api: [{ description: '', name: 'getWeather', parameters: { type: 'object' } }],
++  identifier: 'meteoblue',
++  meta: { title: 'meteoblue' },
++  type: 'mcp',
++};
++const toolSet = {
++  manifestMap: { meteoblue: meteoblueManifest },
++  sourceMap: {},
++  tools: [{ function: { name: toolName, parameters: { type: 'object' } }, type: 'function' }],
++} as any;
++const weatherCall: MessageToolCall = {
++  function: { arguments: '{"city":"Paris"}', name: toolName },
++  id: 'call_1',
++  type: 'function',
++};
++
++const sseResponse = (events: [string, unknown][]) =>
++  new Response(
++    events.map(([e, d]) => `id: 1\nevent: ${e}\ndata: ${JSON.stringify(d)}\n\n`).join(''),
++  );
++
++/** First step asks for the weather tool, the second answers with its result. */
++const createModelRuntime = () => {
++  const payloads: ChatStreamPayload[] = [];
++  const chat = vi.fn(async (payload: ChatStreamPayload, options?: ChatMethodOptions) => {
++    payloads.push(payload);
++    if (payloads.length === 1) {
++      await options?.callback?.onToolsCalling?.({ chunk: [], toolsCalling: [weatherCall] });
++      await options?.callback?.onCompletion?.({ text: '', toolsCalling: [weatherCall] });
++      return sseResponse([['stop', 'tool_calls']]);
++    }
++    await options?.callback?.onCompletion?.({ text: 'done' });
++    return sseResponse([
++      ['text', 'done'],
++      ['stop', 'stop'],
++    ]);
++  });
++  return { modelRuntime: { chat } as any, payloads };
++};
++
++const baseParams = () => ({
++  chatOptions: { metadata: {}, user: 'user_1' },
++  headers: new Headers({ 'user-agent': 'LobeHub-Mobile/android-v1.0.22' }),
++  payload: {
++    messages: [{ content: 'Weather in Paris?', role: 'user' }],
++    model: 'deepseek/deepseek-v4.1-flash',
++    stream: true,
++    temperature: 1,
++  } as ChatStreamPayload,
++  provider: 'commandcode',
++  serverDB: {} as any,
++  trace: {
++    enabled: false,
++    sessionId: 'agt_1',
++    topicId: 'tpc_1',
++    traceName: TraceNameMap.Conversation,
++  },
++  userId: 'user_1',
++});
++
++beforeEach(() => {
++  topicState.topic = { agentId: 'agt_1', id: 'tpc_1' };
++  settingsState.settings = undefined;
++  vi.mocked(resolveChatCompletionToolSet).mockResolvedValue(toolSet);
++});
++
++afterEach(() => {
++  vi.restoreAllMocks();
++  vi.clearAllMocks();
++});
++
++describe('chatWithNativeMobileTools', () => {
++  it('runs an enabled tool on the server for a native mobile turn', async () => {
++    const executeTool = vi
++      .spyOn(ToolExecutionService.prototype, 'executeTool')
++      .mockResolvedValue({ content: '{"temperature":20}', executionTime: 1, success: true });
++    const { modelRuntime, payloads } = createModelRuntime();
++
++    const response = await chatWithNativeMobileTools({ ...baseParams(), modelRuntime });
++    const body = await response!.text();
++
++    expect(body).toContain('"done"');
++    expect(body).not.toContain('tool_calls');
++    expect(payloads[0].tools).toEqual(toolSet.tools);
++    expect(executeTool).toHaveBeenCalledWith(
++      expect.objectContaining({ apiName: 'getWeather', identifier: 'meteoblue' }),
++      expect.objectContaining({ agentId: 'agt_1', topicId: 'tpc_1', userId: 'user_1' }),
++    );
++    expect(payloads[1].messages.at(-1)).toMatchObject({
++      content: '{"temperature":20}',
++      role: 'tool',
++    });
++  });
++
++  it('refuses a tool that needs approval instead of running it', async () => {
++    vi.mocked(resolveChatCompletionToolSet).mockResolvedValue({
++      ...toolSet,
++      manifestMap: {
++        meteoblue: {
++          ...meteoblueManifest,
++          api: [{ ...meteoblueManifest.api[0], humanIntervention: 'required' }],
++        },
++      },
++    });
++    const executeTool = vi.spyOn(ToolExecutionService.prototype, 'executeTool');
++    const { modelRuntime, payloads } = createModelRuntime();
++
++    const response = await chatWithNativeMobileTools({ ...baseParams(), modelRuntime });
++    await response!.text();
++
++    expect(executeTool).not.toHaveBeenCalled();
++    expect(payloads[1].messages.at(-1)).toMatchObject({
++      content: APPROVAL_UNAVAILABLE_RESULT,
++      role: 'tool',
++    });
++  });
++
++  it('serves web requests as plain completions', async () => {
++    const { modelRuntime } = createModelRuntime();
++
++    const response = await chatWithNativeMobileTools({
++      ...baseParams(),
++      headers: new Headers({ 'user-agent': 'Mozilla/5.0' }),
++      modelRuntime,
++    });
++
++    expect(response).toBeUndefined();
++    expect(resolveChatCompletionToolSet).not.toHaveBeenCalled();
++  });
++
++  it('does not trust a trace header naming another agent’s topic', async () => {
++    topicState.topic = { agentId: 'agt_other', id: 'tpc_1' };
++    const { modelRuntime } = createModelRuntime();
++
++    expect(await chatWithNativeMobileTools({ ...baseParams(), modelRuntime })).toBeUndefined();
++    expect(resolveChatCompletionToolSet).not.toHaveBeenCalled();
++  });
++
++  it('does not trust a trace header naming a topic the caller cannot read', async () => {
++    topicState.topic = undefined;
++    const { modelRuntime } = createModelRuntime();
++
++    expect(await chatWithNativeMobileTools({ ...baseParams(), modelRuntime })).toBeUndefined();
++  });
++
++  it('falls back to a plain completion when tool discovery fails', async () => {
++    vi.mocked(resolveChatCompletionToolSet).mockRejectedValue(new Error('Agent not found'));
++    vi.spyOn(console, 'error').mockImplementation(() => {});
++    const { modelRuntime } = createModelRuntime();
++
++    expect(await chatWithNativeMobileTools({ ...baseParams(), modelRuntime })).toBeUndefined();
++    expect(modelRuntime.chat).not.toHaveBeenCalled();
++  });
++
++  it('falls back to a plain completion when the agent has no runnable tools', async () => {
++    vi.mocked(resolveChatCompletionToolSet).mockResolvedValue({
++      manifestMap: {},
++      sourceMap: {},
++      tools: [],
++    });
++    const { modelRuntime } = createModelRuntime();
++
++    expect(await chatWithNativeMobileTools({ ...baseParams(), modelRuntime })).toBeUndefined();
++  });
++});
+diff --git a/apps/server/src/services/nativeMobileChat/__tests__/target.test.ts b/apps/server/src/services/nativeMobileChat/__tests__/target.test.ts
+new file mode 100644
+index 0000000000..8aa87a73ff
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/__tests__/target.test.ts
+@@ -0,0 +1,91 @@
++// @vitest-environment node
++import type { ChatStreamPayload, TracePayload } from '@lobechat/types';
++import { TraceNameMap } from '@lobechat/types';
++import { describe, expect, it } from 'vitest';
++
++import { resolveNativeMobileToolLoopTarget } from '../target';
++
++const androidHeaders = new Headers({ 'user-agent': 'LobeHub-Mobile/android-v1.0.22' });
++
++const payload: ChatStreamPayload = {
++  messages: [{ content: 'hi', role: 'user' }],
++  model: 'deepseek/deepseek-v4.1-flash',
++  stream: true,
++  temperature: 1,
++};
++
++// As captured from the Android app: tracing disabled, agent id in `sessionId`.
++const conversationTrace: TracePayload = {
++  enabled: false,
++  sessionId: 'agt_1',
++  topicId: 'tpc_1',
++  traceName: TraceNameMap.Conversation,
++};
++
++describe('resolveNativeMobileToolLoopTarget', () => {
++  it('targets the agent and topic of a native mobile conversation turn', () => {
++    expect(
++      resolveNativeMobileToolLoopTarget({
++        headers: androidHeaders,
++        payload,
++        trace: conversationTrace,
++      }),
++    ).toEqual({ agentId: 'agt_1', topicId: 'tpc_1' });
++  });
++
++  it('leaves topic title generation a plain completion', () => {
++    expect(
++      resolveNativeMobileToolLoopTarget({
++        headers: androidHeaders,
++        payload,
++        trace: { ...conversationTrace, traceName: TraceNameMap.SummaryTopicTitle },
++      }),
++    ).toBeUndefined();
++  });
++
++  it('ignores web and desktop clients', () => {
++    expect(
++      resolveNativeMobileToolLoopTarget({
++        headers: new Headers({ 'user-agent': 'Mozilla/5.0' }),
++        payload,
++        trace: conversationTrace,
++      }),
++    ).toBeUndefined();
++  });
++
++  it('leaves a client that sends its own tools alone', () => {
++    expect(
++      resolveNativeMobileToolLoopTarget({
++        headers: androidHeaders,
++        payload: {
++          ...payload,
++          tools: [{ function: { name: 'x', parameters: {} }, type: 'function' }],
++        },
++        trace: conversationTrace,
++      }),
++    ).toBeUndefined();
++  });
++
++  it('needs both the agent and the topic', () => {
++    expect(
++      resolveNativeMobileToolLoopTarget({
++        headers: androidHeaders,
++        payload,
++        trace: { ...conversationTrace, topicId: undefined },
++      }),
++    ).toBeUndefined();
++    expect(
++      resolveNativeMobileToolLoopTarget({ headers: androidHeaders, payload, trace: undefined }),
++    ).toBeUndefined();
++  });
++
++  it('skips non-streaming requests', () => {
++    expect(
++      resolveNativeMobileToolLoopTarget({
++        headers: androidHeaders,
++        payload: { ...payload, stream: false },
++        trace: conversationTrace,
++      }),
++    ).toBeUndefined();
++  });
++});
+diff --git a/apps/server/src/services/nativeMobileChat/__tests__/toolCallPolicy.test.ts b/apps/server/src/services/nativeMobileChat/__tests__/toolCallPolicy.test.ts
+new file mode 100644
+index 0000000000..11bdfa2395
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/__tests__/toolCallPolicy.test.ts
+@@ -0,0 +1,83 @@
++// @vitest-environment node
++import type { LobeToolManifest } from '@lobechat/context-engine';
++import { describe, expect, it } from 'vitest';
++
++import { requiresHumanApproval } from '../toolCallPolicy';
++
++const manifest = (humanIntervention?: unknown): LobeToolManifest =>
++  ({
++    api: [
++      {
++        description: 'Run a shell command',
++        humanIntervention,
++        name: 'run',
++        parameters: { properties: {}, type: 'object' },
++      },
++    ],
++    identifier: 'shell-mcp',
++    meta: { title: 'Shell' },
++    type: 'mcp',
++  }) as LobeToolManifest;
++
++const call = (args: Record<string, unknown> = {}) => ({
++  apiName: 'run',
++  arguments: JSON.stringify(args),
++  identifier: 'shell-mcp',
++});
++
++describe('requiresHumanApproval', () => {
++  it('runs a tool without an intervention policy in the default manual mode', async () => {
++    expect(await requiresHumanApproval(call(), manifest(), undefined)).toBe(false);
++  });
++
++  it('refuses a tool that asks for approval in manual mode', async () => {
++    expect(await requiresHumanApproval(call(), manifest('required'), undefined)).toBe(true);
++    expect(
++      await requiresHumanApproval(call(), manifest('required'), { approvalMode: 'manual' }),
++    ).toBe(true);
++  });
++
++  it('honours auto-run for overridable approvals only', async () => {
++    const autoRun = { approvalMode: 'auto-run' as const };
++
++    expect(await requiresHumanApproval(call(), manifest('required'), autoRun)).toBe(false);
++    expect(await requiresHumanApproval(call(), manifest('always'), autoRun)).toBe(true);
++  });
++
++  it('refuses a call on the security blacklist even in auto-run', async () => {
++    expect(
++      await requiresHumanApproval(call({ command: 'rm -rf /' }), manifest(), {
++        approvalMode: 'auto-run',
++      }),
++    ).toBe(true);
++  });
++
++  it('runs only allow-listed tools in allow-list mode', async () => {
++    expect(
++      await requiresHumanApproval(call(), manifest('required'), {
++        allowList: ['shell-mcp/run'],
++        approvalMode: 'allow-list',
++      }),
++    ).toBe(false);
++    expect(
++      await requiresHumanApproval(call(), manifest(), {
++        allowList: ['other/run'],
++        approvalMode: 'allow-list',
++      }),
++    ).toBe(true);
++  });
++
++  it('treats a dynamic policy as needing approval', async () => {
++    expect(
++      await requiresHumanApproval(
++        call(),
++        manifest({ dynamic: { default: 'never', type: 'pathScope' } }),
++        { approvalMode: 'auto-run' },
++      ),
++    ).toBe(true);
++  });
++
++  it('refuses a tool without a manifest', async () => {
++    expect(await requiresHumanApproval(call(), undefined, undefined)).toBe(true);
++  });
++});
+diff --git a/apps/server/src/services/nativeMobileChat/__tests__/toolLoop.test.ts b/apps/server/src/services/nativeMobileChat/__tests__/toolLoop.test.ts
+new file mode 100644
+index 0000000000..8b8d71c48b
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/__tests__/toolLoop.test.ts
+@@ -0,0 +1,273 @@
++// @vitest-environment node
++import type { ChatStreamPayload, MessageToolCall } from '@lobechat/types';
++import { describe, expect, it, vi } from 'vitest';
++
++import type { ToolLoopChat } from '../toolLoop';
++import { runChatToolLoop, TOOL_STEP_LIMIT_NOTICE } from '../toolLoop';
++
++interface FakeStep {
++  events: [event: string, data: unknown][];
++  text?: string;
++  toolCalls?: MessageToolCall[];
++}
++
++const sse = (events: FakeStep['events']) =>
++  events.map(([event, data]) => `id: chat_1\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
++
++/**
++ * Stands in for `modelRuntime.chat`: streams the step's SSE events and fires
++ * the completion callbacks the real runtime fires while the body is read.
++ */
++const fakeChat = (steps: FakeStep[]) => {
++  const payloads: ChatStreamPayload[] = [];
++  const signals: AbortSignal[] = [];
++  const chat = vi.fn<ToolLoopChat>(async (payload, callback, signal) => {
++    const step = steps[Math.min(payloads.length, steps.length - 1)];
++    payloads.push(payload);
++    signals.push(signal);
++    if (step.toolCalls)
++      await callback.onToolsCalling?.({ chunk: [], toolsCalling: step.toolCalls });
++    await callback.onCompletion?.({ text: step.text ?? '', toolsCalling: step.toolCalls });
++
++    // Split mid-event to exercise the parser's buffering.
++    const body = sse(step.events).join('');
++    const chunks = [body.slice(0, 7), body.slice(7)];
++    return new Response(
++      new ReadableStream({
++        start(controller) {
++          for (const chunk of chunks) controller.enqueue(new TextEncoder().encode(chunk));
++          controller.close();
++        },
++      }),
++      { headers: { 'content-type': 'text/event-stream' } },
++    );
++  });
++  return { chat, payloads, signals };
++};
++
++const readEvents = async (response: Response) => {
++  const text = await response.text();
++  return text
++    .split('\n\n')
++    .filter(Boolean)
++    .map((block) => {
++      const event = block.match(/^event: (.*)$/m)?.[1];
++      const data = block.match(/^data: (.*)$/m)?.[1];
++      return [event, data === undefined ? undefined : JSON.parse(data)] as const;
++    });
++};
++
++const weatherCall: MessageToolCall = {
++  function: { arguments: '{"city":"Paris"}', name: 'meteoblue____getWeather____mcp' },
++  id: 'call_1',
++  type: 'function',
++};
++
++const payload: ChatStreamPayload = {
++  messages: [
++    { content: 'system prompt', role: 'system' },
++    { content: 'Weather in Paris?', role: 'user' },
++  ],
++  model: 'deepseek/deepseek-v4.1-flash',
++  stream: true,
++  temperature: 1,
++  tools: [
++    {
++      function: { name: 'meteoblue____getWeather____mcp', parameters: { type: 'object' } },
++      type: 'function',
++    },
++  ],
++};
++
++describe('runChatToolLoop', () => {
++  it('passes a response without tool calls through unchanged', async () => {
++    const { chat } = fakeChat([
++      {
++        events: [
++          ['reasoning', 'thinking'],
++          ['reasoning_signature', 'sig'],
++          ['text', 'Hello'],
++          ['stop', 'stop'],
++          ['usage', { totalTokens: 3 }],
++        ],
++        text: 'Hello',
++      },
++    ]);
++    const executeToolCall = vi.fn();
++
++    const response = await runChatToolLoop({ chat, executeToolCall, payload });
++
++    expect(await readEvents(response)).toEqual([
++      ['reasoning', 'thinking'],
++      ['text', 'Hello'],
++      ['reasoning_signature', 'sig'],
++      ['stop', 'stop'],
++      ['usage', { totalTokens: 3 }],
++    ]);
++    expect(chat).toHaveBeenCalledTimes(1);
++    expect(executeToolCall).not.toHaveBeenCalled();
++  });
++
++  it('executes tool calls on the server and streams only the combined answer', async () => {
++    const { chat, payloads } = fakeChat([
++      {
++        events: [
++          ['reasoning', 'need weather'],
++          ['reasoning_signature', 'sig-1'],
++          ['text', 'Checking.'],
++          ['tool_calls', [{ function: weatherCall.function, id: 'call_1', index: 0 }]],
++          ['stop', 'tool_calls'],
++          ['usage', { cost: 0.5, totalTokens: 10 }],
++          ['speed', { tps: 1 }],
++        ],
++        text: 'Checking.',
++        toolCalls: [weatherCall],
++      },
++      {
++        events: [
++          ['text', 'It is 20°C.'],
++          ['stop', 'stop'],
++          ['usage', { cost: 0.25, totalTokens: 5 }],
++          ['speed', { tps: 2 }],
++        ],
++        text: 'It is 20°C.',
++      },
++    ]);
++    const executeToolCall = vi.fn(async () => '{"temperature":20}');
++
++    const response = await runChatToolLoop({ chat, executeToolCall, payload });
++
++    expect(await readEvents(response)).toEqual([
++      ['reasoning', 'need weather'],
++      ['text', 'Checking.'],
++      ['text', '\n\n'],
++      ['text', 'It is 20°C.'],
++      ['stop', 'stop'],
++      ['usage', { cost: 0.75, totalTokens: 15 }],
++      ['speed', { tps: 2 }],
++    ]);
++    expect(executeToolCall).toHaveBeenCalledWith(weatherCall, expect.any(AbortSignal));
++
++    // The follow-up request replays the conversation plus the tool round.
++    expect(payloads[1].tools).toEqual(payload.tools);
++    expect(payloads[1].model).toBe(payload.model);
++    expect(payloads[1].temperature).toBe(1);
++    expect(payloads[1].messages).toEqual([
++      ...payload.messages,
++      { content: 'Checking.', role: 'assistant', tool_calls: [weatherCall] },
++      {
++        content: '{"temperature":20}',
++        name: weatherCall.function.name,
++        role: 'tool',
++        tool_call_id: 'call_1',
++      },
++    ]);
++  });
++
++  it('hands a failing tool back to the model as a tool result', async () => {
++    const { chat, payloads } = fakeChat([
++      { events: [['stop', 'tool_calls']], toolCalls: [weatherCall] },
++      { events: [['text', 'The tool failed.']], text: 'The tool failed.' },
++    ]);
++    const executeToolCall = vi.fn(async () => {
++      throw new Error('MCP server unreachable');
++    });
++
++    const events = await readEvents(await runChatToolLoop({ chat, executeToolCall, payload }));
++
++    expect(events).toContainEqual(['text', 'The tool failed.']);
++    expect(payloads[1].messages.at(-1)).toMatchObject({
++      content: 'Tool execution failed: MCP server unreachable',
++      role: 'tool',
++    });
++  });
++
++  it('stops at the step limit and says so', async () => {
++    const { chat } = fakeChat([
++      {
++        events: [
++          ['text', 'again'],
++          ['stop', 'tool_calls'],
++        ],
++        text: 'again',
++        toolCalls: [weatherCall],
++      },
++    ]);
++    const executeToolCall = vi.fn(async () => 'ok');
++
++    const events = await readEvents(
++      await runChatToolLoop({ chat, executeToolCall, maxSteps: 3, payload }),
++    );
++
++    expect(chat).toHaveBeenCalledTimes(3);
++    expect(executeToolCall).toHaveBeenCalledTimes(2);
++    expect(events.at(-2)).toEqual(['text', TOOL_STEP_LIMIT_NOTICE]);
++    expect(events.at(-1)).toEqual(['stop', 'tool_calls']);
++  });
++
++  it('forwards a provider error from a later step and ends the stream', async () => {
++    const { chat } = fakeChat([
++      { events: [['stop', 'tool_calls']], toolCalls: [weatherCall] },
++      { events: [['error', { message: 'quota exceeded', type: 'ProviderBizError' }]] },
++    ]);
++
++    const events = await readEvents(
++      await runChatToolLoop({ chat, executeToolCall: async () => 'ok', payload }),
++    );
++
++    expect(events).toEqual([['error', { message: 'quota exceeded', type: 'ProviderBizError' }]]);
++  });
++
++  it('reports a later step that fails to start as an error event', async () => {
++    const { chat } = fakeChat([{ events: [['stop', 'tool_calls']], toolCalls: [weatherCall] }]);
++    chat.mockImplementationOnce(chat.getMockImplementation()!).mockRejectedValueOnce({
++      error: { message: 'Invalid API key' },
++      errorType: 'InvalidProviderAPIKey',
++    });
++
++    const events = await readEvents(
++      await runChatToolLoop({ chat, executeToolCall: async () => 'ok', payload }),
++    );
++
++    expect(events).toEqual([
++      [
++        'error',
++        {
++          body: { message: 'Invalid API key' },
++          message: 'Invalid API key',
++          type: 'InvalidProviderAPIKey',
++        },
++      ],
++    ]);
++  });
++
++  it('rejects when the first model call fails, like a plain completion', async () => {
++    const chat = vi.fn<ToolLoopChat>().mockRejectedValue({ errorType: 'InvalidProviderAPIKey' });
++
++    await expect(
++      runChatToolLoop({ chat, executeToolCall: async () => 'ok', payload }),
++    ).rejects.toEqual({ errorType: 'InvalidProviderAPIKey' });
++  });
++
++  it('stops the loop when the client goes away', async () => {
++    const { chat, signals } = fakeChat([
++      { events: [['stop', 'tool_calls']], toolCalls: [weatherCall] },
++    ]);
++    const requestController = new AbortController();
++    const executeToolCall = vi.fn(async () => {
++      requestController.abort();
++      return 'late result';
++    });
++
++    const response = await runChatToolLoop({
++      chat,
++      executeToolCall,
++      payload,
++      signal: requestController.signal,
++    });
++    await response.text();
++
++    expect(signals[0].aborted).toBe(true);
++    expect(chat).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/apps/server/src/services/nativeMobileChat/index.ts b/apps/server/src/services/nativeMobileChat/index.ts
+new file mode 100644
+index 0000000000..f3a728f066
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/index.ts
+@@ -0,0 +1,259 @@
++import { ToolNameResolver } from '@lobechat/context-engine';
++import type { LobeChatDatabase } from '@lobechat/database';
++import type { ChatMethodOptions, ModelRuntime } from '@lobechat/model-runtime';
++import type {
++  ChatStreamPayload,
++  ChatToolPayload,
++  MessageToolCall,
++  TracePayload,
++  UserInterventionConfig,
++} from '@lobechat/types';
++import { TRPCError } from '@trpc/server';
++import debug from 'debug';
++
++import { ConnectorModel } from '@/database/models/connector';
++import { ConnectorToolModel } from '@/database/models/connectorTool';
++import { MessageModel } from '@/database/models/message';
++import { PluginModel } from '@/database/models/plugin';
++import { TopicModel } from '@/database/models/topic';
++import { UserModel } from '@/database/models/user';
++import { resolveToolTimeoutMs } from '@/server/modules/AgentRuntime/resolveToolTimeout';
++import { AgentService } from '@/server/services/agent';
++import { AgentDocumentsService } from '@/server/services/agentDocuments';
++import {
++  type ChatCompletionToolSet,
++  resolveChatCompletionToolSet,
++} from '@/server/services/aiAgent/pipeline/chatCompletionToolSet';
++import { resolveRunAgentConfig } from '@/server/services/aiAgent/pipeline/resolveRunAgentConfig';
++import { ComposioService } from '@/server/services/composio';
++import { MarketService } from '@/server/services/market';
++import { mcpService } from '@/server/services/mcp';
++import { ToolExecutionService } from '@/server/services/toolExecution';
++import { BuiltinToolsExecutor } from '@/server/services/toolExecution/builtin';
++
++import { resolveNativeMobileToolLoopTarget } from './target';
++import { APPROVAL_UNAVAILABLE_RESULT, requiresHumanApproval } from './toolCallPolicy';
++import { runChatToolLoop } from './toolLoop';
++
++const log = debug('lobe-server:native-mobile-chat');
++
++export interface NativeMobileChatParams {
++  /** Options the plain completion would be called with (user, metadata, trace). */
++  chatOptions: ChatMethodOptions;
++  headers: Headers;
++  modelRuntime: ModelRuntime;
++  payload: ChatStreamPayload;
++  provider: string;
++  serverDB: LobeChatDatabase;
++  signal?: AbortSignal;
++  trace?: TracePayload;
++  userId: string;
++  workspaceId?: string;
++}
++
++const latestUserText = (payload: ChatStreamPayload) => {
++  const message = payload.messages.findLast((item) => item.role === 'user');
++  if (!message) return '';
++  if (typeof message.content === 'string') return message.content;
++  return message.content
++    .map((part) => (part.type === 'text' ? part.text : ''))
++    .filter(Boolean)
++    .join('\n');
++};
++
++const mergeCallbacks = (
++  base: ChatMethodOptions['callback'],
++  loop: NonNullable<ChatMethodOptions['callback']>,
++): NonNullable<ChatMethodOptions['callback']> => ({
++  ...base,
++  onCompletion: async (data) => {
++    await base?.onCompletion?.(data);
++    await loop.onCompletion?.(data);
++  },
++  onToolsCalling: async (data) => {
++    await base?.onToolsCalling?.(data);
++    await loop.onToolsCalling?.(data);
++  },
++});
++
++const resolveToolSet = async (
++  params: NativeMobileChatParams,
++  target: { agentId: string; topicId: string },
++): Promise<ChatCompletionToolSet | undefined> => {
++  const { payload, provider, serverDB: db, signal, userId, workspaceId } = params;
++
++  // The trace header is client data: the topic must be the caller's own, and
++  // belong to the agent the header names.
++  const topic = await new TopicModel(db, userId, workspaceId).findById(target.topicId);
++  if (!topic || (topic.agentId && topic.agentId !== target.agentId)) {
++    log('topic %s is not an own topic of agent %s, skipping tools', target.topicId, target.agentId);
++    return;
++  }
++
++  const agentService = new AgentService(db, userId, workspaceId);
++  const toolSet = await resolveChatCompletionToolSet(
++    {
++      agentDocumentsService: new AgentDocumentsService(db, userId, workspaceId),
++      composioService: new ComposioService({ db, userId, workspaceId }),
++      connectorModel: new ConnectorModel(db, userId, workspaceId),
++      connectorToolModel: new ConnectorToolModel(db, userId, workspaceId),
++      db,
++      getMarketService: async () => {
++        const settings = await new UserModel(db, userId).getUserSettings().catch((error) => {
++          console.error('[nativeMobileChat] failed to read market token:', error);
++          return undefined;
++        });
++        return new MarketService({
++          accessToken: (settings?.market as { accessToken?: string } | undefined)?.accessToken,
++          userInfo: { userId },
++        });
++      },
++      messageModel: new MessageModel(db, userId, workspaceId),
++      pluginModel: new PluginModel(db, userId, workspaceId),
++      resolveAgentConfig: (identifier, overrides) =>
++        resolveRunAgentConfig(
++          {
++            db,
++            resolveAgentConfigOrThrow: async (id) => {
++              const config = await agentService.getAgentConfig(id);
++              if (!config) throw new TRPCError({ code: 'NOT_FOUND', message: 'Agent not found' });
++              return config;
++            },
++            userId,
++            workspaceId,
++          },
++          {
++            identifier,
++            modelOverride: overrides.model,
++            providerOverride: overrides.provider,
++            throwIfExecutionAborted: async () => {},
++          },
++        ),
++      userId,
++      workspaceId,
++    },
++    {
++      agentId: target.agentId,
++      model: payload.model,
++      prompt: latestUserText(payload),
++      provider,
++      signal,
++      topicId: target.topicId,
++    },
++  );
++
++  return toolSet.tools.length > 0 ? toolSet : undefined;
++};
++
++const readInterventionConfig = async (db: LobeChatDatabase, userId: string) => {
++  try {
++    const settings = await new UserModel(db, userId).getUserSettings();
++    return (settings?.tool as { humanIntervention?: UserInterventionConfig } | undefined)
++      ?.humanIntervention;
++  } catch (error) {
++    // Unknown settings fall back to manual approval — the strictest mode.
++    console.error('[nativeMobileChat] failed to read approval settings:', error);
++    return undefined;
++  }
++};
++
++/**
++ * Serve a native mobile conversation turn with the agent's enabled tools.
++ *
++ * Returns `undefined` when the request is not such a turn, or the agent has no
++ * tool this path can run, and the caller should serve the plain completion
++ * exactly as before. Setup failures degrade the same way: the user still gets
++ * an answer, just without tools.
++ */
++export const chatWithNativeMobileTools = async (
++  params: NativeMobileChatParams,
++): Promise<Response | undefined> => {
++  const { chatOptions, headers, modelRuntime, payload, serverDB, signal, trace, userId } = params;
++  const target = resolveNativeMobileToolLoopTarget({ headers, payload, trace });
++  if (!target) return;
++
++  let toolSet: ChatCompletionToolSet | undefined;
++  try {
++    toolSet = await resolveToolSet(params, target);
++  } catch (error) {
++    if (signal?.aborted) throw error;
++    console.error('[nativeMobileChat] tool discovery failed, serving without tools:', error);
++    return;
++  }
++  if (!toolSet) return;
++
++  log(
++    'serving agent %s topic %s with %d tool(s)',
++    target.agentId,
++    target.topicId,
++    toolSet.tools.length,
++  );
++
++  const { manifestMap, sourceMap, tools } = toolSet;
++  const offeredNames = tools.map((tool) => tool.function.name);
++  const resolver = new ToolNameResolver();
++  const interventionConfig = await readInterventionConfig(serverDB, userId);
++  const toolExecutionService = new ToolExecutionService({
++    builtinToolsExecutor: new BuiltinToolsExecutor(serverDB, userId),
++    mcpService,
++  });
++
++  const executeToolCall = async (toolCall: MessageToolCall, loopSignal: AbortSignal) => {
++    const [resolved] = resolver.resolve([toolCall], manifestMap, offeredNames);
++    if (!resolved) return `Tool "${toolCall.function.name}" is not available.`;
++
++    const call: ChatToolPayload = { ...resolved, source: sourceMap[resolved.identifier] };
++    const manifest = manifestMap[call.identifier];
++    if (await requiresHumanApproval(call, manifest, interventionConfig)) {
++      log('refused %s:%s: approval required', call.identifier, call.apiName);
++      return APPROVAL_UNAVAILABLE_RESULT;
++    }
++
++    let args: Record<string, unknown> | undefined;
++    try {
++      args = JSON.parse(call.arguments || '{}');
++    } catch {
++      args = undefined;
++    }
++
++    const execution = toolExecutionService.executeTool(call, {
++      agentId: target.agentId,
++      executionTimeoutMs: resolveToolTimeoutMs({ apiName: call.apiName, args, manifest }),
++      serverDB,
++      toolCallId: call.id,
++      toolManifestMap: manifestMap,
++      topicId: target.topicId,
++      userId,
++      workspaceId: params.workspaceId,
++    });
++    // A cancelled request stops waiting; work already handed to a tool server
++    // cannot be recalled and finishes in the background.
++    let onAbort: (() => void) | undefined;
++    const aborted = new Promise<never>((_, reject) => {
++      onAbort = () => reject(loopSignal.reason);
++      if (loopSignal.aborted) onAbort();
++      else loopSignal.addEventListener('abort', onAbort, { once: true });
++    });
++    try {
++      const result = await Promise.race([execution, aborted]);
++      return result.content;
++    } finally {
++      if (onAbort) loopSignal.removeEventListener('abort', onAbort);
++    }
++  };
++
++  let isFirstStep = true;
++  return runChatToolLoop({
++    chat: (stepPayload, callback, loopSignal) => {
++      // Tracing covers one generation; later steps are served untraced.
++      const options: ChatMethodOptions = isFirstStep
++        ? { ...chatOptions, callback: mergeCallbacks(chatOptions.callback, callback) }
++        : { metadata: chatOptions.metadata, user: chatOptions.user, callback };
++      isFirstStep = false;
++      return modelRuntime.chat(stepPayload, { ...options, signal: loopSignal });
++    },
++    executeToolCall,
++    payload: { ...payload, tools },
++    signal,
++  });
++};
+diff --git a/apps/server/src/services/nativeMobileChat/target.ts b/apps/server/src/services/nativeMobileChat/target.ts
+new file mode 100644
+index 0000000000..67fbb35493
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/target.ts
+@@ -0,0 +1,42 @@
++import type { ChatStreamPayload, TracePayload } from '@lobechat/types';
++import { TraceNameMap } from '@lobechat/types';
++import { parseClientMetadata } from '@lobechat/utils/server';
++
++export interface NativeMobileToolLoopTarget {
++  agentId: string;
++  topicId: string;
++}
++
++/**
++ * Whether a `/webapi/chat` request is a native mobile conversation turn that
++ * the server should serve with the agent's tools.
++ *
++ * The native apps (LobeHub-Mobile/android-v1.0.22 as captured) send no tool
++ * definitions and have no tool loop. Their only link to the agent is the
++ * `X-lobe-trace` header, sent even with tracing disabled: `sessionId` carries
++ * the agent id and `topicId` the topic. `traceName` tells the conversation
++ * turn apart from auxiliary requests such as topic-title generation, which
++ * must stay plain completions.
++ *
++ * A request that already carries `tools` is left alone: that client runs its
++ * own loop.
++ */
++export const resolveNativeMobileToolLoopTarget = ({
++  headers,
++  payload,
++  trace,
++}: {
++  headers: Headers;
++  payload: ChatStreamPayload;
++  trace?: TracePayload;
++}): NativeMobileToolLoopTarget | undefined => {
++  if (parseClientMetadata(headers).type !== 'mobile') return;
++  if (trace?.traceName !== TraceNameMap.Conversation) return;
++  if (payload.stream === false || payload.tools?.length) return;
++
++  const agentId = trace.sessionId;
++  const topicId = trace.topicId;
++  if (!agentId || !topicId) return;
++
++  return { agentId, topicId };
++};
+diff --git a/apps/server/src/services/nativeMobileChat/toolCallPolicy.ts b/apps/server/src/services/nativeMobileChat/toolCallPolicy.ts
+new file mode 100644
+index 0000000000..60625dd30d
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/toolCallPolicy.ts
+@@ -0,0 +1,75 @@
++import {
++  createDefaultGlobalAudits,
++  DEFAULT_SECURITY_BLACKLIST,
++  InterventionChecker,
++} from '@lobechat/agent-runtime';
++import type { LobeToolManifest } from '@lobechat/context-engine';
++import type {
++  ChatToolPayload,
++  HumanInterventionConfig,
++  HumanInterventionPolicy,
++  UserInterventionConfig,
++} from '@lobechat/types';
++import { isRecord } from '@lobechat/utils/object';
++
++export const APPROVAL_UNAVAILABLE_RESULT =
++  'This tool call was not executed: it requires the user to approve it, and this client cannot show approval requests yet. Tell the user to run this request from the LobeHub web or desktop app if they want to approve it.';
++
++const POLICY_RANK: Record<HumanInterventionPolicy, number> = { always: 2, never: 0, required: 1 };
++
++const parseArgs = (raw: string | undefined): Record<string, unknown> => {
++  try {
++    const parsed = JSON.parse(raw || '{}');
++    return isRecord(parsed) ? parsed : {};
++  } catch {
++    return {};
++  }
++};
++
++/**
++ * Whether the call would stop for human approval in the server agent runtime.
++ *
++ * Mirrors `GeneralChatAgent.checkInterventionNeeded` for a client that cannot
++ * approve anything: every call that would wait there is refused here, never
++ * auto-approved. The one deliberate difference is on the safe side — dynamic
++ * intervention configs need resolvers only the runtime has, so they always
++ * count as needing approval.
++ */
++export const requiresHumanApproval = async (
++  toolCall: Pick<ChatToolPayload, 'apiName' | 'arguments' | 'identifier'>,
++  manifest: LobeToolManifest | undefined,
++  userConfig: UserInterventionConfig | undefined,
++): Promise<boolean> => {
++  const { apiName, identifier } = toolCall;
++  const args = parseArgs(toolCall.arguments);
++  const { allowList = [], approvalMode = 'manual' } = userConfig ?? {};
++
++  let globalPolicy: HumanInterventionPolicy | undefined;
++  for (const audit of createDefaultGlobalAudits()) {
++    if (await audit.resolver(args, { securityBlacklist: DEFAULT_SECURITY_BLACKLIST })) {
++      const policy = audit.policy ?? 'always';
++      if (!globalPolicy || POLICY_RANK[policy] > POLICY_RANK[globalPolicy]) globalPolicy = policy;
++    }
++  }
++  if (globalPolicy === 'always') return true;
++
++  const api = manifest?.api?.find((item) => item.name === apiName);
++  const config =
++    (api as { humanIntervention?: unknown } | undefined)?.humanIntervention ??
++    (manifest as { humanIntervention?: unknown } | undefined)?.humanIntervention;
++  if (isRecord(config) && 'dynamic' in config) return true;
++
++  const staticPolicy = InterventionChecker.shouldIntervene({
++    config: config as HumanInterventionConfig | undefined,
++    securityBlacklist: [],
++    toolArgs: args,
++  });
++  if (staticPolicy === 'always') return true;
++
++  if (approvalMode === 'auto-run' || approvalMode === 'headless') return false;
++  if (globalPolicy === 'required') return true;
++  if (!manifest) return true;
++  if (approvalMode === 'allow-list') return !allowList.includes(`${identifier}/${apiName}`);
++
++  return staticPolicy !== 'never';
++};
+diff --git a/apps/server/src/services/nativeMobileChat/toolLoop.ts b/apps/server/src/services/nativeMobileChat/toolLoop.ts
+new file mode 100644
+index 0000000000..cf6e881dc3
+--- /dev/null
++++ b/apps/server/src/services/nativeMobileChat/toolLoop.ts
+@@ -0,0 +1,329 @@
++import type { ChatMethodOptions, OnFinishData } from '@lobechat/model-runtime';
++import type { ChatStreamPayload, MessageToolCall, OpenAIChatMessage } from '@lobechat/types';
++import { isRecord } from '@lobechat/utils/object';
++
++/** Model calls per request, tool rounds included. */
++export const MAX_TOOL_LOOP_STEPS = 10;
++
++export const TOOL_STEP_LIMIT_NOTICE = `\n\n(Stopped after ${MAX_TOOL_LOOP_STEPS} tool steps.)`;
++
++export type ToolLoopChat = (
++  payload: ChatStreamPayload,
++  callback: NonNullable<ChatMethodOptions['callback']>,
++  signal: AbortSignal,
++) => Promise<Response>;
++
++/** Resolves to the content handed back to the model as the tool result. */
++export type ToolLoopExecuteToolCall = (
++  toolCall: MessageToolCall,
++  signal: AbortSignal,
++) => Promise<string>;
++
++export interface RunChatToolLoopParams {
++  chat: ToolLoopChat;
++  executeToolCall: ToolLoopExecuteToolCall;
++  maxSteps?: number;
++  /** Request payload with the offered `tools` already set. */
++  payload: ChatStreamPayload;
++  signal?: AbortSignal;
++}
++
++interface SSEEvent {
++  data?: unknown;
++  event?: string;
++  raw: string;
++}
++
++/**
++ * Held until the whole response is known. Reasoning signatures and Responses
++ * items describe ONE provider response; a multi-step answer concatenates the
++ * reasoning of several, so replaying any single signature against it on the
++ * next turn would be rejected by the provider.
++ */
++const PER_RESPONSE_EVENTS = new Set([
++  'flagged_reasoning_signature',
++  'reasoning_response_item',
++  'reasoning_signature',
++]);
++
++const encoder = new TextEncoder();
++
++const parseEvent = (raw: string): SSEEvent => {
++  let event: string | undefined;
++  let dataText: string | undefined;
++  for (const line of raw.split('\n')) {
++    if (line.startsWith('event:')) event = line.slice(6).trim();
++    else if (line.startsWith('data:')) dataText = line.slice(5).trim();
++  }
++
++  let data: unknown;
++  if (dataText !== undefined) {
++    try {
++      data = JSON.parse(dataText);
++    } catch {
++      data = dataText;
++    }
++  }
++  return { data, event, raw };
++};
++
++const formatEvent = (id: string, event: string, data: unknown) =>
++  `id: ${id}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
++
++async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<SSEEvent> {
++  const reader = body.getReader();
++  const decoder = new TextDecoder();
++  let buffer = '';
++  try {
++    while (true) {
++      const { done, value } = await reader.read();
++      buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
++
++      let boundary = buffer.indexOf('\n\n');
++      while (boundary !== -1) {
++        const raw = buffer.slice(0, boundary);
++        buffer = buffer.slice(boundary + 2);
++        if (raw.trim()) yield parseEvent(raw);
++        boundary = buffer.indexOf('\n\n');
++      }
++
++      if (done) break;
++    }
++    if (buffer.trim()) yield parseEvent(buffer);
++  } finally {
++    reader.releaseLock();
++  }
++}
++
++/** Token counts and costs add up across steps; anything else keeps the latest value. */
++const mergeUsage = (total: unknown, next: unknown) => {
++  if (!isRecord(total) || !isRecord(next)) return next;
++
++  const merged: Record<string, unknown> = { ...total };
++  for (const [key, value] of Object.entries(next)) {
++    const previous = merged[key];
++    merged[key] =
++      typeof value === 'number' && typeof previous === 'number' ? previous + value : value;
++  }
++  return merged;
++};
++
++const toErrorEventData = (error: unknown) => {
++  const payload = isRecord(error) ? error : {};
++  const errorType = typeof payload.errorType === 'string' ? payload.errorType : undefined;
++  const inner = payload.error ?? error;
++  const message =
++    inner instanceof Error
++      ? inner.message
++      : isRecord(inner) && typeof inner.message === 'string'
++        ? inner.message
++        : String(inner);
++
++  return {
++    body: isRecord(inner) ? inner : { message },
++    message,
++    type: errorType ?? 'AgentRuntimeError',
++  };
++};
++
++interface StepOutcome {
++  completion?: OnFinishData;
++  toolCalls: MessageToolCall[];
++}
++
++/**
++ * Serve one chat completion request with a server-side tool loop, for clients
++ * that stream `/webapi/chat` but cannot execute tool calls themselves.
++ *
++ * The client receives a single ordinary completion stream: text, reasoning and
++ * the other content events of every step are forwarded as they arrive, while
++ * `tool_calls` never reach it (it has nothing to run them with) and the
++ * terminal `stop` / `usage` / `speed` events are sent once, after the last
++ * step, with usage summed over all steps. The tool calls and their results live
++ * only inside this request; the client persists the final answer as usual.
++ *
++ * The first model call is awaited before the response is returned, so a
++ * provider rejection surfaces through the caller's normal error response.
++ */
++export const runChatToolLoop = async ({
++  chat,
++  executeToolCall,
++  maxSteps = MAX_TOOL_LOOP_STEPS,
++  payload,
++  signal,
++}: RunChatToolLoopParams): Promise<Response> => {
++  const abortController = new AbortController();
++  const abort = () => abortController.abort(signal?.reason);
++  if (signal?.aborted) abort();
++  else signal?.addEventListener('abort', abort, { once: true });
++  const loopSignal = abortController.signal;
++
++  const messages: OpenAIChatMessage[] = [...payload.messages];
++
++  let outcome: StepOutcome = { toolCalls: [] };
++  const startStep = () => {
++    outcome = { toolCalls: [] };
++    const step = outcome;
++    return chat(
++      { ...payload, messages: [...messages] },
++      {
++        onCompletion: (data) => {
++          step.completion = data;
++        },
++        onToolsCalling: ({ toolsCalling }) => {
++          step.toolCalls = toolsCalling;
++        },
++      },
++      loopSignal,
++    );
++  };
++
++  let response: Response;
++  try {
++    response = await startStep();
++  } catch (error) {
++    signal?.removeEventListener('abort', abort);
++    throw error;
++  }
++  if (!response.ok || !response.body) {
++    signal?.removeEventListener('abort', abort);
++    return response;
++  }
++
++  let firstResponse: Response | undefined = response;
++
++  const stream = new ReadableStream<Uint8Array>({
++    cancel: () => abortController.abort(),
++    start: async (controller) => {
++      const send = (text: string) => {
++        // A cancelled reader closes the controller; the loop only has to wind down.
++        if (loopSignal.aborted) return;
++        controller.enqueue(encoder.encode(text));
++      };
++
++      let lastId = 'chat';
++      let hasText = false;
++      let usage: unknown;
++      let speed: SSEEvent | undefined;
++      let stop: SSEEvent | undefined;
++      let heldPerResponse: SSEEvent[] = [];
++      let steps = 0;
++      let errored = false;
++
++      try {
++        while (true) {
++          const current = firstResponse ?? (await startStep());
++          firstResponse = undefined;
++          steps += 1;
++          if (!current.body) break;
++
++          const separateFromPreviousStep = hasText;
++          let stepHasText = false;
++
++          for await (const event of readEvents(current.body)) {
++            const idLine = event.raw.split('\n').find((line) => line.startsWith('id:'));
++            if (idLine) lastId = idLine.slice(3).trim() || lastId;
++
++            switch (event.event) {
++              case 'tool_calls': {
++                break;
++              }
++              case 'stop': {
++                stop = event;
++                break;
++              }
++              case 'usage': {
++                usage = mergeUsage(usage, event.data);
++                break;
++              }
++              case 'speed': {
++                speed = event;
++                break;
++              }
++              case 'text': {
++                if (typeof event.data === 'string' && event.data) {
++                  if (separateFromPreviousStep && !stepHasText) {
++                    send(formatEvent(lastId, 'text', '\n\n'));
++                  }
++                  stepHasText = true;
++                  hasText = true;
++                }
++                send(`${event.raw}\n\n`);
++                break;
++              }
++              case 'error': {
++                errored = true;
++                send(`${event.raw}\n\n`);
++                break;
++              }
++              default: {
++                if (event.event && PER_RESPONSE_EVENTS.has(event.event)) {
++                  heldPerResponse.push(event);
++                } else {
++                  send(`${event.raw}\n\n`);
++                }
++              }
++            }
++          }
++
++          if (errored || loopSignal.aborted) break;
++
++          const toolCalls = outcome.toolCalls.length
++            ? outcome.toolCalls
++            : (outcome.completion?.toolsCalling ?? []);
++          if (toolCalls.length === 0) break;
++
++          if (steps >= maxSteps) {
++            send(formatEvent(lastId, 'text', TOOL_STEP_LIMIT_NOTICE));
++            break;
++          }
++
++          messages.push({
++            content: outcome.completion?.text ?? '',
++            reasoning: outcome.completion?.reasoning,
++            role: 'assistant',
++            tool_calls: toolCalls,
++          });
++          for (const toolCall of toolCalls) {
++            let content: string;
++            try {
++              content = await executeToolCall(toolCall, loopSignal);
++            } catch (error) {
++              content = `Tool execution failed: ${(error as Error)?.message ?? String(error)}`;
++            }
++            if (loopSignal.aborted) break;
++            messages.push({
++              content,
++              name: toolCall.function.name,
++              role: 'tool',
++              tool_call_id: toolCall.id,
++            });
++          }
++          if (loopSignal.aborted) break;
++        }
++
++        if (!errored) {
++          if (steps === 1) for (const event of heldPerResponse) send(`${event.raw}\n\n`);
++          heldPerResponse = [];
++          if (stop) send(`${stop.raw}\n\n`);
++          if (usage !== undefined) send(formatEvent(lastId, 'usage', usage));
++          if (speed) send(`${speed.raw}\n\n`);
++        }
++      } catch (error) {
++        if (!loopSignal.aborted) {
++          console.error('[nativeMobileChat] tool loop failed:', error);
++          send(formatEvent(lastId, 'error', toErrorEventData(error)));
++        }
++      } finally {
++        signal?.removeEventListener('abort', abort);
++        try {
++          controller.close();
++        } catch {
++          // Already closed by a cancelled reader.
++        }
++      }
++    },
++  });
++
++  return new Response(stream, { headers: response.headers, status: response.status });
++};
+diff --git a/src/app/(backend)/webapi/chat/[provider]/route.test.ts b/src/app/(backend)/webapi/chat/[provider]/route.test.ts
+index 66dce14939..0dbfd183aa 100644
+--- a/src/app/(backend)/webapi/chat/[provider]/route.test.ts
++++ b/src/app/(backend)/webapi/chat/[provider]/route.test.ts
+@@ -1,12 +1,13 @@
+ // @vitest-environment node
+-import { REQUEST_TOPIC_ID_HEADER } from '@lobechat/const';
++import { LOBE_CHAT_TRACE_HEADER, REQUEST_TOPIC_ID_HEADER } from '@lobechat/const';
+ import { type LobeRuntimeAI } from '@lobechat/model-runtime';
+ import { ModelRuntime } from '@lobechat/model-runtime';
+-import { ChatErrorType } from '@lobechat/types';
++import { ChatErrorType, TraceNameMap } from '@lobechat/types';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ 
+ import { auth } from '@/auth';
+ import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
++import { resolveChatCompletionToolSet } from '@/server/services/aiAgent/pipeline/chatCompletionToolSet';
+ 
+ import { POST } from './route';
+ 
+@@ -19,6 +20,16 @@ vi.mock('@/server/modules/ModelRuntime', () => ({
+   createTraceOptions: vi.fn().mockReturnValue({}),
+ }));
+ 
++vi.mock('@/database/models/topic', () => ({
++  TopicModel: vi.fn(function () {
++    return { findById: async (id: string) => ({ agentId: 'agt_1', id }) };
++  }),
++}));
++
++vi.mock('@/server/services/aiAgent/pipeline/chatCompletionToolSet', () => ({
++  resolveChatCompletionToolSet: vi.fn(),
++}));
++
+ vi.mock('@/auth', () => ({
+   auth: {
+     api: {
+@@ -150,4 +161,74 @@ describe('POST handler', () => {
+       });
+     });
+   });
++
++  describe('native mobile tools', () => {
++    const weatherTool = {
++      function: { name: 'meteoblue____getWeather____mcp', parameters: { type: 'object' } },
++      type: 'function',
++    };
++    const mobilePayload = {
++      messages: [{ content: 'Use the meteoblue tool for Paris', role: 'user' }],
++      model: 'deepseek/deepseek-v4.1-flash',
++      stream: true,
++    };
++
++    // Headers as captured from LobeHub Android 1.0.22: no tools in the body,
++    // the agent id rides in the trace header's `sessionId`, tracing disabled.
++    const mobileRequest = (traceName: TraceNameMap) =>
++      new Request(new URL('https://test.com'), {
++        body: JSON.stringify(mobilePayload),
++        headers: {
++          'User-Agent': 'LobeHub-Mobile/android-v1.0.22',
++          [LOBE_CHAT_TRACE_HEADER]: Buffer.from(
++            JSON.stringify({ enabled: false, sessionId: 'agt_1', topicId: 'tpc_1', traceName }),
++          ).toString('base64'),
++        },
++        method: 'POST',
++      });
++
++    beforeEach(() => {
++      vi.mocked(resolveChatCompletionToolSet).mockResolvedValue({
++        manifestMap: {
++          meteoblue: {
++            api: [{ description: '', name: 'getWeather', parameters: { type: 'object' } }],
++            identifier: 'meteoblue',
++            meta: { title: 'meteoblue' },
++            type: 'mcp',
++          },
++        },
++        sourceMap: {},
++        tools: [weatherTool],
++      } as any);
++    });
++
++    it("offers the agent's enabled tools to the model", async () => {
++      const chat = vi.fn().mockResolvedValue(new Response('event: text\ndata: "hi"\n\n'));
++      vi.mocked(initModelRuntimeFromDB).mockResolvedValue({ chat } as any);
++
++      const response = await POST(mobileRequest(TraceNameMap.Conversation), {
++        params: Promise.resolve({ provider: 'commandcode' }),
++      });
++      await response.text();
++
++      expect(chat).toHaveBeenCalledTimes(1);
++      expect(chat.mock.calls[0][0]).toEqual({ ...mobilePayload, tools: [weatherTool] });
++      expect(resolveChatCompletionToolSet).toHaveBeenCalledWith(
++        expect.anything(),
++        expect.objectContaining({ agentId: 'agt_1', provider: 'commandcode', topicId: 'tpc_1' }),
++      );
++    });
++
++    it('keeps topic title generation a plain completion', async () => {
++      const chat = vi.fn().mockResolvedValue(new Response('ok'));
++      vi.mocked(initModelRuntimeFromDB).mockResolvedValue({ chat } as any);
++
++      await POST(mobileRequest(TraceNameMap.SummaryTopicTitle), {
++        params: Promise.resolve({ provider: 'githubcopilot' }),
++      });
++
++      expect(chat.mock.calls[0][0]).toEqual(mobilePayload);
++      expect(resolveChatCompletionToolSet).not.toHaveBeenCalled();
++    });
++  });
+ });
+diff --git a/src/app/(backend)/webapi/chat/[provider]/route.ts b/src/app/(backend)/webapi/chat/[provider]/route.ts
+index 2d2379091d..87ca43345d 100644
+--- a/src/app/(backend)/webapi/chat/[provider]/route.ts
++++ b/src/app/(backend)/webapi/chat/[provider]/route.ts
+@@ -5,6 +5,7 @@ import { ChatErrorType } from '@lobechat/types';
+ 
+ import { checkAuth } from '@/app/(backend)/middleware/auth';
+ import { createTraceOptions, initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
++import { chatWithNativeMobileTools } from '@/server/services/nativeMobileChat';
+ import { type ChatStreamPayload } from '@/types/openai/chat';
+ import { createErrorResponse } from '@/utils/errorResponse';
+ import { getTracePayload } from '@/utils/trace';
+@@ -36,12 +37,29 @@ export const POST = checkAuth(async (req: Request, { params, userId, serverDB })
+       traceOptions = createTraceOptions(data, { provider, trace: tracePayload });
+     }
+ 
+-    return await modelRuntime.chat(data, {
++    const chatOptions = {
+       user: userId,
+       ...traceOptions,
+       metadata: { topicId: req.headers.get(REQUEST_TOPIC_ID_HEADER) ?? undefined },
++    };
++
++    // Native mobile apps have no tool loop: serve their conversation turns with
++    // the agent's tools on the server. Everything else stays a plain completion.
++    const nativeMobileResponse = await chatWithNativeMobileTools({
++      chatOptions,
++      headers: req.headers,
++      modelRuntime,
++      payload: data,
++      provider,
++      serverDB,
+       signal: req.signal,
++      trace: tracePayload,
++      userId,
++      workspaceId,
+     });
++    if (nativeMobileResponse) return nativeMobileResponse;
++
++    return await modelRuntime.chat(data, { ...chatOptions, signal: req.signal });
+   } catch (e) {
+     const {
+       errorType = ChatErrorType.InternalServerError,
+-- 
+2.55.0
+
