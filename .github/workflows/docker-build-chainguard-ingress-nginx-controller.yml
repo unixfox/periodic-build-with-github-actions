@@ -7,6 +7,14 @@ on:
       - '.github/workflows/docker-build-chainguard-ingress-nginx-controller.yml'
       - 'chainguard-ingress-nginx-controller/**'
 
+env:
+  IMAGE_NAME: quay.io/unixfox/chainguard-ingress-nginx-controller
+  # Patched nginx base image. The fork's NGINX_BASE still points to the frozen
+  # upstream registry.k8s.io/ingress-nginx/nginx:v2.2.8, which does NOT contain
+  # the nginx CVE backports in images/nginx/rootfs/patches. Chainguard only
+  # publishes its patched base in its paid catalog, so we build it ourselves.
+  BASE_IMAGE_NAME: quay.io/unixfox/chainguard-ingress-nginx-base
+
 jobs:
 
   checks:
@@ -29,14 +37,117 @@ jobs:
       - uses: actions/cache@v6
         id: cache
         with:
+          # v2: invalidate entries from builds that used the unpatched upstream base
           path: chainguard-ingress-nginx-controller/.built
-          key: ${{ runner.os }}-chainguard-ingress-nginx-controller-${{ env.tag }}
+          key: ${{ runner.os }}-chainguard-ingress-nginx-controller-v2-${{ env.tag }}
+
+  prepare:
+    needs: checks
+    runs-on: ubuntu-24.04
+    if: needs.checks.outputs.cache-hit != 'true'
+    outputs:
+      base-tag: ${{ steps.meta.outputs.base-tag }}
+      timestamp: ${{ steps.meta.outputs.timestamp }}
+    steps:
+      - name: Check Out Repo chainguard-forks/ingress-nginx
+        uses: actions/checkout@v7
+        with:
+          repository: "chainguard-forks/ingress-nginx"
+          ref: '${{ needs.checks.outputs.env-tag }}'
+          path: 'ingress-nginx-git'
+
+      - name: Compute base image tag
+        id: meta
+        run: |
+          cd ingress-nginx-git
+          # Tag = fork's nginx image TAG + git tree hash of the nginx rootfs, so
+          # any patch change yields a new base even if TAG was not bumped.
+          echo "base-tag=$(cat images/nginx/TAG)-$(git rev-parse --short=12 HEAD:images/nginx/rootfs)" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
+  build-base:
+    needs:
+      - checks
+      - prepare
+
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            runs-on: ubuntu-24.04
+            suffix: "-amd64"
+          - platform: linux/arm64
+            runs-on: ubuntu-24.04-arm
+            suffix: "-arm64"
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - name: Check Out Repo chainguard-forks/ingress-nginx
+        uses: actions/checkout@v7
+        with:
+          repository: "chainguard-forks/ingress-nginx"
+          ref: '${{ needs.checks.outputs.env-tag }}'
+          path: 'ingress-nginx-git'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          version: latest
+
+      - name: Login to Quay.io
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      # build.sh compiles nginx 1.27.1 + modules and applies every patch in
+      # rootfs/patches (set -o errexit: a patch that fails to apply fails the build).
+      - name: Build and push patched nginx base image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./ingress-nginx-git/images/nginx/rootfs
+          file: ./ingress-nginx-git/images/nginx/rootfs/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          pull: true
+          no-cache: true
+          tags: |
+            ${{ env.BASE_IMAGE_NAME }}:${{ needs.prepare.outputs.base-tag }}${{ matrix.suffix }}
+
+  merge-base:
+    needs:
+      - prepare
+      - build-base
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Login to Quay.io
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Create and push multi-arch base manifest
+        uses: int128/docker-manifest-create-action@v2
+        with:
+          push: true
+          tags: |
+            ${{ env.BASE_IMAGE_NAME }}:${{ needs.prepare.outputs.base-tag }}
+            ${{ env.BASE_IMAGE_NAME }}:latest
+          sources: |
+            ${{ env.BASE_IMAGE_NAME }}:${{ needs.prepare.outputs.base-tag }}-amd64
+            ${{ env.BASE_IMAGE_NAME }}:${{ needs.prepare.outputs.base-tag }}-arm64
 
   build:
 
-    needs: checks
+    needs:
+      - checks
+      - prepare
+      - merge-base
     runs-on: ubuntu-latest
-    if: needs.checks.outputs.cache-hit != 'true'
     steps:
 
       - name: Set up QEMU
@@ -64,11 +175,9 @@ jobs:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
-      - name: Set version, base image and build timestamp
+      - name: Set version
         run: |
           echo "version=${TAG#controller-}" >> $GITHUB_ENV
-          echo "base_image=$(cat ingress-nginx-git/NGINX_BASE)" >> $GITHUB_ENV
-          echo "timestamp=$(date +%Y%m%d)" >> $GITHUB_ENV
         env:
           TAG: ${{ needs.checks.outputs.env-tag }}
 
@@ -88,11 +197,11 @@ jobs:
           pull: true
           no-cache: true
           build-args: |
-            BASE_IMAGE=${{ env.base_image }}
+            BASE_IMAGE=${{ env.BASE_IMAGE_NAME }}:${{ needs.prepare.outputs.base-tag }}
             VERSION=${{ env.version }}
             COMMIT_SHA=git-${{ github.sha }}
             BUILD_ID=UNSET
           tags: |
-            quay.io/unixfox/chainguard-ingress-nginx-controller:latest
-            quay.io/unixfox/chainguard-ingress-nginx-controller:${{ env.version }}
-            quay.io/unixfox/chainguard-ingress-nginx-controller:${{ env.version }}-build-${{ env.timestamp }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ env.version }}
+            ${{ env.IMAGE_NAME }}:${{ env.version }}-build-${{ needs.prepare.outputs.timestamp }}

@@ -11,8 +11,15 @@ controller image.
 The workflow (`.github/workflows/docker-build-chainguard-ingress-nginx-controller.yml`)
 checks out the fork at its newest `controller-v*` tag, compiles the controller
 binaries with the fork's `make build` (for amd64 and arm64), then builds and pushes
-the standard controller image from `rootfs/Dockerfile` using the base image pinned
-in the fork's `NGINX_BASE` file — the same image chainguard builds.
+the standard controller image from `rootfs/Dockerfile`.
+
+The nginx base image is **built here too**, from the fork's `images/nginx/rootfs`
+(nginx 1.27.1 + the CVE backports in `patches/`), natively on amd64 and arm64
+runners, and pushed to https://quay.io/unixfox/chainguard-ingress-nginx-base
+(tag `<images/nginx/TAG>-<tree hash of images/nginx/rootfs>`). We do **not** use
+the fork's `NGINX_BASE` file: it still points to the frozen upstream
+`registry.k8s.io/ingress-nginx/nginx:v2.2.8`, which lacks those patches, and
+chainguard only publishes its patched base in its paid catalog.
 
 New tags are detected hourly by `.github/workflows/check-docker-updates.yml`, which
 triggers this workflow when the fork publishes a new `controller-v*` tag. Bump/edit
