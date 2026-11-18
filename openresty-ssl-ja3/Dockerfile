@@ -11,7 +11,18 @@ LABEL maintainer="Evan Wies <evan@neomantra.net>"
 # Docker Build Arguments
 ARG RESTY_IMAGE_BASE="alpine"
 ARG RESTY_IMAGE_TAG="3.23.5"
-ARG RESTY_VERSION="1.31.1.1"
+ARG RESTY_VERSION="1.31.8.1"
+# nginx core bundled in RESTY_VERSION, and the upstream nginx release whose source diff
+# we apply on top of it. OpenResty 1.31.8.1 ships nginx 1.31.8, which is vulnerable to the
+# HTTP/2 RCEs CVE-2026-123633 (use-after-free) and CVE-2026-123007 (send_window underflow),
+# plus CVE-2026-121810/118899/113425/120993, all fixed in nginx 1.31.9. Until OpenResty
+# ships a 1.31.9-based release, the full nginx 1.31.8 -> 1.31.9 diff (minus CHANGES and
+# nginx.h, which OpenResty customizes) is applied to bundle/nginx-1.31.8. Drop this once
+# RESTY_VERSION bundles nginx >= NGINX_SECURITY_VERSION.
+ARG RESTY_NGINX_VERSION="1.31.8"
+ARG RESTY_NGINX_SHA256="0652b760b3b772d2ec17b47c2fc15d9a95e6fe35cd5b877eadc1a62d9bc75af1"
+ARG NGINX_SECURITY_VERSION="1.31.9"
+ARG NGINX_SECURITY_SHA256="a11c5eeee2e257f4478f0e649f84b0040787d277d2d3e5233952aa6b6dcb80ad"
 
 # https://github.com/openresty/openresty-packaging/blob/master/alpine/openresty-openssl3/APKBUILD
 # NOTE: upstream docker-openresty is on OpenSSL 3.5.7, but we pin 3.5.6 to match
@@ -144,6 +155,8 @@ RUN apk add --no-cache --virtual .build-deps \
         readline-dev \
         zlib-dev \
         git \
+        patch \
+        diffutils \
         ${RESTY_ADD_PACKAGE_BUILDDEPS} \
     && apk add --no-cache \
         gd \
@@ -163,7 +176,7 @@ RUN apk add --no-cache --virtual .build-deps \
         echo "patching OpenSSL ${RESTY_OPENSSL_PATCH_VERSION} for OpenResty" \
         && curl -s https://raw.githubusercontent.com/openresty/openresty/master/patches/openssl-${RESTY_OPENSSL_PATCH_VERSION}-sess_set_get_cb_yield.patch | patch -p1 \
         && echo "patching OpenSSL for phuslu/nginx-ssl-fingerprint (clienthello ja data)" \
-        && curl -s https://raw.githubusercontent.com/phuslu/nginx-ssl-fingerprint/v1.0.5/patches/openssl-${RESTY_OPENSSL_VERSION}.patch | patch -p1 \
+        && curl -s https://raw.githubusercontent.com/phuslu/nginx-ssl-fingerprint/v1.0.9/patches/openssl-${RESTY_OPENSSL_VERSION}.patch | patch -p1 \
         && echo "exporting SSL_client_hello_get_ja_data from shared libssl (phuslu patch omits util/libssl.num, needed for docker-openresty shared-openssl build)" \
         && printf 'SSL_client_hello_get_ja_data            %s\t3_0_0\tEXIST::FUNCTION:\n' "$(awk '$2 ~ /^[0-9]+$/ && $2+0>m {m=$2} END{print m+1}' util/libssl.num)" >> util/libssl.num ; \
     fi \
@@ -200,16 +213,27 @@ RUN apk add --no-cache --virtual .build-deps \
     && git clone -b 0.9.6 https://github.com/nginx/njs \
     && git clone https://github.com/bellard/quickjs \
     && cd quickjs && git checkout d7ae12ae71dfd6ab2997527d295014a8996fa0f9 && CFLAGS='-fPIC' make -j${RESTY_J} libquickjs.a && cd .. \
-    && git clone -b v1.0.5 --depth 1 https://github.com/phuslu/nginx-ssl-fingerprint.git \
+    && git clone -b v1.0.9 --depth 1 https://github.com/phuslu/nginx-ssl-fingerprint.git \
     && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream.git \
     && git clone --depth 1 https://github.com/ZigzagAK/ngx_dynamic_upstream_lua.git \
     && cd /tmp \
+    && curl -fSL https://nginx.org/download/nginx-${RESTY_NGINX_VERSION}.tar.gz -o nginx-${RESTY_NGINX_VERSION}.tar.gz \
+    && echo "${RESTY_NGINX_SHA256}  nginx-${RESTY_NGINX_VERSION}.tar.gz" | sha256sum -c \
+    && curl -fSL https://nginx.org/download/nginx-${NGINX_SECURITY_VERSION}.tar.gz -o nginx-${NGINX_SECURITY_VERSION}.tar.gz \
+    && echo "${NGINX_SECURITY_SHA256}  nginx-${NGINX_SECURITY_VERSION}.tar.gz" | sha256sum -c \
+    && tar xzf nginx-${RESTY_NGINX_VERSION}.tar.gz \
+    && tar xzf nginx-${NGINX_SECURITY_VERSION}.tar.gz \
+    && { diff -ruN -x CHANGES -x CHANGES.ru -x nginx.h nginx-${RESTY_NGINX_VERSION} nginx-${NGINX_SECURITY_VERSION} > /tmp/nginx-security.diff; [ $? -eq 1 ]; } \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && if [ -n "${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}" ]; then eval $(echo ${RESTY_EVAL_POST_DOWNLOAD_PRE_CONFIGURE}); fi \
-    && cd bundle/nginx-1.31.1 \
-    && patch -p1 < /tmp/build_repos/nginx-ssl-fingerprint/patches/release-1.30.0.patch \
+    && cd bundle/nginx-${RESTY_NGINX_VERSION} \
+    && echo "applying nginx ${RESTY_NGINX_VERSION} -> ${NGINX_SECURITY_VERSION} security diff" \
+    && patch -p1 --forward < /tmp/nginx-security.diff \
+    && sed -i 's/^#define NGINX_VERSION .*/#define NGINX_VERSION      "'"${NGINX_SECURITY_VERSION}"'"/' src/core/nginx.h \
+    && grep -q "\"${NGINX_SECURITY_VERSION}\"" src/core/nginx.h \
+    && patch -p1 < /tmp/build_repos/nginx-ssl-fingerprint/patches/release-1.31.9.patch \
     && cd /tmp/openresty-${RESTY_VERSION} \
     && eval ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} ${RESTY_CONFIG_OPTIONS_MORE} ${RESTY_LUAJIT_OPTIONS} ${RESTY_PCRE_OPTIONS} \
     && STREAM_LUA_SRC=$(find /tmp/openresty-${RESTY_VERSION}/bundle -maxdepth 1 -name 'ngx_stream_lua-*' -type d | head -1)/src \
@@ -223,6 +247,8 @@ RUN apk add --no-cache --virtual .build-deps \
         openssl-${RESTY_OPENSSL_VERSION}.tar.gz openssl-${RESTY_OPENSSL_VERSION} \
         pcre2-${RESTY_PCRE_VERSION}.tar.gz pcre2-${RESTY_PCRE_VERSION} \
         openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
+        nginx-${RESTY_NGINX_VERSION}.tar.gz nginx-${RESTY_NGINX_VERSION} \
+        nginx-${NGINX_SECURITY_VERSION}.tar.gz nginx-${NGINX_SECURITY_VERSION} /tmp/nginx-security.diff \
         /tmp/build_repos \
     && /usr/local/openresty/bin/opm get openresty/lua-resty-string \
     && /usr/local/openresty/bin/opm get bungle/lua-resty-session \

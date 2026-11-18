@@ -9,7 +9,7 @@ on:
 
 env:
   IMAGE_NAME: quay.io/unixfox/openresty-ssl-ja3
-  TAG_PREFIX: openssl3.5.6-nginx1.31.1
+  TAG_PREFIX: openssl3.5.6-nginx1.31.9
 
 jobs:
 
